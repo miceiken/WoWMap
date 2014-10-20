@@ -8,7 +8,7 @@ using WoWMap.Chunks;
 
 namespace WoWMap
 {
-    public interface IChunkReader
+    public interface IChunk
     {
         void Read(ChunkHeader header, BinaryReader br);
     }

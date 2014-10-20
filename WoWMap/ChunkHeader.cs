@@ -23,6 +23,11 @@ namespace WoWMap
             set;
         }
 
+        public string Name
+        {
+            get { return new string(Header); }
+        }
+
         public ChunkHeader()
         {
             Header = new char[4];
@@ -35,6 +40,11 @@ namespace WoWMap
             Size = size;
         }
 
+        public ChunkHeader(BinaryReader br)
+        {
+            Read(br);
+        }
+
         public void Flip()
         {
             Array.Reverse(Header);
@@ -42,7 +52,7 @@ namespace WoWMap
 
         public override string ToString()
         {
-            return Header.ToString();
+            return Name;
         }
 
         public void Read(BinaryReader br)

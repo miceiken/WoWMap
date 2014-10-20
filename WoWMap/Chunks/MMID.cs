@@ -7,13 +7,14 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MMID : IChunkReader
+    public class MMID : IChunk
     {
         public uint[] Offsets;
 
         public void Read(ChunkHeader header, BinaryReader br)
         {
-            for (int i = 0; i < header.Size / 4; i++)
+            Offsets = new uint[header.Size / 4];
+            for (int i = 0; i < Offsets.Length; i++)
                 Offsets[i] = br.ReadUInt32();
         }
     }

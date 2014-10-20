@@ -5,6 +5,8 @@ VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WoWMap", "WoWMap\WoWMap.csproj", "{13E48410-4D2D-4196-B013-0E84A5652E83}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WoWMapParser", "WoWMapParser\WoWMapParser.csproj", "{FBD21E41-3D77-444A-BCE6-FE16FDDADC3B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{13E48410-4D2D-4196-B013-0E84A5652E83}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13E48410-4D2D-4196-B013-0E84A5652E83}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{13E48410-4D2D-4196-B013-0E84A5652E83}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBD21E41-3D77-444A-BCE6-FE16FDDADC3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBD21E41-3D77-444A-BCE6-FE16FDDADC3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBD21E41-3D77-444A-BCE6-FE16FDDADC3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBD21E41-3D77-444A-BCE6-FE16FDDADC3B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

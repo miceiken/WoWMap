@@ -7,7 +7,7 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MVER : IChunkReader
+    public class MVER : IChunk
     {
         public uint Version;
         

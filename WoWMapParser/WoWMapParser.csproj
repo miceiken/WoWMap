@@ -4,15 +4,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{13E48410-4D2D-4196-B013-0E84A5652E83}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{FBD21E41-3D77-444A-BCE6-FE16FDDADC3B}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WoWMap</RootNamespace>
-    <AssemblyName>WoWMap</AssemblyName>
+    <RootNamespace>WoWMapParser</RootNamespace>
+    <AssemblyName>WoWMapParser</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -22,6 +23,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -30,9 +32,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CascLib">
-      <HintPath>.\CascLib.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -42,29 +41,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ADT.cs" />
-    <Compile Include="ChunkHeader.cs" />
-    <Compile Include="Chunks\MFBO.cs" />
-    <Compile Include="Helpers.cs" />
-    <Compile Include="IChunk.cs" />
-    <Compile Include="Chunks\MCIN.cs" />
-    <Compile Include="Chunks\MCLQ.cs" />
-    <Compile Include="Chunks\MCLY.cs" />
-    <Compile Include="Chunks\MCNK.cs" />
-    <Compile Include="Chunks\MCNR.cs" />
-    <Compile Include="Chunks\MDDF.cs" />
-    <Compile Include="Chunks\MH2O.cs" />
-    <Compile Include="Chunks\MHDR.cs" />
-    <Compile Include="Chunks\MMDX.cs" />
-    <Compile Include="Chunks\MMID.cs" />
-    <Compile Include="Chunks\MODF.cs" />
-    <Compile Include="Chunks\MTEX.cs" />
-    <Compile Include="Chunks\MVER.cs" />
-    <Compile Include="Chunks\MWID.cs" />
-    <Compile Include="Chunks\MWMO.cs" />
-    <Compile Include="Global.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Vector3.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WoWMap\WoWMap.csproj">
+      <Project>{13e48410-4d2d-4196-b013-0e84a5652e83}</Project>
+      <Name>WoWMap</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

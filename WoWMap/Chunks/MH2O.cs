@@ -7,13 +7,14 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MH2O : IChunkReader
+    public class MH2O : IChunk
     {
         public MH2OHeader[] Headers;
 
         public void Read(ChunkHeader header, BinaryReader br)
         {
-            for (int i = 0; i < 256; i++)
+            Headers = new MH2OHeader[256];
+            for (int i = 0; i < Headers.Length; i++)
             {
                 var entry = new MH2OHeader();
                 entry.Read(header, br);
@@ -21,7 +22,7 @@ namespace WoWMap.Chunks
             }
         }
 
-        public class MH2OHeader : IChunkReader
+        public class MH2OHeader : IChunk
         {
             public uint ofsInformation;
             public uint LayerCount;
@@ -35,7 +36,7 @@ namespace WoWMap.Chunks
             }
         }
 
-        public class MH2OInformation : IChunkReader
+        public class MH2OInformation : IChunk
         {
             public ushort LiquidTypeId;
             public ushort LiquidObjectId;
@@ -63,7 +64,7 @@ namespace WoWMap.Chunks
             }
         }
 
-        public class MH2OHeightmapData : IChunkReader
+        public class MH2OHeightmapData : IChunk
         {
             public float[] Heightmap;
             public char[] Transparency;

@@ -7,7 +7,7 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MTEX : IChunkReader
+    public class MTEX : IChunk
     {
         public string[] Filenames;
 

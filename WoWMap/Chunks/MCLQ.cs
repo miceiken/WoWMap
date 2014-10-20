@@ -7,7 +7,7 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MCLQ : IChunkReader
+    public class MCLQ : IChunk
     {
         private short unk0;
         private short unk1;

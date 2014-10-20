@@ -7,13 +7,14 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MODF : IChunkReader
+    public class MODF : IChunk
     {
         public MODFEntry[] Entries;
 
         public void Read(ChunkHeader header, BinaryReader br)
         {
-            for (int i = 0; i < header.Size / 22; i++)
+            Entries = new MODFEntry[header.Size / 22];
+            for (int i = 0; i < Entries.Length; i++)
             {
                 var entry = new MODFEntry();
                 entry.Read(header, br);
@@ -22,7 +23,7 @@ namespace WoWMap.Chunks
         }
 
         // Sizeof = 22
-        public class MODFEntry : IChunkReader
+        public class MODFEntry : IChunk
         {
             public uint MWIDEntry;
             public uint UniqueId;
@@ -39,12 +40,16 @@ namespace WoWMap.Chunks
             {
                 MWIDEntry = br.ReadUInt32();
                 UniqueId = br.ReadUInt32();
+                Position = new float[3];
                 for (int i = 0; i < 3; i++)
                     Position[i] = br.ReadSingle();
+                Rotation = new float[3];
                 for (int i = 0; i < 3; i++)
                     Rotation[i] = br.ReadSingle();
+                LowerBounds = new float[3];
                 for (int i = 0; i < 3; i++)
                     LowerBounds[i] = br.ReadSingle();
+                UpperBounds = new float[3];
                 for (int i = 0; i < 3; i++)
                     UpperBounds[i] = br.ReadSingle();
                 Flags = br.ReadUInt16();

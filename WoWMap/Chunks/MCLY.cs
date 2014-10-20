@@ -7,7 +7,7 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MCLY : IChunkReader
+    public class MCLY : IChunk
     {
         public uint TextureId;
         public uint Flags;

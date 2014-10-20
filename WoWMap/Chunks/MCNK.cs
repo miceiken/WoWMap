@@ -7,7 +7,7 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MCNK : IChunkReader
+    public class MCNK : IChunk
     {
         public uint Flags;
         public uint IndexX;
@@ -24,7 +24,7 @@ namespace WoWMap.Chunks
         public uint AreaId;
         public uint nMapObjRefs;
         public uint Holes;
-        public uint[] ReallyLowQualityTextureingMap;
+        public uint[,] ReallyLowQualityTextureingMap;
         public uint predTex;
         public uint noEffectDoodad;
         public uint ofsSoundEmitters;
@@ -64,14 +64,17 @@ namespace WoWMap.Chunks
             AreaId = br.ReadUInt32();
             nMapObjRefs = br.ReadUInt32();
             Holes = br.ReadUInt32();
+            ReallyLowQualityTextureingMap = new uint[8, 8];
             for (int i = 0; i < 8; i++)
-                ReallyLowQualityTextureingMap[i] = br.ReadUInt32();
+                for (int j = 0; j < 8; j++)
+                    ReallyLowQualityTextureingMap[i, j] = br.ReadUInt32();
             predTex = br.ReadUInt32();
             noEffectDoodad = br.ReadUInt32();
             ofsSoundEmitters = br.ReadUInt32();
             numSoundEmitters = br.ReadUInt32();
             ofsLiquid = br.ReadUInt32();
             sizeLiquid = br.ReadUInt32();
+            Position = new float[3];
             for (int i = 0; i < 3; i++)
                 Position[i] = br.ReadSingle();
             ofsMCCV = br.ReadUInt32();

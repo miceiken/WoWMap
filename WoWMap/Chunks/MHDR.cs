@@ -7,7 +7,7 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MHDR : IChunkReader
+    public class MHDR : IChunk
     {
         public MHDRFlags Flags;
         public uint ofsMCIN;
@@ -21,7 +21,7 @@ namespace WoWMap.Chunks
         public uint ofsMFBO;
         public uint ofsMH2O;
         public uint ofsMTXF;
-        public uint[] padding;
+        private uint[] padding;
 
         public enum MHDRFlags : uint
         {
@@ -43,6 +43,8 @@ namespace WoWMap.Chunks
             ofsMFBO = br.ReadUInt32();
             ofsMH2O = br.ReadUInt32();
             ofsMTEX = br.ReadUInt32();
+
+            padding = new uint[4];
             for (int i = 0; i < 4; i++)
                 padding[i] = br.ReadUInt32();
         }
