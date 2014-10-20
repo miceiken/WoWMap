@@ -28,9 +28,9 @@ namespace WoWMap.Chunks
 
             public void Read(ChunkHeader header, BinaryReader br)
             {
-                Height = new short[8,8];
-                for (int i = 0; i < 8; i++)
-                    for (int j = 0; j < 8; j++)
+                Height = new short[3,3];
+                for (int i = 0; i < 3; i++)
+                    for (int j = 0; j < 3; j++)
                         Height[i, j] = br.ReadInt16();
             }
         }
