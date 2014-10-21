@@ -1,0 +1,6 @@
+[submodule "CASCExplorer"]
+	path = CASCExplorer
+	url = https://github.com/WoW-Tools/CASCExplorer.git
+[submodule "SharpNav"]
+	path = SharpNav
+	url = https://github.com/Robmaister/SharpNav
