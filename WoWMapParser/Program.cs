@@ -13,6 +13,14 @@ namespace WoWMapParser
     {
         static void Main(string[] args)
         {
+           // ReadADT();
+            ReadWDT();
+            
+            Console.ReadKey();
+        }
+
+        static void ReadADT()
+        {
             const string path = @"PVPZone01_30_29.adt";
             var adt = new ADT(path);
             var sw = Stopwatch.StartNew();
@@ -20,7 +28,15 @@ namespace WoWMapParser
             sw.Stop();
 
             //Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", adt.Chunks.Count, System.IO.Path.GetFileName(path), sw.ElapsedMilliseconds);
-            Console.ReadKey();
+        }
+
+        static void ReadWDT()
+        {
+            const string path = @"PVPZone01.wdt";
+            var wdt = new WDT(path);
+            var sw = Stopwatch.StartNew();
+            wdt.Read();
+            sw.Stop();
         }
     }
 }
