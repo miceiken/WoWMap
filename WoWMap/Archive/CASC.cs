@@ -13,11 +13,16 @@ namespace WoWMap.Archive
     {
         public static void Initialize(string path, LocaleFlags locale)
         {
-            Worker = new BackgroundWorker();
+            Worker = new BackgroundWorker() { WorkerReportsProgress = true };
             Locale = locale;
             Handler = CASCHandler.OpenLocalStorage(path, Worker);
 
             Initialized = true;
+        }
+
+        static void Worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            Console.WriteLine(e.ProgressPercentage);
         }
 
         public static void Initialize(string path)
