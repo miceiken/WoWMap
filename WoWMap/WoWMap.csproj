@@ -43,6 +43,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ADT.cs" />
+    <Compile Include="Archive\CASC.cs" />
+    <Compile Include="Archive\DBC.cs" />
+    <Compile Include="Archive\Map.cs" />
     <Compile Include="ChunkData.cs" />
     <Compile Include="ChunkHeader.cs" />
     <Compile Include="Chunks\MAIN.cs" />

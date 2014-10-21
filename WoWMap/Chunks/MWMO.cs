@@ -14,7 +14,7 @@ namespace WoWMap.Chunks
         public void Read(BinaryReader br, uint size)
         {
             var chunk = br.ReadBytes((int)size);
-            Filenames = Helpers.SplitStrings(chunk).ToArray();
+            Filenames = Helpers.SplitStrings(chunk).ToArray();;
         }
     }
 }

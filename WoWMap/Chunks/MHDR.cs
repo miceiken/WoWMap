@@ -56,9 +56,9 @@ namespace WoWMap.Chunks
             ofsMTEX = br.ReadUInt32();
 
             // We don't have to read this if we keep jumping back and forth.
-            //padding = new uint[4];
-            //for (int i = 0; i < 4; i++)
-            //    padding[i] = br.ReadUInt32();
+            padding = new uint[4];
+            for (int i = 0; i < 4; i++)
+                padding[i] = br.ReadUInt32();
 
             //var position = br.BaseStream.Position;
             //Process(br);
@@ -131,7 +131,7 @@ namespace WoWMap.Chunks
                 br.BaseStream.Position = ofsMODF;
                 MODF = new MODF();
                 header.Read(br);
-                MODF.Read(br, header.Size);
+                MODF.Read(br);
             }
 
             if (ofsMFBO > 0)

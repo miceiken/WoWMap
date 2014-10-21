@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WoWMap;
-using WoWMap.Chunks;
+using WoWMap.Archive;
 using System.Diagnostics;
 
 namespace WoWMapParser
@@ -13,9 +13,10 @@ namespace WoWMapParser
     {
         static void Main(string[] args)
         {
-           // ReadADT();
+            CASC.Initialize(@"D:\Games\World of Warcraft\");
+            // ReadADT();
             ReadWDT();
-            
+
             Console.ReadKey();
         }
 

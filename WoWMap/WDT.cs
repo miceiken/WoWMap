@@ -23,10 +23,14 @@ namespace WoWMap
         }
 
         public ChunkData Data { get; private set; }
+
+        public bool IsValid { get; private set; }
         public bool[,] TileTable { get; private set; }
-        public MWMO MWMO { get; private set; }
-        public MODF MODF { get; private set; }
         public MAIN MAIN { get; private set; }
+
+        public bool IsGlobalModel { get; private set; }
+        public MWMO MWMO { get; private set; }
+        public MODF MODF { get; private set; }        
         public string ModelFile { get; private set; }
 
         public bool HasTile(int x, int y)
@@ -44,6 +48,8 @@ namespace WoWMap
                 var chunk = Data.GetChunkByName("MAIN");
                 if (chunk == null) return;
 
+                IsValid = true;
+
                 MAIN = new MAIN();
                 MAIN.Read(chunk.GetReader());
 
@@ -57,8 +63,10 @@ namespace WoWMap
                 var defChunk = Data.GetChunkByName("MODF");
                 if (fileChunk == null || defChunk == null) return;
 
+                IsGlobalModel = true;
+
                 MODF = new MODF();
-                MODF.Read(defChunk.GetReader(), defChunk.Size);
+                MODF.Read(defChunk.GetReader());
 
                 MWMO = new MWMO();
                 MWMO.Read(fileChunk.GetReader(), fileChunk.Size);
