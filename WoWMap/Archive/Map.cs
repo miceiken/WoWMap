@@ -8,27 +8,27 @@ namespace WoWMap.Archive
 {
     public class MapRecord
     {
-        public int ID { get; private set; }
-        public string Directory { get; private set; }
-        public int InstanceType { get; private set; }
-        public int Flags { get; private set; }
-        public int unk { get; private set; }
-        public int MapType { get; private set; }
-        public string Mapname_lang { get; private set; }
-        public int areaTableID { get; private set; }
-        public string MapDescription0_lang { get; private set; }
-        public string MapDescription1_lang { get; private set; }
-        public int LoadingScreenID { get; private set; }
-        public float minimapIconScale { get; private set; }
-        public int corpseMapID { get; private set; }
-        public float corpse_x { get; private set; }
-        public float corpse_y { get; private set; }
-        public int timeOfDayoverride { get; private set; }
-        public int expansionID { get; private set; }
-        public int raidOffset { get; private set; }
-        public int maxPlayers { get; private set; }
-        public int parentMapID { get; private set; }
-        public int cosmeticParentMapID { get; private set; }
-        public int timeOffset { get; private set; }
+        public int ID { get; set; }
+        public string Directory { get; set; }
+        public int InstanceType { get; set; }
+        public int Flags { get; set; }
+        public int unk { get; private set; } // <---
+        public int MapType { get; set; }
+        public string MapNameLang { get; set; }
+        public int AreaTableID { get; set; }
+        public string MapDescription0Lang { get; set; }
+        public string MapDescription1Lang { get; set; }
+        public int LoadingScreenID { get; set; }
+        public float MinimapIconScale { get; set; }
+        public int CorpseMapID { get; set; }
+        public float CorpseX { get; set; }
+        public float CorpseY { get; set; }
+        public int TimeOfDayOverride { get; set; }
+        public int ExpansionID { get; set; }
+        public int RaidOffset { get; set; }
+        public int MaxPlayers { get; set; }
+        public int ParentMapID { get; set; }
+        public int CosmeticParentMapID { get; set; }
+        public int TimeOffset { get; set; }
     }
 }

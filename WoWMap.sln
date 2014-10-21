@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WoWMap", "WoWMap\WoWMap.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WoWMapParser", "WoWMapParser\WoWMapParser.csproj", "{FBD21E41-3D77-444A-BCE6-FE16FDDADC3B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CascLib", "CASCExplorer\CascLib\CascLib.csproj", "{E08E1E48-6585-4137-8405-661C62C10713}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{FBD21E41-3D77-444A-BCE6-FE16FDDADC3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FBD21E41-3D77-444A-BCE6-FE16FDDADC3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FBD21E41-3D77-444A-BCE6-FE16FDDADC3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

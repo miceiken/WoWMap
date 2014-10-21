@@ -9,18 +9,19 @@ namespace WoWMap.Archive
 {
     public class DBC<T> where T : new()
     {
-        private const uint DB2FmtSig = 0x32424457; // WDB2
+        private const uint DBCFmtSig = 0x43424457; // WDBC
 
         public DBC(string filename)
         {
             if (!CASC.Initialized) return;
             if (!CASC.FileExists(filename)) return;
 
+            #region Read DBC
             using (var br = new BinaryReader(CASC.OpenFile(filename)))
             {
                 // Make sure we've got a valid DBC
                 if (br.BaseStream.Length < DBCHeader.Size) return;
-                if (DB2FmtSig != br.ReadUInt32()) return;
+                if (DBCFmtSig != br.ReadUInt32()) return;
 
                 // Read DBC header
                 Header = new DBCHeader();
@@ -29,9 +30,13 @@ namespace WoWMap.Archive
                 // Read strings to a table
                 var readPos = br.BaseStream.Position;
                 var strTableOffset = br.BaseStream.Position + (Header.RecordCount * Header.RecordSize);
+                br.BaseStream.Position = strTableOffset;
                 var strTable = new Dictionary<int, string>();
                 while (br.BaseStream.Position < br.BaseStream.Length)
-                    strTable[(int)(br.BaseStream.Position - strTableOffset)] = br.ReadCString();
+                {
+                    var idx = (int)(br.BaseStream.Position - strTableOffset);
+                    strTable[idx] = br.ReadCString();
+                }
 
                 // Move back to where we were
                 br.BaseStream.Position = readPos;
@@ -59,6 +64,9 @@ namespace WoWMap.Archive
                             case TypeCode.String:
                                 tProperties[j].SetValue(row, strTable[br.ReadInt32()]);
                                 break;
+                            default:
+                                Console.WriteLine("wat?? {0}", Type.GetTypeCode(tProperties[j].PropertyType));
+                                break;
                         }
                     }
 
@@ -70,6 +78,7 @@ namespace WoWMap.Archive
                 }
 
             }
+            #endregion
         }
 
         public DBCHeader Header
@@ -95,12 +104,6 @@ namespace WoWMap.Archive
         {
             #region Properties
 
-            public string Filename
-            {
-                get;
-                private set;
-            }
-
             public int RecordCount
             {
                 get;
@@ -125,48 +128,6 @@ namespace WoWMap.Archive
                 private set;
             }
 
-            public int TableHash
-            {
-                get;
-                private set;
-            }
-
-            public int Build
-            {
-                get;
-                private set;
-            }
-
-            public int LastWritten
-            {
-                get;
-                private set;
-            }
-
-            public int MinId
-            {
-                get;
-                private set;
-            }
-
-            public int MaxId
-            {
-                get;
-                private set;
-            }
-
-            public int Locale
-            {
-                get;
-                private set;
-            }
-
-            private int unk0
-            {
-                get;
-                set;
-            }
-
             public static readonly int Size = 48;
 
             #endregion
@@ -177,13 +138,6 @@ namespace WoWMap.Archive
                 FieldCount = br.ReadInt32();
                 RecordSize = br.ReadInt32();
                 StringBlockSize = br.ReadInt32();
-                TableHash = br.ReadInt32();
-                Build = br.ReadInt32();
-                LastWritten = br.ReadInt32();
-                MinId = br.ReadInt32();
-                MaxId = br.ReadInt32();
-                Locale = br.ReadInt32();
-                unk0 = br.ReadInt32();
             }
         }
 

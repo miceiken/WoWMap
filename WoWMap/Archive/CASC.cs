@@ -13,21 +13,16 @@ namespace WoWMap.Archive
     {
         public static void Initialize(string path, LocaleFlags locale)
         {
-            Worker = new BackgroundWorker() { WorkerReportsProgress = true };
             Locale = locale;
-            Handler = CASCHandler.OpenLocalStorage(path, Worker);
+            Handler = CASCHandler.OpenLocalStorage(path);
+            Handler.Root.SetFlags(locale, ContentFlags.None);
 
             Initialized = true;
         }
 
-        static void Worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            Console.WriteLine(e.ProgressPercentage);
-        }
-
         public static void Initialize(string path)
         {
-            Initialize(path, LocaleFlags.All);
+            Initialize(path, LocaleFlags.enUS);
         }
 
         public static bool Initialized
@@ -48,20 +43,14 @@ namespace WoWMap.Archive
             private set;
         }
 
-        public static BackgroundWorker Worker
-        {
-            get;
-            private set;
-        }
-
         public static Stream OpenFile(string filename)
         {
-            return Handler.OpenFile(filename, Locale);
+            return Handler.OpenFile(filename);
         }
 
         public static bool FileExists(string filename)
         {
-            return Handler.FileExis(filename);
+            return Handler.FileExists(filename);
         }
     }
 }

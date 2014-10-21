@@ -13,11 +13,24 @@ namespace WoWMapParser
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("Initializing CASC - this make take a while...");
             CASC.Initialize(@"D:\Games\World of Warcraft\");
-            // ReadADT();
-            ReadWDT();
+            Console.WriteLine("CASC initialized");
+            ReadDBC();
+            //ReadADT();
+            //ReadWDT();
 
             Console.ReadKey();
+        }
+
+        static void ReadDBC()
+        {
+            var dbc = new DBC<MapRecord>(@"DBFilesClient\Map.dbc");
+            foreach (var row in dbc.Rows)
+            {
+                if (row == null) continue;
+                Console.WriteLine("{0} - '{1}' - '{2}'", row.ID, row.MapNameLang, row.Directory);
+            }
         }
 
         static void ReadADT()
