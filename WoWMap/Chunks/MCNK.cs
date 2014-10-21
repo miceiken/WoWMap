@@ -7,23 +7,25 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MCNK : IChunk
+    public class MCNK
     {
-        public uint Flags;
+        public MCNKFlags Flags;
         public uint IndexX;
         public uint IndexY;
         public uint nLayers;
         public uint nDoodadRef;
-        public uint ofsHeight;
-        public uint ofsNormal;
-        public uint ofsLayer;
-        public uint ofsAlpha;
-        public uint sizeAlpha;
-        public uint ofsShadow;
-        public uint sizeShadow;
+        public uint ofsMCVT;
+        public uint ofsMCNR;
+        public uint ofsMCLY;
+        public uint ofsMCRF;
+        public uint ofsMCAL;
+        public uint sizeMCAL;
+        public uint ofsMCSH;
+        public uint sizeMCSH;
         public uint AreaId;
         public uint nMapObjRefs;
-        public uint Holes;
+        public ushort Holes;
+        public ushort HolesAlign;
         public uint[,] ReallyLowQualityTextureingMap;
         public uint predTex;
         public uint noEffectDoodad;
@@ -47,23 +49,25 @@ namespace WoWMap.Chunks
             HighResolutionHoles = 0x10000
         };
 
-        public void Read(ChunkHeader header, BinaryReader br)
+        public void Read(BinaryReader br)
         {
-            Flags = br.ReadUInt32();
+            Flags = (MCNKFlags)br.ReadUInt32();
             IndexX = br.ReadUInt32();
             IndexY = br.ReadUInt32();
             nLayers = br.ReadUInt32();
             nDoodadRef = br.ReadUInt32();
-            ofsHeight = br.ReadUInt32();
-            ofsNormal = br.ReadUInt32();
-            ofsLayer = br.ReadUInt32();
-            ofsAlpha = br.ReadUInt32();
-            sizeAlpha = br.ReadUInt32();
-            ofsShadow = br.ReadUInt32();
-            sizeShadow = br.ReadUInt32();
+            ofsMCVT = br.ReadUInt32();
+            ofsMCNR = br.ReadUInt32();
+            ofsMCLY = br.ReadUInt32();
+            ofsMCRF = br.ReadUInt32();
+            ofsMCAL = br.ReadUInt32();
+            sizeMCAL = br.ReadUInt32();
+            ofsMCSH = br.ReadUInt32();
+            sizeMCSH = br.ReadUInt32();
             AreaId = br.ReadUInt32();
             nMapObjRefs = br.ReadUInt32();
-            Holes = br.ReadUInt32();
+            Holes = br.ReadUInt16();
+            HolesAlign = br.ReadUInt16();
             ReallyLowQualityTextureingMap = new uint[8, 8];
             for (int i = 0; i < 8; i++)
                 for (int j = 0; j < 8; j++)

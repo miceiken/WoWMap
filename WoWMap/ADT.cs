@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using WoWMap.Chunks;
+using WoWMap.Geometry;
 
 namespace WoWMap
 {
@@ -12,7 +13,6 @@ namespace WoWMap
     {
         public ADT(string filename)
         {
-            Chunks = new List<IChunk>();
             Filename = filename;
         }
 
@@ -22,72 +22,26 @@ namespace WoWMap
             private set;
         }
 
-        public List<IChunk> Chunks { get; private set; }
+        public ChunkData Data { get; private set; }
+        public MapChunk[] MapChunks { get; private set; }
+        public MHDR Header { get; private set; }
 
         public void Read()
         {
             using (var file = File.Open(Filename, FileMode.Open))
-            using (var br = new BinaryReader(file))
             {
-                var bytesRead = 0L;
-                while (bytesRead < file.Length)
-                {
-                    file.Position = bytesRead;
-                    var header = new ChunkHeader(br);
-                    header.Flip();
-                    bytesRead = file.Position + header.Size;
+                Data = new ChunkData(file);
 
-                    Console.WriteLine("{0} - {1} bytes", header.Name, header.Size);
-                    // We should probably just read what we need
-                    IChunk cr = null;
-                    switch (header.Name)
-                    {
-                        case "MVER":
-                            cr = new MVER();
-                            break;
-                        case "MHDR":
-                            cr = new MHDR();
-                            break;
-                        case "MCIN":
-                            cr = new MCIN();
-                            break;
-                        case "MTEX":
-                            cr = new MTEX();
-                            break;
-                        case "MMDX":
-                            cr = new MMDX();
-                            break;
-                        case "MWMO":
-                            cr = new MWMO();
-                            break;
-                        case "MWID":
-                            cr = new MWID();
-                            break;
-                        case "MDDF":
-                            cr = new MDDF();
-                            break;
-                        case "MODF":
-                            cr = new MODF();
-                            break;
-                        case "MH2O":
-                            cr = new MH2O();
-                            break;
-                        case "MCNK":
-                            cr = new MCNK();
-                            break;
-                        case "MFBO":
-                            cr = new MFBO();
-                            break;
-                        case "MTXF":
-                        case "MTXP":
-                            break;
-                    }
+                Header = new MHDR();
+                Header.Read(Data.GetChunkByName("MHDR").GetReader());
 
-                    // Unknown chunk?
-                    if (cr == null) continue;
-                    cr.Read(header, br);
-                    Chunks.Add(cr);
-                }
+                MapChunks = new MapChunk[16 * 16];
+                int idx = 0;
+                foreach (var mapChunk in Data.Chunks.Where(c => c.Name == "MCNK"))
+                    MapChunks[idx++] = new MapChunk(this, mapChunk);
+
+                foreach (var mapChunk in MapChunks)
+                    mapChunk.GenerateTriangles();
             }
         }
     }

@@ -7,18 +7,18 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MCNR : IChunk
+    public class MCNR
     {
         public MCNREntry[] Entries;
         private ushort[] unk0;
 
-        public void Read(ChunkHeader header, BinaryReader br)
+        public void Read(BinaryReader br)
         {
             Entries = new MCNREntry[145];
             for (int i = 0; i < Entries.Length; i++)
             {
                 var entry = new MCNREntry();
-                entry.Read(header, br);
+                entry.Read(br);
                 Entries[i] = entry;
             }
 
@@ -27,11 +27,11 @@ namespace WoWMap.Chunks
                 unk0[i] = br.ReadUInt16();
         }
 
-        public class MCNREntry : IChunk
+        public class MCNREntry
         {
             public short[] Normal;
 
-            public void Read(ChunkHeader header, BinaryReader br)
+            public void Read( BinaryReader br)
             {
                 Normal = new short[3];
                 for (int i = 0; i < 3; i++)

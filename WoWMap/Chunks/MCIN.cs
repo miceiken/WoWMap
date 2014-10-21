@@ -7,29 +7,29 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MCIN : IChunk
+    public class MCIN
     {
         public MCINEntry[] Entries;
 
-        public void Read(ChunkHeader header, BinaryReader br)
+        public void Read(BinaryReader br)
         {
             Entries = new MCINEntry[256];
             for (int i = 0; i < 256; i++) // 16*16
             {
                 var entry = new MCINEntry();
-                entry.Read(header, br);
+                entry.Read(br);
                 Entries[i] = entry;
             }
         }
 
-        public class MCINEntry : IChunk
+        public class MCINEntry
         {
             public uint ofsMCNK;    // Absolute
             public uint Size;       // Size of MCNK chunk
             public uint Flags;      // Always 0
             public uint AsyncId;
 
-            public void Read(ChunkHeader header, BinaryReader br)
+            public void Read(BinaryReader br)
             {
                 ofsMCNK = br.ReadUInt32();
                 Size = br.ReadUInt32();

@@ -7,26 +7,26 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MFBO : IChunk
+    public class MFBO
     {
         public Plane Maximum;
         public Plane Minimum;
 
-        public void Read(ChunkHeader header, BinaryReader br)
+        public void Read(BinaryReader br)
         {
             Maximum = new Plane();
-            Maximum.Read(header, br);
+            Maximum.Read(br);
 
             Minimum = new Plane();
-            Minimum.Read(header, br);
+            Minimum.Read(br);
         }
 
 
-        public class Plane : IChunk
+        public class Plane
         {
             short[,] Height;
 
-            public void Read(ChunkHeader header, BinaryReader br)
+            public void Read(BinaryReader br)
             {
                 Height = new short[3,3];
                 for (int i = 0; i < 3; i++)

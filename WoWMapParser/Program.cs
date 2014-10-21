@@ -19,7 +19,7 @@ namespace WoWMapParser
             adt.Read();
             sw.Stop();
 
-            Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", adt.Chunks.Count, System.IO.Path.GetFileName(path), sw.ElapsedMilliseconds);
+            //Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", adt.Chunks.Count, System.IO.Path.GetFileName(path), sw.ElapsedMilliseconds);
             Console.ReadKey();
         }
     }

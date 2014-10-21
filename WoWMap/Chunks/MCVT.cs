@@ -7,13 +7,15 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MVER
+    public class MCVT
     {
-        public uint Version;
+        public float[] Height;
 
         public void Read(BinaryReader br)
         {
-            Version = br.ReadUInt32();
+            Height = new float[145];
+            for (int i = 0; i < 145; i++)
+                Height[i] = br.ReadSingle();
         }
     }
 }

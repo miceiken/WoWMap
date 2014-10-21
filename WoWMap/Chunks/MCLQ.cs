@@ -7,13 +7,13 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MCLQ : IChunk
+    public class MCLQ
     {
         private short unk0;
         private short unk1;
         public float Height;
 
-        public void Read(ChunkHeader header, BinaryReader br)
+        public void Read(BinaryReader br)
         {
             unk0 = br.ReadInt16();
             unk1 = br.ReadInt16();

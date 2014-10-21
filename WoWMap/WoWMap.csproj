@@ -43,10 +43,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ADT.cs" />
+    <Compile Include="ChunkData.cs" />
     <Compile Include="ChunkHeader.cs" />
+    <Compile Include="Chunks\MCVT.cs" />
     <Compile Include="Chunks\MFBO.cs" />
+    <Compile Include="Geometry\MapChunk.cs" />
     <Compile Include="Helpers.cs" />
-    <Compile Include="IChunk.cs" />
+    <Compile Include="Chunk.cs" />
     <Compile Include="Chunks\MCIN.cs" />
     <Compile Include="Chunks\MCLQ.cs" />
     <Compile Include="Chunks\MCLY.cs" />
@@ -64,7 +67,8 @@
     <Compile Include="Chunks\MWMO.cs" />
     <Compile Include="Global.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Vector3.cs" />
+    <Compile Include="Geometry\Triangle.cs" />
+    <Compile Include="Geometry\Vector3.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

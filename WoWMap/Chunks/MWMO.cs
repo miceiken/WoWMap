@@ -7,13 +7,13 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MWMO : IChunk
+    public class MWMO
     {
         public string[] Filenames;
 
-        public void Read(ChunkHeader header, BinaryReader br)
+        public void Read(BinaryReader br, uint size)
         {
-            var chunk = br.ReadBytes((int)header.Size);
+            var chunk = br.ReadBytes((int)size);
             Filenames = Helpers.SplitStrings(chunk).ToArray();
         }
     }

@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 
 namespace WoWMap
 {
-    public class Global
+    public static class Global
     {
-        public static int BLOCK_SIZE = 64;
-        public static int CHUNK_SIZE = 16;
-        public static float BLOCK_LENGTH = 533f + (1f/3f);
+        public const float TileSize = (533f + (1f / 3f));
+        public const float MaxXY = 32.0f * TileSize;
+        public const float ChunkSize = TileSize / 16.0f;
+        public const float UnitSize = ChunkSize / 8.0f;
     }
 }

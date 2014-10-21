@@ -7,23 +7,23 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MDDF : IChunk
+    public class MDDF
     {
         public MDDFEntry[] Entries;
 
-        public void Read(ChunkHeader header, BinaryReader br)
+        public void Read(BinaryReader br, uint size)
         {
-            Entries = new MDDFEntry[header.Size / 12];
+            Entries = new MDDFEntry[size / 12];
             for (int i = 0; i < Entries.Length; i++)
             {
                 var entry = new MDDFEntry();
-                entry.Read(header, br);
+                entry.Read(br);
                 Entries[i] = entry;
             }
         }
 
         // Sizeof = 12
-        public class MDDFEntry : IChunk
+        public class MDDFEntry
         {
             public uint MMIDEntry;
             public uint UniqueId;
@@ -32,7 +32,7 @@ namespace WoWMap.Chunks
             public ushort Scale;
             public ushort Flags;        // MDDFFlags
 
-            public void Read(ChunkHeader header, BinaryReader br)
+            public void Read(BinaryReader br)
             {
                 MMIDEntry = br.ReadUInt32();
                 UniqueId = br.ReadUInt32();

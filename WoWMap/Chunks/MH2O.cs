@@ -7,28 +7,28 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MH2O : IChunk
+    public class MH2O
     {
         public MH2OHeader[] Headers;
 
-        public void Read(ChunkHeader header, BinaryReader br)
+        public void Read(BinaryReader br)
         {
             Headers = new MH2OHeader[256];
             for (int i = 0; i < Headers.Length; i++)
             {
                 var entry = new MH2OHeader();
-                entry.Read(header, br);
+                entry.Read(br);
                 Headers[i] = entry;
             }
         }
 
-        public class MH2OHeader : IChunk
+        public class MH2OHeader
         {
             public uint ofsInformation;
             public uint LayerCount;
             public ulong ofsRender; // or is it uint32???
 
-            public void Read(ChunkHeader header, BinaryReader br)
+            public void Read(BinaryReader br)
             {
                 ofsInformation = br.ReadUInt32();
                 LayerCount = br.ReadUInt32();
@@ -36,7 +36,7 @@ namespace WoWMap.Chunks
             }
         }
 
-        public class MH2OInformation : IChunk
+        public class MH2OInformation
         {
             public ushort LiquidTypeId;
             public ushort LiquidObjectId;
@@ -49,7 +49,7 @@ namespace WoWMap.Chunks
             public uint ofsMask2;
             public uint ofsHeightmapData;
 
-            public void Read(ChunkHeader header, BinaryReader br)
+            public void Read(BinaryReader br)
             {
                 LiquidTypeId = br.ReadUInt16();
                 LiquidObjectId = br.ReadUInt16();
@@ -64,12 +64,12 @@ namespace WoWMap.Chunks
             }
         }
 
-        public class MH2OHeightmapData : IChunk
+        public class MH2OHeightmapData
         {
             public float[] Heightmap;
             public char[] Transparency;
 
-            public void Read(ChunkHeader header, BinaryReader br)
+            public void Read(BinaryReader br)
             { // TODO: Find out how to read this
 
             }

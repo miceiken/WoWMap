@@ -7,7 +7,7 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MHDR : IChunk
+    public class MHDR
     {
         public MHDRFlags Flags;
         public uint ofsMCIN;
@@ -40,7 +40,7 @@ namespace WoWMap.Chunks
         public MFBO MFBO { get; private set; }
         public MH2O MH2O { get; private set; }
 
-        public void Read(ChunkHeader header, BinaryReader br)
+        public void Read(BinaryReader br)
         {
             Flags = (MHDRFlags)br.ReadUInt32();
             ofsMCIN = br.ReadUInt32();
@@ -55,13 +55,14 @@ namespace WoWMap.Chunks
             ofsMH2O = br.ReadUInt32();
             ofsMTEX = br.ReadUInt32();
 
-            padding = new uint[4];
-            for (int i = 0; i < 4; i++)
-                padding[i] = br.ReadUInt32();
+            // We don't have to read this if we keep jumping back and forth.
+            //padding = new uint[4];
+            //for (int i = 0; i < 4; i++)
+            //    padding[i] = br.ReadUInt32();
 
-            var position = br.BaseStream.Position;
-            Process(br);
-            br.BaseStream.Position = position;
+            //var position = br.BaseStream.Position;
+            //Process(br);
+            //br.BaseStream.Position = position;
         }
 
         // How do we not make this ugly?
@@ -74,7 +75,7 @@ namespace WoWMap.Chunks
                 br.BaseStream.Position = ofsMCIN;
                 MCIN = new MCIN();
                 header.Read(br);
-                MCIN.Read(header, br);
+                MCIN.Read(br);
             }
 
             if (ofsMTEX > 0)
@@ -82,7 +83,7 @@ namespace WoWMap.Chunks
                 br.BaseStream.Position = ofsMTEX;
                 MTEX = new MTEX();
                 header.Read(br);
-                MTEX.Read(header, br);
+                MTEX.Read(br, header.Size);
             }
 
             if (ofsMMDX > 0)
@@ -90,7 +91,7 @@ namespace WoWMap.Chunks
                 br.BaseStream.Position = ofsMMDX;
                 MMDX = new MMDX();
                 header.Read(br);
-                MMDX.Read(header, br);
+                MMDX.Read(br, header.Size);
             }
 
             if (ofsMMID > 0)
@@ -98,7 +99,7 @@ namespace WoWMap.Chunks
                 br.BaseStream.Position = ofsMMID;
                 MMID = new MMID();
                 header.Read(br);
-                MMID.Read(header, br);
+                MMID.Read(br, header.Size);
             }
 
             if (ofsMWMO > 0)
@@ -106,7 +107,7 @@ namespace WoWMap.Chunks
                 br.BaseStream.Position = ofsMWMO;
                 MWMO = new MWMO();
                 header.Read(br);
-                MWMO.Read(header, br);
+                MWMO.Read(br, header.Size);
             }
 
             if (ofsMWID > 0)
@@ -114,7 +115,7 @@ namespace WoWMap.Chunks
                 br.BaseStream.Position = ofsMWID;
                 MWID = new MWID();
                 header.Read(br);
-                MWID.Read(header, br);
+                MWID.Read(br, header.Size);
             }
 
             if (ofsMDDF > 0)
@@ -122,7 +123,7 @@ namespace WoWMap.Chunks
                 br.BaseStream.Position = ofsMDDF;
                 MDDF = new MDDF();
                 header.Read(br);
-                MDDF.Read(header, br);
+                MDDF.Read(br, header.Size);
             }
 
             if (ofsMODF > 0)
@@ -130,7 +131,7 @@ namespace WoWMap.Chunks
                 br.BaseStream.Position = ofsMODF;
                 MODF = new MODF();
                 header.Read(br);
-                MODF.Read(header, br);
+                MODF.Read(br, header.Size);
             }
 
             if (ofsMFBO > 0)
@@ -138,7 +139,7 @@ namespace WoWMap.Chunks
                 br.BaseStream.Position = ofsMFBO;
                 MFBO = new MFBO();
                 header.Read(br);
-                MFBO.Read(header, br);
+                MFBO.Read(br);
             }
 
             if (ofsMH2O > 0)
@@ -146,7 +147,7 @@ namespace WoWMap.Chunks
                 br.BaseStream.Position = ofsMH2O;
                 MH2O = new MH2O();
                 header.Read(br);
-                MH2O.Read(header, br);
+                MH2O.Read(br);
             }
         }
     }

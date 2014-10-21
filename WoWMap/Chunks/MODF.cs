@@ -7,23 +7,23 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MODF : IChunk
+    public class MODF
     {
         public MODFEntry[] Entries;
 
-        public void Read(ChunkHeader header, BinaryReader br)
+        public void Read(BinaryReader br, uint size)
         {
-            Entries = new MODFEntry[header.Size / 22];
+            Entries = new MODFEntry[size / 22];
             for (int i = 0; i < Entries.Length; i++)
             {
                 var entry = new MODFEntry();
-                entry.Read(header, br);
+                entry.Read(br);
                 Entries[i] = entry;
             }
         }
 
         // Sizeof = 22
-        public class MODFEntry : IChunk
+        public class MODFEntry
         {
             public uint MWIDEntry;
             public uint UniqueId;
@@ -36,7 +36,7 @@ namespace WoWMap.Chunks
             public ushort NameSet;
             private ushort padding;
 
-            public void Read(ChunkHeader header, BinaryReader br)
+            public void Read(BinaryReader br)
             {
                 MWIDEntry = br.ReadUInt32();
                 UniqueId = br.ReadUInt32();

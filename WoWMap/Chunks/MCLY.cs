@@ -7,7 +7,7 @@ using System.IO;
 
 namespace WoWMap.Chunks
 {
-    public class MCLY : IChunk
+    public class MCLY
     {
         public uint TextureId;
         public uint Flags;
@@ -30,7 +30,7 @@ namespace WoWMap.Chunks
             SkyboxReflection = 0x400
         };
 
-        public void Read(ChunkHeader header, BinaryReader br)
+        public void Read(BinaryReader br)
         {
             TextureId = br.ReadUInt32();
             Flags = br.ReadUInt32();

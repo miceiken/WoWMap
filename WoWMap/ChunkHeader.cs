@@ -37,17 +37,13 @@ namespace WoWMap
         public ChunkHeader(char[] header, uint size)
         {
             Header = header;
-            Size = size;
+            Array.Reverse(Header);
+            Size = size;            
         }
 
         public ChunkHeader(BinaryReader br)
         {
             Read(br);
-        }
-
-        public void Flip()
-        {
-            Array.Reverse(Header);
         }
 
         public override string ToString()
@@ -58,6 +54,7 @@ namespace WoWMap
         public void Read(BinaryReader br)
         {
             Header = br.ReadChars(4);
+            Array.Reverse(Header);
             Size = br.ReadUInt32();
         }
     }
