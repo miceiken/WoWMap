@@ -13,19 +13,35 @@ namespace WoWMapParser
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Initializing CASC - this make take a while...");
-            CASC.Initialize(@"D:\Games\World of Warcraft\");
-            Console.WriteLine("CASC initialized");
-            ReadDBC();
-            //ReadADT();
+            Initialize();
+
+            //ReadDBC();
+            ReadADT();
             //ReadWDT();
 
             Console.ReadKey();
         }
 
+        static void Initialize()
+        {
+            Console.WriteLine("Initializing CASC - this make take a while...");
+
+            var sw = Stopwatch.StartNew();
+            CASC.Initialize(@"D:\Games\World of Warcraft\");
+            sw.Stop();
+
+            Console.WriteLine("CASC initialized in {0}ms", sw.ElapsedMilliseconds);
+        }
+
         static void ReadDBC()
         {
-            var dbc = new DBC<MapRecord>(@"DBFilesClient\Map.dbc");
+            const string path = @"DBFilesClient\Map.dbc";
+            var sw = Stopwatch.StartNew();
+            var dbc = new DBC<MapRecord>(path);
+            sw.Stop();
+
+            Console.WriteLine("Loaded {0} records from '{1}' in {2}ms", dbc.Rows.Count(), System.IO.Path.GetFileName(path), sw.ElapsedMilliseconds);
+
             foreach (var row in dbc.Rows)
             {
                 if (row == null) continue;
@@ -41,7 +57,7 @@ namespace WoWMapParser
             adt.Read();
             sw.Stop();
 
-            //Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", adt.Chunks.Count, System.IO.Path.GetFileName(path), sw.ElapsedMilliseconds);
+            Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", adt.Data.Chunks.Count, System.IO.Path.GetFileName(path), sw.ElapsedMilliseconds);
         }
 
         static void ReadWDT()
@@ -51,6 +67,8 @@ namespace WoWMapParser
             var sw = Stopwatch.StartNew();
             wdt.Read();
             sw.Stop();
+
+            Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", wdt.Data.Chunks.Count, System.IO.Path.GetFileName(path), sw.ElapsedMilliseconds);
         }
     }
 }

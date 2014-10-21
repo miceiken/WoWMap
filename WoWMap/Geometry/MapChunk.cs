@@ -109,7 +109,15 @@ namespace WoWMap.Geometry
                     var center = (byte)((17 * y) + 9 + x);
 
                     var triangleType = TriangleType.Terrain;
-                    // TODO: check for water
+                    if (ADT.Liquid != null && ADT.Liquid.HeightMaps != null)
+                    {
+                        var data = ADT.Liquid.HeightMaps[Index];
+                        var maxHeight = Math.Max(Math.Max(Math.Max(Math.Max(Vertices[topLeft].Z, Vertices[topRight].Z), Vertices[bottomLeft].Z), Vertices[bottomRight].Z), Vertices[center].Z);
+                        if (data != null && data.IsWater(x, y, maxHeight))
+                            triangleType = TriangleType.Water;
+                    }
+
+                    Console.WriteLine("MapChunk #{0} [{1}, {2}]: Triangle is {3}", Index, x, y, triangleType);
 
                     Triangles.Add(new Triangle<byte>(triangleType, topRight, topLeft, center));
                     Triangles.Add(new Triangle<byte>(triangleType, topLeft, bottomLeft, center));

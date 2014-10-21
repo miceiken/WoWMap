@@ -24,6 +24,7 @@ namespace WoWMap
 
         public ChunkData Data { get; private set; }
         public MapChunk[] MapChunks { get; private set; }
+        public Liquid Liquid { get; private set; }
         public MHDR Header { get; private set; }
 
         public void Read()
@@ -39,6 +40,8 @@ namespace WoWMap
                 int idx = 0;
                 foreach (var mapChunk in Data.Chunks.Where(c => c.Name == "MCNK"))
                     MapChunks[idx++] = new MapChunk(this, mapChunk);
+
+                Liquid = new Liquid(this, Data.GetChunkByName("MH2O"));
 
                 foreach (var mapChunk in MapChunks)
                     mapChunk.GenerateTriangles();

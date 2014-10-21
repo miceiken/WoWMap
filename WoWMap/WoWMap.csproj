@@ -49,6 +49,7 @@
     <Compile Include="Chunks\MCVT.cs" />
     <Compile Include="Chunks\MFBO.cs" />
     <Compile Include="Chunks\MPHD.cs" />
+    <Compile Include="Geometry\Liquid.cs" />
     <Compile Include="Geometry\MapChunk.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Chunk.cs" />
