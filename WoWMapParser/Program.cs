@@ -51,13 +51,14 @@ namespace WoWMapParser
 
         static void ReadADT()
         {
-            const string path = @"PVPZone01_30_29.adt";
-            var adt = new ADT(path);
+            var adt = new ADT("Azeroth", 36, 49);
             var sw = Stopwatch.StartNew();
             adt.Read();
             sw.Stop();
 
-            Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", adt.Data.Chunks.Count, System.IO.Path.GetFileName(path), sw.ElapsedMilliseconds);
+            adt.SaveObj("test.obj");
+
+            //Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", adt.Data.Chunks.Count, System.IO.Path.GetFileName(path), sw.ElapsedMilliseconds);
         }
 
         static void ReadWDT()

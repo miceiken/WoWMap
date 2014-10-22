@@ -81,12 +81,12 @@ namespace WoWMap.Geometry
 
                     var vertex = new Vector3()
                     {
-                        X = MCNK.Position[0] - (j * Global.UnitSize * 0.5f),
-                        Y = MCNK.Position[1] - (i * Global.UnitSize),
+                        X = MCNK.Position[0] - (j * Constants.UnitSize * 0.5f),
+                        Y = MCNK.Position[1] - (i * Constants.UnitSize),
                         Z = MCNK.Position[2] + MCVT.Height[idx]
                     };
 
-                    if (values == 0) vertex.Y -= Global.UnitSize * 0.5f;
+                    if (values == 0) vertex.Y -= Constants.UnitSize * 0.5f;
 
                     Vertices[idx++] = vertex;
                 }

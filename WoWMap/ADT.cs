@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
+using System.Globalization;
 
 namespace WoWMap
 {
@@ -13,14 +14,12 @@ namespace WoWMap
     {
         public ADT(string filename)
         {
-            Filename = filename;
+            Data = new ChunkData(filename);
         }
 
-        public string Filename
-        {
-            get;
-            private set;
-        }
+        public ADT(string world, int x, int y)
+            : this(string.Format(@"World\Maps\{0}\{0}_{1}_{2}.adt", world, x, y))
+        { }
 
         public ChunkData Data { get; private set; }
         public MapChunk[] MapChunks { get; private set; }
@@ -29,22 +28,38 @@ namespace WoWMap
 
         public void Read()
         {
-            using (var file = File.Open(Filename, FileMode.Open))
+            Header = new MHDR();
+            Header.Read(Data.GetChunkByName("MHDR").GetReader());
+
+            MapChunks = new MapChunk[16 * 16];
+            int idx = 0;
+            foreach (var mapChunk in Data.Chunks.Where(c => c.Name == "MCNK"))
+                MapChunks[idx++] = new MapChunk(this, mapChunk);
+
+            Liquid = new Liquid(this, Data.GetChunkByName("MH2O"));
+
+            foreach (var mapChunk in MapChunks)
+                mapChunk.GenerateTriangles();
+        }
+
+        public void SaveObj(string filename)
+        {
+            var vertices = new List<Vector3>();
+            var triangles = new List<Triangle<uint>>();
+            foreach (var mapChunk in MapChunks)
             {
-                Data = new ChunkData(file);
+                var vo = (uint)vertices.Count;
+                vertices.AddRange(mapChunk.Vertices);
+                foreach (var triangle in mapChunk.Triangles)
+                    triangles.Add(new Triangle<uint>(triangle.Type, triangle.V0 + vo, triangle.V1 + vo, triangle.V2 + vo));
+            }
 
-                Header = new MHDR();
-                Header.Read(Data.GetChunkByName("MHDR").GetReader());
-
-                MapChunks = new MapChunk[16 * 16];
-                int idx = 0;
-                foreach (var mapChunk in Data.Chunks.Where(c => c.Name == "MCNK"))
-                    MapChunks[idx++] = new MapChunk(this, mapChunk);
-
-                Liquid = new Liquid(this, Data.GetChunkByName("MH2O"));
-
-                foreach (var mapChunk in MapChunks)
-                    mapChunk.GenerateTriangles();
+            using (var sw = new StreamWriter(filename, false))
+            {
+                foreach (var v in vertices)
+                    sw.WriteLine("v " + v.X.ToString(CultureInfo.InvariantCulture) + " " + v.Z.ToString(CultureInfo.InvariantCulture) + " " + v.Y.ToString(CultureInfo.InvariantCulture));
+                foreach (var t in triangles)
+                    sw.WriteLine("f " + (t.V0+1) + " " + (t.V1+1) + " " + (t.V2+1));
             }
         }
     }

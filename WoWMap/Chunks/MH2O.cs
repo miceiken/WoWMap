@@ -11,13 +11,15 @@ namespace WoWMap.Chunks
     {
         public MH2OHeader[] Headers;
 
-        public void Read(BinaryReader br)
+        public void Read(Chunk chunk)
         {
+            var br = chunk.GetReader();
+
             Headers = new MH2OHeader[256];
             for (int i = 0; i < Headers.Length; i++)
             {
                 var entry = new MH2OHeader();
-                entry.Read(br);
+                entry.Read(br, chunk.Offset);
                 Headers[i] = entry;
             }
         }
@@ -28,29 +30,32 @@ namespace WoWMap.Chunks
             public uint LayerCount;
             public MH2ORenderMask Render;
 
-            public void Read(BinaryReader br)
+            public void Read(BinaryReader br, uint offset)
             {
                 var ofsInformation = br.ReadUInt32();
                 LayerCount = br.ReadUInt32();
                 var ofsRender = br.ReadUInt32();
 
                 var pos = br.BaseStream.Position;
-                if (ofsInformation > 0)
-                {
-                    br.BaseStream.Position = ofsInformation;
 
-                    var info = new MH2OInformation();
-                    info.Read(br, this);
-                    Information = info;
-                }
+
 
                 if (ofsRender > 0)
                 {
-                    br.BaseStream.Position = ofsRender;
+                    br.BaseStream.Position = offset + ofsRender;
 
                     var render = new MH2ORenderMask();
                     render.Read(br);
                     Render = render;
+                }
+
+                if (ofsInformation > 0)
+                {
+                    br.BaseStream.Position = offset + ofsInformation;
+
+                    var info = new MH2OInformation();
+                    info.Read(br, this, offset);
+                    Information = info;
                 }
                 br.BaseStream.Position = pos;
             }
@@ -69,7 +74,7 @@ namespace WoWMap.Chunks
             public MH2OHeightmapData Mask2;
             public MH2OHeightmapData HeightmapData;
 
-            public void Read(BinaryReader br, MH2OHeader header)
+            public void Read(BinaryReader br, MH2OHeader header, uint offset)
             {
                 LiquidTypeId = br.ReadUInt16();
                 LiquidObjectId = br.ReadUInt16();
@@ -79,14 +84,14 @@ namespace WoWMap.Chunks
                 YOffset = br.ReadByte();
                 Width = br.ReadByte();
                 Height = br.ReadByte();
-                var ofsMask2 = br.ReadUInt32();
+                var ofsMask2 = br.ReadInt32();
                 var ofsHeightmapData = br.ReadUInt32();
 
                 var pos = br.BaseStream.Position;
 
                 if (ofsHeightmapData > 0)
                 {
-                    br.BaseStream.Position = ofsHeightmapData;
+                    br.BaseStream.Position = offset + ofsHeightmapData;
 
                     var heightMap = new MH2OHeightmapData();
                     heightMap.Read(br);
@@ -95,7 +100,7 @@ namespace WoWMap.Chunks
 
                 if (ofsMask2 > 0)
                 {
-                    br.BaseStream.Position = ofsMask2;
+                    br.BaseStream.Position = offset + ofsMask2;
 
                     Mask2 = MH2OHeightmapData.GetAlternativeData(header, this);
                 }

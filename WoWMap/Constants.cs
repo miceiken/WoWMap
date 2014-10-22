@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WoWMap
 {
-    public static class Global
+    public static class Constants
     {
         public const float TileSize = (533f + (1f / 3f));
         public const float MaxXY = 32.0f * TileSize;

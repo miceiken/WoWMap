@@ -32,7 +32,8 @@ namespace WoWMap.Geometry
             Triangles = new List<Triangle<uint>>();
 
             MH2O = new MH2O();
-            MH2O.Read(Chunk.GetReader());
+            MH2O.Read(Chunk);
+            HeightMaps = new Chunks.MH2O.MH2OHeightmapData[256];
 
             int idx = 0;
             foreach (var header in MH2O.Headers)
@@ -60,15 +61,15 @@ namespace WoWMap.Geometry
 
                         var mapChunk = ADT.MapChunks[idx];
                         var location = mapChunk.MCNK.Position;
-                        location[1] = location[1] - (x * Global.UnitSize);
-                        location[0] = location[0] - (y * Global.UnitSize);
+                        location[1] = location[1] - (x * Constants.UnitSize);
+                        location[0] = location[0] - (y * Constants.UnitSize);
                         location[2] = heightMap.Heightmap[x, y];
 
                         var vertOffset = (uint)Vertices.Count;
                         Vertices.Add(new Vector3(location[0], location[1], location[2]));
-                        Vertices.Add(new Vector3(location[0] - Global.UnitSize, location[1], location[2]));
-                        Vertices.Add(new Vector3(location[0], location[1] - Global.UnitSize, location[2]));
-                        Vertices.Add(new Vector3(location[0] - Global.UnitSize, location[1] - Global.UnitSize, location[2]));
+                        Vertices.Add(new Vector3(location[0] - Constants.UnitSize, location[1], location[2]));
+                        Vertices.Add(new Vector3(location[0], location[1] - Constants.UnitSize, location[2]));
+                        Vertices.Add(new Vector3(location[0] - Constants.UnitSize, location[1] - Constants.UnitSize, location[2]));
 
                         Triangles.Add(new Triangle<uint>(TriangleType.Water, vertOffset, vertOffset + 2, vertOffset + 1));
                         Triangles.Add(new Triangle<uint>(TriangleType.Water, vertOffset + 2, vertOffset + 3, vertOffset + 1));

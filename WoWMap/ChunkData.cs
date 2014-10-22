@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using WoWMap.Archive;
 
 namespace WoWMap
 {
@@ -29,6 +30,10 @@ namespace WoWMap
                     stream.Seek(header.Size, SeekOrigin.Current);
             }
         }
+
+        public ChunkData(string filename)
+            : this(CASC.OpenFile(filename))
+        { }
 
         public Chunk GetChunkByName(string name)
         {

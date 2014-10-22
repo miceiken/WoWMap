@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
+using WoWMap.Archive;
 
 namespace WoWMap
 {
@@ -13,13 +14,7 @@ namespace WoWMap
     {
         public WDT(string filename)
         {
-            Filename = filename;
-        }
-
-        public string Filename
-        {
-            get;
-            private set;
+            Data = new ChunkData(filename);
         }
 
         public ChunkData Data { get; private set; }
@@ -30,7 +25,7 @@ namespace WoWMap
 
         public bool IsGlobalModel { get; private set; }
         public MWMO MWMO { get; private set; }
-        public MODF MODF { get; private set; }        
+        public MODF MODF { get; private set; }
         public string ModelFile { get; private set; }
 
         public bool HasTile(int x, int y)
@@ -40,37 +35,32 @@ namespace WoWMap
 
         public void Read()
         {
-            using (var file = File.Open(Filename, FileMode.Open))
-            {
-                Data = new ChunkData(file);
+            // Tile Table
+            var chunk = Data.GetChunkByName("MAIN");
+            if (chunk == null) return;
 
-                // Tile Table
-                var chunk = Data.GetChunkByName("MAIN");
-                if (chunk == null) return;
+            IsValid = true;
 
-                IsValid = true;
+            MAIN = new MAIN();
+            MAIN.Read(chunk.GetReader());
 
-                MAIN = new MAIN();
-                MAIN.Read(chunk.GetReader());
+            TileTable = new bool[64, 64];
+            for (int y = 0; y < 64; y++)
+                for (int x = 0; x < 64; x++)
+                    TileTable[x, y] = MAIN.Entries[x, y].Flags.HasFlag(MAIN.MAINFlags.HasADT);
 
-                TileTable = new bool[64, 64];
-                for (int y = 0; y < 64; y++)
-                    for (int x = 0; x < 64; x++)
-                        TileTable[x, y] = MAIN.Entries[x, y].Flags.HasFlag(MAIN.MAINFlags.HasADT);
+            // Global Model
+            var fileChunk = Data.GetChunkByName("MWMO");
+            var defChunk = Data.GetChunkByName("MODF");
+            if (fileChunk == null || defChunk == null) return;
 
-                // Global Model
-                var fileChunk = Data.GetChunkByName("MWMO");
-                var defChunk = Data.GetChunkByName("MODF");
-                if (fileChunk == null || defChunk == null) return;
+            IsGlobalModel = true;
 
-                IsGlobalModel = true;
+            MODF = new MODF();
+            MODF.Read(defChunk.GetReader());
 
-                MODF = new MODF();
-                MODF.Read(defChunk.GetReader());
-
-                MWMO = new MWMO();
-                MWMO.Read(fileChunk.GetReader(), fileChunk.Size);
-            }
+            MWMO = new MWMO();
+            MWMO.Read(fileChunk.GetReader(), fileChunk.Size);
         }
     }
 }
