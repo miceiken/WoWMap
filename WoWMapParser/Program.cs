@@ -19,6 +19,7 @@ namespace WoWMapParser
             ReadADT();
             //ReadWDT();
 
+            Console.WriteLine("Done.");
             Console.ReadKey();
         }
 

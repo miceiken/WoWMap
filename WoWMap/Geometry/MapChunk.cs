@@ -72,18 +72,21 @@ namespace WoWMap.Geometry
         private void GenerateVertices()
         {
             Vertices = new Vector3[145];
+            var stream = Chunk.GetStream();
+            stream.Seek(MCNK.ofsMCVT, SeekOrigin.Current);
+            var br = Chunk.GetReader();
+
             int idx = 0;
             for (int j = 0; j < 17; j++)
             {
                 int values = (j % 2) != 0 ? 8 : 9;
                 for (int i = 0; i < values; i++)
                 {
-
                     var vertex = new Vector3()
                     {
                         X = MCNK.Position[0] - (j * Constants.UnitSize * 0.5f),
                         Y = MCNK.Position[1] - (i * Constants.UnitSize),
-                        Z = MCNK.Position[2] + MCVT.Height[(i * values) + j]
+                        Z = MCNK.Position[2] + br.ReadSingle()
                     };
 
                     if (values == 0) vertex.Y -= Constants.UnitSize * 0.5f;
@@ -116,8 +119,6 @@ namespace WoWMap.Geometry
                         if (data != null && data.IsWater(x, y, maxHeight))
                             triangleType = TriangleType.Water;
                     }
-
-                    System.Diagnostics.Debug.WriteLine("MapChunk #{0} [{1}, {2}]: Triangle is {3}", Index, x, y, triangleType);
 
                     Triangles.Add(new Triangle<byte>(triangleType, topRight, topLeft, center));
                     Triangles.Add(new Triangle<byte>(triangleType, topLeft, bottomLeft, center));

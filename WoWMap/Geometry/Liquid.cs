@@ -48,15 +48,16 @@ namespace WoWMap.Geometry
                 var information = new MH2O.MH2OInformation();
                 information.Read(Chunk.GetReader());
 
-
-                Debug.WriteLine("--- MH2O #{0}", i);
                 MH2O.MH2OHeightmapData heightMap;
                 if (information.LiquidTypeId != 2)
                 {
+                    stream.Seek(Chunk.Offset + information.ofsHeightmapData, SeekOrigin.Begin);
+                    heightMap = new MH2O.MH2OHeightmapData();
+                    heightMap.Read(Chunk.GetReader());
+
                     stream.Seek(Chunk.Offset + header.ofsRender, SeekOrigin.Begin);
                     var renderMask = new MH2O.MH2ORenderMask();
                     renderMask.Read(Chunk.GetReader());
-                    Debug.WriteLine("RenderMask: {0}", string.Join(" ", renderMask.Mask));
 
                     if ((renderMask.Mask.All(b => b == 0) || (information.Width == 8 && information.Height == 8)) && information.ofsMask2 != 0)
                     {
@@ -67,18 +68,10 @@ namespace WoWMap.Geometry
                         for (int mi = 0; mi < altMask.Length; mi++)
                             renderMask.Mask[mi + information.YOffset] |= altMask[mi];
                     }
-                    Debug.WriteLine("RenderMask: {0}", string.Join(" ", renderMask.Mask));
-
-                    stream.Seek(Chunk.Offset + information.ofsHeightmapData, SeekOrigin.Begin);
-                    heightMap = new MH2O.MH2OHeightmapData();
-                    heightMap.Read(Chunk.GetReader());
+                    heightMap.Transparency = renderMask;         
                 }
                 else // Ocean
                     heightMap = GetOceanHeightMap(information.MinHeightLevel);
-
-                Debug.WriteLine("RenderMask: {0}", string.Join(" ", heightMap.Transparency.Mask));
-                Debug.WriteLine("Heights: {0}", string.Join(" ", heightMap.Heightmap));
-                Debug.WriteLine("---");
 
                 HeightMaps[i] = heightMap;
 
@@ -102,7 +95,6 @@ namespace WoWMap.Geometry
 
                         Triangles.Add(new Triangle<uint>(TriangleType.Water, vertOffset, vertOffset + 2, vertOffset + 1));
                         Triangles.Add(new Triangle<uint>(TriangleType.Water, vertOffset + 2, vertOffset + 3, vertOffset + 1));
-
                     }
                 }
             }

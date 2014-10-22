@@ -49,9 +49,10 @@ namespace WoWMap
             foreach (var mapChunk in MapChunks)
             {
                 var vo = (uint)vertices.Count;
-                vertices.AddRange(mapChunk.Vertices);
-                foreach (var triangle in mapChunk.Triangles)
-                    triangles.Add(new Triangle<uint>(triangle.Type, triangle.V0 + vo, triangle.V1 + vo, triangle.V2 + vo));
+                foreach (var v in mapChunk.Vertices)
+                    vertices.Add(v);
+                foreach (var t in mapChunk.Triangles)
+                    triangles.Add(new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo));
             }
 
             using (var sw = new StreamWriter(filename, false))
