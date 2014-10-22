@@ -49,9 +49,10 @@ namespace WoWMap
             return Stream;
         }
 
+        private BinaryReader _reader;
         public BinaryReader GetReader()
         {
-            return new BinaryReader(GetStream());
+            return _reader ?? (_reader = new BinaryReader(GetStream()));
         }
         
     }

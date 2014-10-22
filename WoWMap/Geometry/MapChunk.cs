@@ -23,7 +23,7 @@ namespace WoWMap.Geometry
             var stream = chunk.GetStream();
             stream.Seek(MCNK.ofsMCVT, SeekOrigin.Current);
             MCVT = new MCVT();
-            MCVT.Read(new BinaryReader(stream));
+            MCVT.Read(chunk.GetReader());
 
             GenerateVertices();
         }
@@ -83,7 +83,7 @@ namespace WoWMap.Geometry
                     {
                         X = MCNK.Position[0] - (j * Constants.UnitSize * 0.5f),
                         Y = MCNK.Position[1] - (i * Constants.UnitSize),
-                        Z = MCNK.Position[2] + MCVT.Height[idx]
+                        Z = MCNK.Position[2] + MCVT.Height[(i * values) + j]
                     };
 
                     if (values == 0) vertex.Y -= Constants.UnitSize * 0.5f;
@@ -117,7 +117,7 @@ namespace WoWMap.Geometry
                             triangleType = TriangleType.Water;
                     }
 
-                    Console.WriteLine("MapChunk #{0} [{1}, {2}]: Triangle is {3}", Index, x, y, triangleType);
+                    System.Diagnostics.Debug.WriteLine("MapChunk #{0} [{1}, {2}]: Triangle is {3}", Index, x, y, triangleType);
 
                     Triangles.Add(new Triangle<byte>(triangleType, topRight, topLeft, center));
                     Triangles.Add(new Triangle<byte>(triangleType, topLeft, bottomLeft, center));
