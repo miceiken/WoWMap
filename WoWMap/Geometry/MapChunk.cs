@@ -14,14 +14,14 @@ namespace WoWMap.Geometry
         {
             ADT = adt;
             Chunk = chunk;
+            var stream = chunk.GetStream();
             MCNK = new MCNK();
             MCNK.Read(chunk.GetReader());
 
             Holes = MCNK.Flags.HasFlag(MCNK.MCNKFlags.HighResolutionHoles) ?
                 HighResHoles : TransformToHighRes(MCNK.Holes);
-
-            var stream = chunk.GetStream();
-            stream.Seek(MCNK.ofsMCVT, SeekOrigin.Current);
+            
+            stream.Seek(MCNK.ofsMCVT, SeekOrigin.Begin);
             MCVT = new MCVT();
             MCVT.Read(chunk.GetReader());
 

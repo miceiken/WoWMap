@@ -69,7 +69,7 @@ namespace WoWMap.Chunks
             public const float MaxStandableHeight = 1.5f;
 
             public float[,] Heightmap;
-            public MH2ORenderMask Transparency;
+            public MH2ORenderMask RenderMask;
 
             public void Read(BinaryReader br)
             {
@@ -77,17 +77,13 @@ namespace WoWMap.Chunks
                 for (int y = 0; y < 9; y++)
                     for (int x = 0; x < 9; x++)
                         Heightmap[x, y] = br.ReadSingle();
-
-                var transparency = new MH2ORenderMask();
-                transparency.Read(br);
-                Transparency = transparency;
             }
 
             public bool IsWater(int x, int y, float height)
             {
-                if (Heightmap == null || Transparency == null)
+                if (Heightmap == null || RenderMask == null)
                     return false;
-                if (!Transparency.ShouldRender(x, y))
+                if (!RenderMask.ShouldRender(x, y))
                     return false;
                 var diff = Heightmap[x, y] - height;
                 if (diff > MaxStandableHeight)

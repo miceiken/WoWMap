@@ -23,7 +23,7 @@ namespace WoWMap
 
         public ChunkData Data { get; private set; }
         public MapChunk[] MapChunks { get; private set; }
-        public Liquid Liquid { get; private set; }
+        public ChunkLiquid Liquid { get; private set; }
         public MHDR Header { get; private set; }
 
         public void Read()
@@ -36,7 +36,7 @@ namespace WoWMap
             foreach (var mapChunk in Data.Chunks.Where(c => c.Name == "MCNK"))
                 MapChunks[idx++] = new MapChunk(this, mapChunk);
 
-            Liquid = new Liquid(this, Data.GetChunkByName("MH2O"));
+            Liquid = new ChunkLiquid(this, Data.GetChunkByName("MH2O"));
 
             foreach (var mapChunk in MapChunks)
                 mapChunk.GenerateTriangles();
@@ -46,21 +46,22 @@ namespace WoWMap
         {
             var vertices = new List<Vector3>();
             var triangles = new List<Triangle<uint>>();
+
             foreach (var mapChunk in MapChunks)
             {
                 var vo = (uint)vertices.Count;
-                foreach (var v in mapChunk.Vertices)
-                    vertices.Add(v);
-                foreach (var t in mapChunk.Triangles)
-                    triangles.Add(new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo));
+                vertices.AddRange(mapChunk.Vertices);
+                triangles.AddRange(mapChunk.Triangles.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
             }
 
             using (var sw = new StreamWriter(filename, false))
             {
+                sw.WriteLine("o " + filename);
+                var nf = CultureInfo.InvariantCulture.NumberFormat;
                 foreach (var v in vertices)
-                    sw.WriteLine("v " + v.X.ToString(CultureInfo.InvariantCulture) + " " + v.Z.ToString(CultureInfo.InvariantCulture) + " " + v.Y.ToString(CultureInfo.InvariantCulture));
+                    sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Y.ToString(nf) + " " + v.Z.ToString(nf));
                 foreach (var t in triangles)
-                    sw.WriteLine("f " + (t.V0+1) + " " + (t.V1+1) + " " + (t.V2+1));
+                    sw.WriteLine("f " + (t.V0 + 1) + " " + (t.V1 + 1) + " " + (t.V2 + 1));
             }
         }
     }
