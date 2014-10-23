@@ -50,6 +50,7 @@ namespace WoWMap
             foreach (var mapChunk in MapChunks)
             {
                 var vo = (uint)vertices.Count;
+                //vertices.AddRange(mapChunk.Vertices.Select(v => v.ToRecast()));
                 vertices.AddRange(mapChunk.Vertices);
                 triangles.AddRange(mapChunk.Triangles.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
             }

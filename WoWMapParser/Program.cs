@@ -23,7 +23,7 @@ namespace WoWMapParser
             //ReadWDT();
 
             Console.WriteLine("Done.");
-            Console.ReadKey();
+            //Console.ReadKey();
         }
 
         static void Initialize()
@@ -59,14 +59,14 @@ namespace WoWMapParser
 
         static void ReadADT()
         {
-            var adt = new ADT("Kalimdor", 29, 13);
+            var adt = new ADT("Kalimdor", 36, 17);
             var sw = Stopwatch.StartNew();
             adt.Read();
             sw.Stop();
 
             adt.SaveObj("test.obj");
 
-            //Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", adt.Data.Chunks.Count, System.IO.Path.GetFileName(path), sw.ElapsedMilliseconds);
+            Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", adt.Data.Chunks.Count, "err", sw.ElapsedMilliseconds);
         }
 
         static void ReadWDT()

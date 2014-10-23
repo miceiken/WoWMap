@@ -130,6 +130,16 @@ namespace WoWMap.Geometry
             return (x) * (vector.X) + (y) * (vector.Y) + (z) * (vector.Z);
         }
 
+        public Vector3 ToRecast()
+        {
+            return new Vector3(-x, -y, z);
+        }
+
+        public Vector3 ToWoW()
+        {
+            return new Vector3(-z, -x, y);
+        }
+
         public override int GetHashCode()
         {
             return x.GetHashCode() ^ y.GetHashCode() ^ z.GetHashCode();
