@@ -75,15 +75,15 @@ namespace WoWMap.Geometry
 
                         var mapChunk = ADT.MapChunks[i];
                         var location = mapChunk.MCNK.Position;
-                        location[1] = location[1] - (x * Constants.UnitSize);
-                        location[0] = location[0] - (y * Constants.UnitSize);
-                        location[2] = heightMap.Heightmap[x, y];
+                        location.Y = location.Y - (x * Constants.UnitSize);
+                        location.X = location.X - (y * Constants.UnitSize);
+                        location.Z = heightMap.Heightmap[x, y];
 
                         var vertOffset = (uint)Vertices.Count;
-                        Vertices.Add(new Vector3(location[0], location[1], location[2]));
-                        Vertices.Add(new Vector3(location[0] - Constants.UnitSize, location[1], location[2]));
-                        Vertices.Add(new Vector3(location[0], location[1] - Constants.UnitSize, location[2]));
-                        Vertices.Add(new Vector3(location[0] - Constants.UnitSize, location[1] - Constants.UnitSize, location[2]));
+                        Vertices.Add(location);
+                        Vertices.Add(new Vector3(location.X - Constants.UnitSize, location.Y, location.Z));
+                        Vertices.Add(new Vector3(location.X, location.Y - Constants.UnitSize, location.Z));
+                        Vertices.Add(new Vector3(location.X - Constants.UnitSize, location.Y - Constants.UnitSize, location.Z));
 
                         Triangles.Add(new Triangle<uint>(TriangleType.Water, vertOffset, vertOffset + 2, vertOffset + 1));
                         Triangles.Add(new Triangle<uint>(TriangleType.Water, vertOffset + 2, vertOffset + 3, vertOffset + 1));

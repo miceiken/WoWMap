@@ -21,9 +21,9 @@ namespace WoWMap.Geometry
             Holes = MCNK.Flags.HasFlag(MCNK.MCNKFlags.HighResolutionHoles) ?
                 HighResHoles : TransformToHighRes(MCNK.Holes);
             
-            stream.Seek(MCNK.ofsMCVT, SeekOrigin.Begin);
-            MCVT = new MCVT();
-            MCVT.Read(chunk.GetReader());
+            //stream.Seek(chunk.FindSubChunkOffset("MCVT"), SeekOrigin.Begin);
+            //MCVT = new MCVT();
+            //MCVT.Read(chunk.GetReader());
 
             GenerateVertices();
         }
@@ -73,7 +73,7 @@ namespace WoWMap.Geometry
         {
             Vertices = new Vector3[145];
             var stream = Chunk.GetStream();
-            stream.Seek(MCNK.ofsMCVT, SeekOrigin.Current);
+            stream.Seek(Chunk.FindSubChunkOffset("MCVT"), SeekOrigin.Begin);
             var br = Chunk.GetReader();
 
             int idx = 0;
@@ -84,9 +84,9 @@ namespace WoWMap.Geometry
                 {
                     var vertex = new Vector3()
                     {
-                        X = MCNK.Position[0] - (j * Constants.UnitSize * 0.5f),
-                        Y = MCNK.Position[1] - (i * Constants.UnitSize),
-                        Z = MCNK.Position[2] + br.ReadSingle()
+                        X = MCNK.Position.X - (j * Constants.UnitSize * 0.5f),
+                        Y = MCNK.Position.Y - (i * Constants.UnitSize),
+                        Z = MCNK.Position.Z + br.ReadSingle()
                     };
 
                     if (values == 0) vertex.Y -= Constants.UnitSize * 0.5f;
@@ -103,7 +103,7 @@ namespace WoWMap.Geometry
             {
                 for (int x = 0; x < 8; x++)
                 {
-                    if (HasHole(x / 2, y / 2)) continue;
+                    if (HasHole(x, y)) continue;
 
                     var topLeft = (byte)((17 * y) + x);
                     var topRight = (byte)((17 * y) + x + 1);

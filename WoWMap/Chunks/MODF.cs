@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using WoWMap.Geometry;
 
 namespace WoWMap.Chunks
 {
@@ -11,10 +12,10 @@ namespace WoWMap.Chunks
     {
         public uint MWIDEntry;
         public uint UniqueId;
-        public float[] Position;
-        public float[] Rotation;
-        public float[] LowerBounds;
-        public float[] UpperBounds;
+        public Vector3 Position;
+        public Vector3 Rotation;
+        public Vector3 LowerBounds;
+        public Vector3 UpperBounds;
         public ushort Flags; // MODFFlags
         public ushort DoodadSet;
         public ushort NameSet;
@@ -24,18 +25,10 @@ namespace WoWMap.Chunks
         {
             MWIDEntry = br.ReadUInt32();
             UniqueId = br.ReadUInt32();
-            Position = new float[3];
-            for (int i = 0; i < 3; i++)
-                Position[i] = br.ReadSingle();
-            Rotation = new float[3];
-            for (int i = 0; i < 3; i++)
-                Rotation[i] = br.ReadSingle();
-            LowerBounds = new float[3];
-            for (int i = 0; i < 3; i++)
-                LowerBounds[i] = br.ReadSingle();
-            UpperBounds = new float[3];
-            for (int i = 0; i < 3; i++)
-                UpperBounds[i] = br.ReadSingle();
+            Position = new Vector3(br);
+            Rotation = new Vector3(br);
+            LowerBounds = new Vector3(br);
+            UpperBounds = new Vector3(br);
             Flags = br.ReadUInt16();
             DoodadSet = br.ReadUInt16();
             NameSet = br.ReadUInt16();

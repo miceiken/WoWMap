@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using WoWMap.Geometry;
 
 namespace WoWMap.Chunks
 {
@@ -28,12 +29,12 @@ namespace WoWMap.Chunks
         public ushort HolesAlign;
         public uint[,] ReallyLowQualityTextureingMap;
         public uint predTex;
-        public uint noEffectDoodad;
+        public uint nEffectDoodad;
         public uint ofsSoundEmitters;
-        public uint numSoundEmitters;
+        public uint nSoundEmitters;
         public uint ofsLiquid;
         public uint sizeLiquid;
-        public float[] Position;
+        public Vector3 Position;
         public uint ofsMCCV;
         public uint ofsMCLV;
         private uint unused;
@@ -73,14 +74,12 @@ namespace WoWMap.Chunks
                 for (int j = 0; j < 8; j++)
                     ReallyLowQualityTextureingMap[i, j] = br.ReadUInt32();
             predTex = br.ReadUInt32();
-            noEffectDoodad = br.ReadUInt32();
+            nEffectDoodad = br.ReadUInt32();
             ofsSoundEmitters = br.ReadUInt32();
-            numSoundEmitters = br.ReadUInt32();
+            nSoundEmitters = br.ReadUInt32();
             ofsLiquid = br.ReadUInt32();
             sizeLiquid = br.ReadUInt32();
-            Position = new float[3];
-            for (int i = 0; i < 3; i++)
-                Position[i] = br.ReadSingle();
+            Position = new Vector3(br);
             ofsMCCV = br.ReadUInt32();
             ofsMCLV = br.ReadUInt32();
             unused = br.ReadUInt32();

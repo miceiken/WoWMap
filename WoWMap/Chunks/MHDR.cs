@@ -29,17 +29,6 @@ namespace WoWMap.Chunks
             Northrend = 2 // Is set for some Northrend ones
         };
 
-        public MCIN MCIN { get; private set; }
-        public MTEX MTEX { get; private set; }
-        public MMDX MMDX { get; private set; }
-        public MMID MMID { get; private set; }
-        public MWMO MWMO { get; private set; }
-        public MWID MWID { get; private set; }
-        public MDDF MDDF { get; private set; }
-        public MODF MODF { get; private set; }
-        public MFBO MFBO { get; private set; }
-        public MH2O MH2O { get; private set; }
-
         public void Read(BinaryReader br)
         {
             Flags = (MHDRFlags)br.ReadUInt32();
