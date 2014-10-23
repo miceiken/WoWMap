@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define REDIRECT_OUTPUT
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,6 +8,7 @@ using System.Threading.Tasks;
 using WoWMap;
 using WoWMap.Archive;
 using System.Diagnostics;
+using System.IO;
 
 namespace WoWMapParser
 {
@@ -25,7 +28,11 @@ namespace WoWMapParser
 
         static void Initialize()
         {
-            Console.WriteLine("Initializing CASC - this make take a while...");
+#if REDIRECT_OUTPUT
+            Console.SetOut(new StreamWriter("log.txt", false) { AutoFlush = true });
+#endif
+
+            Console.WriteLine("Initializing CASC - this may take a while...");
 
             var sw = Stopwatch.StartNew();
             CASC.Initialize(@"D:\Games\World of Warcraft\");

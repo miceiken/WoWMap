@@ -20,10 +20,10 @@ namespace WoWMap.Geometry
 
             Holes = MCNK.Flags.HasFlag(MCNK.MCNKFlags.HighResolutionHoles) ?
                 HighResHoles : TransformToHighRes(MCNK.Holes);
-            
-            //stream.Seek(chunk.FindSubChunkOffset("MCVT"), SeekOrigin.Begin);
-            //MCVT = new MCVT();
-            //MCVT.Read(chunk.GetReader());
+
+            stream.Seek(chunk.FindSubChunkOffset("MCVT") + 8, SeekOrigin.Begin);
+            MCVT = new MCVT();
+            MCVT.Read(chunk.GetReader());
 
             GenerateVertices();
         }
@@ -71,9 +71,12 @@ namespace WoWMap.Geometry
 
         private void GenerateVertices()
         {
+            Console.WriteLine();
+            Console.WriteLine("--------- MapChunk idx {0} ----------", Index);
             Vertices = new Vector3[145];
+
             var stream = Chunk.GetStream();
-            stream.Seek(Chunk.FindSubChunkOffset("MCVT"), SeekOrigin.Begin);
+            stream.Seek(Chunk.FindSubChunkOffset("MCVT") + 8, SeekOrigin.Begin); // +8 to skip name+size
             var br = Chunk.GetReader();
 
             int idx = 0;
@@ -82,14 +85,19 @@ namespace WoWMap.Geometry
                 int values = (j % 2) != 0 ? 8 : 9;
                 for (int i = 0; i < values; i++)
                 {
+                    Console.WriteLine("------------ '{0}' '{1}' '{2}' -------------", j, values, i);
+                    Console.WriteLine("HeightMap[{0}] = {1}", idx, MCVT.Height[idx]);
+                    Console.WriteLine("MCNK Pos: {0}", MCNK.Position);
                     var vertex = new Vector3()
                     {
                         X = MCNK.Position.X - (j * Constants.UnitSize * 0.5f),
                         Y = MCNK.Position.Y - (i * Constants.UnitSize),
-                        Z = MCNK.Position.Z + br.ReadSingle()
+                        Z = MCNK.Position.Z + MCVT.Height[idx]
                     };
 
-                    if (values == 0) vertex.Y -= Constants.UnitSize * 0.5f;
+                    if (values == 8) vertex.Y -= Constants.UnitSize * 0.5f;
+
+                    Console.WriteLine("Vertice: {0}", vertex);
 
                     Vertices[idx++] = vertex;
                 }

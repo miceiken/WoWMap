@@ -67,28 +67,28 @@ namespace WoWMap.Geometry
 
                 HeightMaps[i] = heightMap;
 
-                for (int y = information.YOffset; y < (information.YOffset + information.Height); y++)
-                {
-                    for (int x = information.XOffset; x < (information.XOffset + information.Width); x++)
-                    {
-                        if (!heightMap.RenderMask.ShouldRender(x, y)) continue;
+                //for (int y = information.YOffset; y < (information.YOffset + information.Height); y++)
+                //{
+                //    for (int x = information.XOffset; x < (information.XOffset + information.Width); x++)
+                //    {
+                //        if (!heightMap.RenderMask.ShouldRender(x, y)) continue;
 
-                        var mapChunk = ADT.MapChunks[i];
-                        var location = mapChunk.MCNK.Position;
-                        location.Y = location.Y - (x * Constants.UnitSize);
-                        location.X = location.X - (y * Constants.UnitSize);
-                        location.Z = heightMap.Heightmap[x, y];
+                //        var mapChunk = ADT.MapChunks[i];
+                //        var location = mapChunk.MCNK.Position;
+                //        location.Y = location.Y - (x * Constants.UnitSize);
+                //        location.X = location.X - (y * Constants.UnitSize);
+                //        location.Z = heightMap.Heightmap[x, y];
 
-                        var vertOffset = (uint)Vertices.Count;
-                        Vertices.Add(location);
-                        Vertices.Add(new Vector3(location.X - Constants.UnitSize, location.Y, location.Z));
-                        Vertices.Add(new Vector3(location.X, location.Y - Constants.UnitSize, location.Z));
-                        Vertices.Add(new Vector3(location.X - Constants.UnitSize, location.Y - Constants.UnitSize, location.Z));
+                //        var vertOffset = (uint)Vertices.Count;
+                //        Vertices.Add(location);
+                //        Vertices.Add(new Vector3(location.X - Constants.UnitSize, location.Y, location.Z));
+                //        Vertices.Add(new Vector3(location.X, location.Y - Constants.UnitSize, location.Z));
+                //        Vertices.Add(new Vector3(location.X - Constants.UnitSize, location.Y - Constants.UnitSize, location.Z));
 
-                        Triangles.Add(new Triangle<uint>(TriangleType.Water, vertOffset, vertOffset + 2, vertOffset + 1));
-                        Triangles.Add(new Triangle<uint>(TriangleType.Water, vertOffset + 2, vertOffset + 3, vertOffset + 1));
-                    }
-                }
+                //        Triangles.Add(new Triangle<uint>(TriangleType.Water, vertOffset, vertOffset + 2, vertOffset + 1));
+                //        Triangles.Add(new Triangle<uint>(TriangleType.Water, vertOffset + 2, vertOffset + 3, vertOffset + 1));
+                //    }
+                //}
             }
         }
 
