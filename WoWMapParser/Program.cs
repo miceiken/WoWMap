@@ -59,12 +59,12 @@ namespace WoWMapParser
 
         static void ReadADT()
         {
-            var adt = new ADT("Azeroth", 33, 32);
+            var adt = new ADT("Kalimdor", 40, 28);
             var sw = Stopwatch.StartNew();
             adt.Read();
             sw.Stop();
 
-            adt.SaveObj("Azeroth_33_32.obj");
+            adt.SaveObj();
 
             Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", adt.Data.Chunks.Count, "err", sw.ElapsedMilliseconds);
         }

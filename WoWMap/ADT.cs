@@ -50,8 +50,10 @@ namespace WoWMap
                 mapChunk.GenerateTriangles();
         }
 
-        public void SaveObj(string filename)
+        public void SaveObj(string filename = null)
         {
+            if (filename == null)
+                filename = string.Format("{0}_{1}_{2}.obj", World, X, Y);
             var vertices = new List<Vector3>();
             var triangles = new List<Triangle<uint>>();
 
@@ -59,7 +61,7 @@ namespace WoWMap
             {
                 var vo = (uint)vertices.Count;
                 vertices.AddRange(mapChunk.Vertices);
-                triangles.AddRange(mapChunk.Triangles);
+                triangles.AddRange(mapChunk.Triangles.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
             }
 
             using (var sw = new StreamWriter(filename, false))
