@@ -78,7 +78,8 @@ namespace WoWMap.Geometry
             stream.Seek(Chunk.FindSubChunkOffset("MCVT") + 8, SeekOrigin.Begin); // +8 to skip name+size
             var br = Chunk.GetReader();
 
-            // This one is correct
+            var relPos = new Vector3(Constants.MaxXY - MCNK.Position.Y, MCNK.Position.Z, Constants.MaxXY + MCNK.Position.X);
+
             int idx = 0;
             for (int i = 0; i < 9; i++)
             {
@@ -86,9 +87,9 @@ namespace WoWMap.Geometry
                 {
                     var vertex = new Vector3()
                     {
-                        X = MCNK.Position.X - (i * Constants.UnitSize),
-                        Y = MCNK.Position.Y - (j * Constants.UnitSize),
-                        Z = MCNK.Position.Z + br.ReadSingle()
+                        X = relPos.X + (i * Constants.UnitSize),
+                        Y = br.ReadSingle() + relPos.Y,
+                        Z = relPos.Z - (j * Constants.UnitSize),
                     };
                     Vertices[idx++] = vertex;
                 }
@@ -99,49 +100,14 @@ namespace WoWMap.Geometry
                     {
                         var vertex = new Vector3()
                         {
-                            X = MCNK.Position.X - (i * Constants.UnitSize) - (Constants.UnitSize / 2.0f),
-                            Y = MCNK.Position.Y - (j * Constants.UnitSize) - (Constants.UnitSize / 2.0f),
-                            Z = MCNK.Position.Z + br.ReadSingle()
+                            X = relPos.X + (i * Constants.UnitSize) + (Constants.UnitSize * 0.5f),
+                            Y = br.ReadSingle() + relPos.Y,
+                            Z = relPos.Z - (j * Constants.UnitSize) - (Constants.UnitSize * 0.5f),
                         };
                         Vertices[idx++] = vertex;
                     }
                 }
             }
-
-            // This one is for recast
-
-            //var cRow = Index / 16;
-            //var cCol = Index % 16;
-            //MCNK.Position = new Vector3(Constants.ChunkSize * cCol, MCNK.Position.Z, Constants.ChunkSize * cRow);
-
-            //int idx = 0;
-            //for (int i = 0; i < 9; i++)
-            //{
-            //    for (int j = 0; j < 9; j++)
-            //    {
-            //        var vertex = new Vector3()
-            //        {
-            //            X = MCNK.Position.X + (j * Constants.UnitSize),
-            //            Y = MCNK.Position.Y + br.ReadSingle(),
-            //            Z = MCNK.Position.Z + (i * Constants.UnitSize),
-            //        };
-            //        Vertices[idx++] = vertex;
-            //    }
-
-            //    if (i < 8)
-            //    {
-            //        for (int j = 0; j < 8; j++)
-            //        {
-            //            var vertex = new Vector3()
-            //            {
-            //                X = MCNK.Position.X + (j * Constants.UnitSize) + (Constants.UnitSize / 2.0f),
-            //                Y = MCNK.Position.Y + br.ReadSingle(),
-            //                Z = MCNK.Position.Z + (i * Constants.UnitSize) + (Constants.UnitSize / 2.0f),
-            //            };
-            //            Vertices[idx++] = vertex;
-            //        }
-            //    }
-            //}
         }
 
         public void GenerateTriangles()
@@ -175,6 +141,7 @@ namespace WoWMap.Geometry
             //    }
             //}
 
+            // TODO: Implement holes, and check for liquid - or keep a seperate liquid mesh
             for (uint j = 9; j < 8 * 8 + 9 * 8; ++j)
             {
                 Triangles.Add(new Triangle<uint>(TriangleType.Terrain, j, j - 9, j + 8));
