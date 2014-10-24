@@ -113,7 +113,7 @@ namespace WoWMap.Geometry
             //var cRow = Index / 16;
             //var cCol = Index % 16;
             //MCNK.Position = new Vector3(Constants.ChunkSize * cCol, MCNK.Position.Z, Constants.ChunkSize * cRow);
-            
+
             //int idx = 0;
             //for (int i = 0; i < 9; i++)
             //{

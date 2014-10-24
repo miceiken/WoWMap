@@ -51,7 +51,8 @@ namespace WoWMap
             foreach (var mapChunk in MapChunks)
             {
                 var vo = (uint)vertices.Count;
-                vertices.AddRange(Helpers.Transform(mapChunk.Vertices, idx++));
+                //vertices.AddRange(Helpers.Transform(mapChunk.Vertices, idx++));
+                vertices.AddRange(mapChunk.Vertices);
                 triangles.AddRange(mapChunk.Triangles.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
             }
 
