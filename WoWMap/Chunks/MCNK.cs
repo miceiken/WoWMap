@@ -10,34 +10,34 @@ namespace WoWMap.Chunks
 {
     public class MCNK
     {
-        public MCNKFlags Flags;
-        public uint IndexX;
-        public uint IndexY;
-        public uint nLayers;
-        public uint nDoodadRef;
-        public uint ofsMCVT;
-        public uint ofsMCNR;
-        public uint ofsMCLY;
-        public uint ofsMCRF;
-        public uint ofsMCAL;
-        public uint sizeMCAL;
-        public uint ofsMCSH;
-        public uint sizeMCSH;
-        public uint AreaId;
-        public uint nMapObjRefs;
-        public ushort Holes;
-        public ushort HolesAlign;
-        public uint[,] ReallyLowQualityTextureingMap;
-        public uint predTex;
-        public uint nEffectDoodad;
-        public uint ofsSoundEmitters;
-        public uint nSoundEmitters;
-        public uint ofsLiquid;
-        public uint sizeLiquid;
-        public Vector3 Position;
-        public uint ofsMCCV;
-        public uint ofsMCLV;
-        private uint unused;
+        public MCNKFlags Flags;                                     // 0x000
+        public uint IndexX;                                         // 0x004
+        public uint IndexY;                                         // 0x008
+        public uint nLayers;                                        // 0x00C
+        public uint nDoodadRef;                                     // 0x010
+        public uint ofsMCVT;                                        // 0x014
+        public uint ofsMCNR;                                        // 0x018
+        public uint ofsMCLY;                                        // 0x01C
+        public uint ofsMCRF;                                        // 0x020
+        public uint ofsMCAL;                                        // 0x024
+        public uint nMCAL;                                          // 0x028
+        public uint ofsMCSH;                                        // 0x02C
+        public uint nMCSH;                                          // 0x030
+        public uint AreaId;                                         // 0x034
+        public uint nMapObjRefs;                                    // 0x038
+        public ushort Holes;                                        // 0x03C
+        public ushort HolesAlign;                                   // 0x03E
+        public ushort[] ReallyLowQualityTextureingMap;              // 0x040 -- all hail Schlumpf, jk, who the hell even knows what a uint2 is
+        public uint predTex;                                        // 0x050
+        public uint nEffectDoodad;                                  // 0x054
+        public uint ofsMCSE;                                        // 0x058
+        public uint nSoundEmitters;                                 // 0x05C
+        public uint ofsMCLQ;                                        // 0x060
+        public uint nMCLQ;                                          // 0x064
+        public Vector3 Position;                                    // 0x068
+        public uint ofsMCCV;                                        // 0x074
+        public uint ofsMCLV;                                        // 0x078
+        private uint unused;                                        // 0x07C
 
         public static readonly int ChunkHeaderSize = 128;
 
@@ -64,23 +64,22 @@ namespace WoWMap.Chunks
             ofsMCLY = br.ReadUInt32();
             ofsMCRF = br.ReadUInt32();
             ofsMCAL = br.ReadUInt32();
-            sizeMCAL = br.ReadUInt32();
+            nMCAL = br.ReadUInt32();
             ofsMCSH = br.ReadUInt32();
-            sizeMCSH = br.ReadUInt32();
+            nMCSH = br.ReadUInt32();
             AreaId = br.ReadUInt32();
             nMapObjRefs = br.ReadUInt32();
             Holes = br.ReadUInt16();
             HolesAlign = br.ReadUInt16();
-            ReallyLowQualityTextureingMap = new uint[8, 8];
+            ReallyLowQualityTextureingMap = new ushort[8];
             for (int i = 0; i < 8; i++)
-                for (int j = 0; j < 8; j++)
-                    ReallyLowQualityTextureingMap[i, j] = br.ReadUInt32();
+                ReallyLowQualityTextureingMap[i] = br.ReadUInt16();
             predTex = br.ReadUInt32();
             nEffectDoodad = br.ReadUInt32();
-            ofsSoundEmitters = br.ReadUInt32();
+            ofsMCSE = br.ReadUInt32();
             nSoundEmitters = br.ReadUInt32();
-            ofsLiquid = br.ReadUInt32();
-            sizeLiquid = br.ReadUInt32();
+            ofsMCLQ = br.ReadUInt32();
+            nMCLQ = br.ReadUInt32();
             Position = new Vector3(br);
             ofsMCCV = br.ReadUInt32();
             ofsMCLV = br.ReadUInt32();

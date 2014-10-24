@@ -125,17 +125,18 @@ namespace WoWMap.Geometry
             //        Vertices[idx++] = vertex;
             //    }
 
-            //    if (i >= 8) continue;
-
-            //    for (int j = 0; j < 8; j++)
+            //    if (i < 8)
             //    {
-            //        var vertex = new Vector3()
+            //        for (int j = 0; j < 8; j++)
             //        {
-            //            X = relPos.X + (i * Constants.UnitSize) + (Constants.UnitSize * 0.5f),
-            //            Y = MCVT.Heights[idx] + relPos.Y,
-            //            Z = relPos.Z - (j * Constants.UnitSize) - (Constants.UnitSize * 0.5f),
-            //        };
-            //        Vertices[idx++] = vertex;
+            //            var vertex = new Vector3()
+            //            {
+            //                X = relPos.X + (i * Constants.UnitSize) + (Constants.UnitSize * 0.5f),
+            //                Y = MCVT.Heights[idx] + relPos.Y,
+            //                Z = relPos.Z - (j * Constants.UnitSize) - (Constants.UnitSize * 0.5f),
+            //            };
+            //            Vertices[idx++] = vertex;
+            //        }
             //    }
             //}
 
