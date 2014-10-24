@@ -23,39 +23,6 @@ namespace WoWMap
             Stream = stream;
         }
 
-        public int FindSubChunkOffset(string name)
-        {
-            var bytes = Encoding.ASCII.GetBytes(name).Reverse().ToArray();
-            if (bytes.Length != 4) return -1;
-
-            var stream = GetStream();
-            int matched = 0;
-            while (stream.Position < stream.Length)
-            {
-                var b = stream.ReadByte();
-                if (b == bytes[matched])
-                    matched++;
-                else
-                    matched = 0;
-                if (matched == 4)
-                    return (int)(stream.Position - 4);
-            }
-            return -1;
-        }
-
-        public Chunk FindSubChunk(string name)
-        {
-            var stream = GetStream();
-
-            var subChunkOffset = FindSubChunkOffset(name);
-            stream.Seek(subChunkOffset, SeekOrigin.Begin);
-            var br = GetReader();
-
-            var cHeader = new ChunkHeader(br);
-
-            return new Chunk(cHeader.Name, cHeader.Size, (uint)(subChunkOffset + 8), stream);
-        }
-
         public Stream GetStream()
         {
             Stream.Seek(Offset, SeekOrigin.Begin);

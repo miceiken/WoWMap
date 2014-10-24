@@ -9,18 +9,15 @@ namespace WoWMap.Chunks
 {
     public class MCVT
     {
-        public float[,] HeightMap;
+        public float[] Heights;
+
+        //public static readonly int ChunkSize = 580;
 
         public void Read(BinaryReader br)
         {
-            var heights = new float[145];
+            Heights = new float[145];
             for (int i = 0; i < 145; i++)
-                heights[i] = br.ReadSingle();
-
-            HeightMap = new float[9, 9];
-            for (int r = 0; r < 9; r++)
-                for (int c = 0; c < 9; c++)
-                    HeightMap[r, c] = heights[r * 17 + c];
+                Heights[i] = br.ReadSingle();
         }
     }
 }

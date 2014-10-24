@@ -12,6 +12,10 @@ namespace WoWMap
 {
     public class ADT
     {
+        public string World { get; private set; }
+        public int X { get; private set; }
+        public int Y { get; private set; }
+
         public ADT(string filename)
         {
             Data = new ChunkData(filename);
@@ -19,7 +23,11 @@ namespace WoWMap
 
         public ADT(string world, int x, int y)
             : this(string.Format(@"World\Maps\{0}\{0}_{1}_{2}.adt", world, x, y))
-        { }
+        {
+            World = world;
+            X = x;
+            Y = y;
+        }
 
         public ChunkData Data { get; private set; }
         public MapChunk[] MapChunks { get; private set; }
@@ -51,7 +59,7 @@ namespace WoWMap
             {
                 var vo = (uint)vertices.Count;
                 vertices.AddRange(mapChunk.Vertices);
-                triangles.AddRange(mapChunk.Triangles.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
+                triangles.AddRange(mapChunk.Triangles);
             }
 
             using (var sw = new StreamWriter(filename, false))
@@ -59,9 +67,11 @@ namespace WoWMap
                 sw.WriteLine("o " + filename);
                 var nf = CultureInfo.InvariantCulture.NumberFormat;
                 foreach (var v in vertices)
-                    sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Y.ToString(nf) + " " + v.Z.ToString(nf));
+                    sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Z.ToString(nf) + " " + v.Y.ToString(nf));
+                //foreach (var t in triangles)
+                //    sw.WriteLine("f " + (t.V0 + 1) + " " + (t.V1 + 1) + " " + (t.V2 + 1));
                 foreach (var t in triangles)
-                    sw.WriteLine("f " + (t.V0 + 1) + " " + (t.V1 + 1) + " " + (t.V2 + 1));
+                    sw.WriteLine("f " + (t.V0 + 1) + " " + (t.V2 + 1) + " " + (t.V1 + 1));
             }
         }
     }
