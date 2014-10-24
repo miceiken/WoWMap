@@ -21,9 +21,9 @@ namespace WoWMap.Geometry
             Holes = MCNK.Flags.HasFlag(MCNK.MCNKFlags.HighResolutionHoles) ?
                 HighResHoles : TransformToHighRes(MCNK.Holes);
 
-            stream.Seek(chunk.FindSubChunkOffset("MCVT") + 8, SeekOrigin.Begin);
-            MCVT = new MCVT();
-            MCVT.Read(chunk.GetReader());
+            //stream.Seek(chunk.FindSubChunkOffset("MCVT") + 8, SeekOrigin.Begin);
+            //MCVT = new MCVT();
+            //MCVT.Read(chunk.GetReader());
 
             GenerateVertices();
         }
@@ -79,7 +79,6 @@ namespace WoWMap.Geometry
             var br = Chunk.GetReader();
 
             // This one is correct
-            /*
             int idx = 0;
             for (int i = 0; i < 9; i++)
             {
@@ -108,41 +107,41 @@ namespace WoWMap.Geometry
                     }
                 }
             }
-             */
-
-            var cRow = Index / 16;
-            var cCol = Index % 16;
-            MCNK.Position = new Vector3(Constants.ChunkSize * cCol, MCNK.Position.Z, Constants.ChunkSize * cRow);
 
             // This one is for recast
-            int idx = 0;
-            for (int i = 0; i < 9; i++)
-            {
-                for (int j = 0; j < 9; j++)
-                {
-                    var vertex = new Vector3()
-                    {
-                        X = MCNK.Position.X + (j * Constants.UnitSize),
-                        Y = MCNK.Position.Y + br.ReadSingle(),
-                        Z = MCNK.Position.Z + (i * Constants.UnitSize),
-                    };
-                    Vertices[idx++] = vertex;
-                }
 
-                if (i < 8)
-                {
-                    for (int j = 0; j < 8; j++)
-                    {
-                        var vertex = new Vector3()
-                        {
-                            X = MCNK.Position.X + (j * Constants.UnitSize) + (Constants.UnitSize / 2.0f),
-                            Y = MCNK.Position.Y + br.ReadSingle(),
-                            Z = MCNK.Position.Z + (i * Constants.UnitSize) + (Constants.UnitSize / 2.0f),
-                        };
-                        Vertices[idx++] = vertex;
-                    }
-                }
-            }
+            //var cRow = Index / 16;
+            //var cCol = Index % 16;
+            //MCNK.Position = new Vector3(Constants.ChunkSize * cCol, MCNK.Position.Z, Constants.ChunkSize * cRow);
+            
+            //int idx = 0;
+            //for (int i = 0; i < 9; i++)
+            //{
+            //    for (int j = 0; j < 9; j++)
+            //    {
+            //        var vertex = new Vector3()
+            //        {
+            //            X = MCNK.Position.X + (j * Constants.UnitSize),
+            //            Y = MCNK.Position.Y + br.ReadSingle(),
+            //            Z = MCNK.Position.Z + (i * Constants.UnitSize),
+            //        };
+            //        Vertices[idx++] = vertex;
+            //    }
+
+            //    if (i < 8)
+            //    {
+            //        for (int j = 0; j < 8; j++)
+            //        {
+            //            var vertex = new Vector3()
+            //            {
+            //                X = MCNK.Position.X + (j * Constants.UnitSize) + (Constants.UnitSize / 2.0f),
+            //                Y = MCNK.Position.Y + br.ReadSingle(),
+            //                Z = MCNK.Position.Z + (i * Constants.UnitSize) + (Constants.UnitSize / 2.0f),
+            //            };
+            //            Vertices[idx++] = vertex;
+            //        }
+            //    }
+            //}
         }
 
         public void GenerateTriangles()

@@ -47,11 +47,11 @@ namespace WoWMap
             var vertices = new List<Vector3>();
             var triangles = new List<Triangle<uint>>();
 
+            int idx = 0;
             foreach (var mapChunk in MapChunks)
             {
                 var vo = (uint)vertices.Count;
-                //vertices.AddRange(mapChunk.Vertices.Select(v => v.ToRecast()));
-                vertices.AddRange(mapChunk.Vertices);
+                vertices.AddRange(Helpers.Transform(mapChunk.Vertices, idx++));
                 triangles.AddRange(mapChunk.Triangles.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
             }
 

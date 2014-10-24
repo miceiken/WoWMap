@@ -130,9 +130,10 @@ namespace WoWMap.Geometry
             return (x) * (vector.X) + (y) * (vector.Y) + (z) * (vector.Z);
         }
 
+        // WoW -> R+D: x,y,z -> -y,z,-x
         public Vector3 ToRecast()
         {
-            return new Vector3(-x, -y, z);
+            return new Vector3(-y, z, -x);
         }
 
         public Vector3 ToWoW()

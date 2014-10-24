@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using WoWMap.Geometry;
 
 namespace WoWMap
 {
@@ -51,6 +52,14 @@ namespace WoWMap
                 return null;
 
             return Encoding.ASCII.GetString(buffer.ToArray());
+        }
+
+        public static Vector3[] Transform(Vector3[] verts, int idx)
+        {
+            var tVerts = new Vector3[verts.Length];
+            for (int i = 0; i < verts.Length; i++)
+                tVerts[i] = new Vector3(-Constants.ChunkSize * (idx % 16), verts[i].Z, -Constants.ChunkSize * (idx / 16));
+            return tVerts;
         }
     }
 }
