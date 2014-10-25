@@ -27,6 +27,8 @@ namespace WoWMap.Chunks
         private uint unk0;
         private uint unk1;
 
+        public static readonly uint ChunkHeaderSize = 0x44;
+
         [Flags]
         public enum MOGPFlags : uint
         {

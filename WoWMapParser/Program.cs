@@ -20,8 +20,9 @@ namespace WoWMapParser
             Initialize();
 
             //ReadDBC();
-            ReadADT();
+            //ReadADT();
             //ReadWDT();
+            ReadWMO();
 
             Console.WriteLine("Done.");
             //Console.ReadKey();
@@ -79,6 +80,12 @@ namespace WoWMapParser
             sw.Stop();
 
             Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", wdt.Data.Chunks.Count, System.IO.Path.GetFileName(path), sw.ElapsedMilliseconds);
+        }
+
+        static void ReadWMO()
+        {
+            const string path = @"World\WMO\Northrend\Battleground\ND_BG_Keep01.wmo";
+            var wmo = new WMORoot(path);
         }
     }
 }

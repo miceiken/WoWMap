@@ -55,6 +55,7 @@
     <Compile Include="Archive\CASC.cs" />
     <Compile Include="Archive\DBC.cs" />
     <Compile Include="Archive\Map.cs" />
+    <Compile Include="Layers\WMORoot.cs" />
     <Compile Include="Readers\ChunkData.cs" />
     <Compile Include="Readers\ChunkHeader.cs" />
     <Compile Include="Chunks\MAIN.cs" />
@@ -86,7 +87,7 @@
     <Compile Include="Geometry\Triangle.cs" />
     <Compile Include="Geometry\Vector3.cs" />
     <Compile Include="Layers\WDT.cs" />
-    <Compile Include="Layers\WMO.cs" />
+    <Compile Include="Layers\WMOGroup.cs" />
     <Compile Include="Readers\ChunkReader.cs" />
   </ItemGroup>
   <ItemGroup>

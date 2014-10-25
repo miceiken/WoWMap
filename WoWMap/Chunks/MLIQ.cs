@@ -22,8 +22,13 @@ namespace WoWMap.Chunks
         public uint Height;
         public Vector3 Position;
         public ushort MaterialId;
-        public float[][] HeightMap;
-        public byte[] Types;
+        public float[,] HeightMap;
+        public byte[,] RenderFlags;
+
+        public bool ShouldRender(int x, int y)
+        {
+            return RenderFlags[x, y] != 0x0F;
+        }
 
         public override void Read()
         {
@@ -35,7 +40,19 @@ namespace WoWMap.Chunks
             Height = br.ReadUInt32();
             Position = br.ReadVector3();
             MaterialId = br.ReadUInt16();
-            // TODO: read the rest?
+            HeightMap = new float[XVertices, YVertices];
+            for (int y = 0; y < YVertices; y++)
+            {
+                for (int x = 0; x < XVertices; x++)
+                {
+                    br.ReadUInt32();
+                    HeightMap[x, y] = br.ReadSingle();
+                }
+            }
+            RenderFlags = new byte[Width, Height];
+            for (int y = 0; y < Height; y++)
+                for (int x = 0; x < Width; x++)
+                    RenderFlags[x, y] = br.ReadByte();
         }
     }
 }
