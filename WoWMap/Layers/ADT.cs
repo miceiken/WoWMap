@@ -35,11 +35,14 @@ namespace WoWMap.Layers
         public LiquidChunk Liquid { get; private set; }
 
         public MHDR MHDR { get; private set; }
+        public MMDX MMDX { get; private set; }
+        public MMID MMID { get; private set; }
         public MWMO MWMO { get; private set; }
         public MWID MWID { get; private set; }
-        public MODF MODF { get; private set; }
         public MDDF MDDF { get; private set; }
+        public MODF MODF { get; private set; }
 
+        public List<string> DoodadPaths { get; private set; }
         public List<string> ModelPaths { get; private set; }
 
         public void Read()
@@ -54,17 +57,23 @@ namespace WoWMap.Layers
                     case "MHDR":
                         MHDR = new MHDR(subChunk);
                         break;
+                    case "MMDX":
+                        MMDX = new MMDX(subChunk);
+                        break;
+                    case "MMID":
+                        MMID = new MMID(subChunk);
+                        break;
                     case "MWMO":
                         MWMO = new MWMO(subChunk);
                         break;
                     case "MWID":
                         MWID = new MWID(subChunk);
                         break;
-                    case "MODF":
-                        MODF = new MODF(subChunk);
-                        break;
                     case "MDDF":
                         MDDF = new MDDF(subChunk);
+                        break;
+                    case "MODF":
+                        MODF = new MODF(subChunk);
                         break;
                     case "MH2O":
                         Liquid = new LiquidChunk(this, subChunk);
@@ -78,8 +87,8 @@ namespace WoWMap.Layers
             foreach (var mapChunk in MapChunks)
                 mapChunk.GenerateIndices();
 
-            // Read models
             ReadModels();
+            ReadDoodads();
         }
 
         private void ReadModels()
@@ -88,8 +97,18 @@ namespace WoWMap.Layers
                 return;
 
             ModelPaths = new List<string>();
-            for (int i = 0; i < MWID.Offsets.Length * 4; i += 4)
-                ModelPaths.Add(MWMO.Filenames[i]);
+            for (int i = 0; i < MWID.Offsets.Length; i++)
+                ModelPaths.Add(MWMO.Filenames[MWID.Offsets[i] / 4]);
+        }
+
+        private void ReadDoodads()
+        {
+            if ((MMID == null || MMID.Offsets.Count() == 0) || (MMDX == null || MMDX.Filenames.Count() == 0))
+                return;
+
+            DoodadPaths = new List<string>();
+            for (int i = 0; i < MMID.Offsets.Length; i++)
+                DoodadPaths.Add(MMDX.Filenames[MMID.Offsets[i] / 4]);
         }
 
         public void SaveObj(string filename = null)
