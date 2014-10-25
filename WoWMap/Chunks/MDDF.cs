@@ -48,6 +48,7 @@ namespace WoWMap.Chunks
             }
         }
 
+        [Flags]
         public enum MDDFFlags : ushort
         {
             Biodome = 1, // this sets internal flags to | 0x800 (WDOODADDEF.var0xC).

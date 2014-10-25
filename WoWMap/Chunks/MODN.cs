@@ -8,10 +8,10 @@ using WoWMap.Readers;
 
 namespace WoWMap.Chunks
 {
-    public class MWMO : ChunkReader
+    public class MODN : ChunkReader
     {
-        public MWMO(Chunk c, uint h) : base(c, h) { }
-        public MWMO(Chunk c) : base(c, c.Size) { }
+        public MODN(Chunk c, uint h) : base(c, h) { }
+        public MODN(Chunk c) : base(c, c.Size) { }
 
         public string[] Filenames;
 

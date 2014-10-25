@@ -61,5 +61,10 @@ namespace WoWMap
                 tVerts[i] = new Vector3(-Constants.ChunkSize * (idx % 16), verts[i].Z, -Constants.ChunkSize * (idx / 16));
             return tVerts;
         }
+
+        public static Vector3 ReadVector3(this BinaryReader br)
+        {
+            return new Vector3(br);
+        }
     }
 }

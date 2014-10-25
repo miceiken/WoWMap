@@ -39,6 +39,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Chunks\MLIQ.cs" />
+    <Compile Include="Chunks\MODD.cs" />
+    <Compile Include="Chunks\MODN.cs" />
+    <Compile Include="Chunks\MODR.cs" />
+    <Compile Include="Chunks\MODS.cs" />
+    <Compile Include="Chunks\MOGI.cs" />
+    <Compile Include="Chunks\MOGN.cs" />
+    <Compile Include="Chunks\MOGP.cs" />
+    <Compile Include="Chunks\MONR.cs" />
+    <Compile Include="Chunks\MOPY.cs" />
+    <Compile Include="Chunks\MOVI.cs" />
+    <Compile Include="Chunks\MOVT.cs" />
     <Compile Include="Layers\ADT.cs" />
     <Compile Include="Archive\CASC.cs" />
     <Compile Include="Archive\DBC.cs" />

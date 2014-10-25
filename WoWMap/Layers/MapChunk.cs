@@ -17,6 +17,7 @@ namespace WoWMap.Layers
             Chunk = chunk;
 
             MCNK = new MCNK(chunk);
+            //SubData = new ChunkData(chunk.GetStream());
             FindSubChunks();
 
             Holes = MCNK.Flags.HasFlag(MCNK.MCNKFlags.HighResolutionHoles) ?
@@ -27,6 +28,7 @@ namespace WoWMap.Layers
 
         public ADT ADT { get; private set; }
         public Chunk Chunk { get; private set; }
+        public ChunkData SubData { get; private set; }
         public MCNK MCNK { get; private set; }
         public MCVT MCVT { get; private set; }
         public Vector3[] Vertices { get; private set; }

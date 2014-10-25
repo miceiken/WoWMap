@@ -25,6 +25,7 @@ namespace WoWMap.Chunks
         public ushort NameSet;
         private ushort padding;
 
+        [Flags]
         public enum MODFFlags : ushort
         {
             Destroyable = 1

@@ -19,6 +19,7 @@ namespace WoWMap.Chunks
         public short EffectId;
         private short padding;
 
+        [Flags]
         public enum MCLYFlags : uint
         {
             Rotate45 = 0x1,

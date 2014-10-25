@@ -28,6 +28,7 @@ namespace WoWMap.Chunks
                 Unused[i] = br.ReadUInt32();
         }
 
+        [Flags]
         public enum MPHDFlags : uint
         {
             GlobalMapObject = 0x01,

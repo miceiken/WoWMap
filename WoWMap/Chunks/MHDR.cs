@@ -27,6 +27,7 @@ namespace WoWMap.Chunks
         public uint ofsMTXF;
         private uint[] padding;
 
+        [Flags]
         public enum MHDRFlags : uint
         {
             MFBO = 1, // Contains a MFBO chunk
