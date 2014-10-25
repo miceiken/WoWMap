@@ -10,9 +10,9 @@ using WoWMap.Geometry;
 
 namespace WoWMap.Layers
 {
-    public class ChunkLiquid
+    public class LiquidChunk
     {
-        public ChunkLiquid(ADT adt, Chunk chunk)
+        public LiquidChunk(ADT adt, Chunk chunk)
         {
             ADT = adt;
             Chunk = chunk;

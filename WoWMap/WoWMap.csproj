@@ -39,6 +39,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Chunks\MCRD.cs" />
+    <Compile Include="Chunks\MCRW.cs" />
     <Compile Include="Chunks\MLIQ.cs" />
     <Compile Include="Chunks\MODD.cs" />
     <Compile Include="Chunks\MODN.cs" />

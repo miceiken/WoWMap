@@ -30,23 +30,66 @@ namespace WoWMap.Layers
         }
 
         public ChunkData Data { get; private set; }
+
         public MapChunk[] MapChunks { get; private set; }
-        public ChunkLiquid Liquid { get; private set; }
-        public MHDR Header { get; private set; }
+        public LiquidChunk Liquid { get; private set; }
+
+        public MHDR MHDR { get; private set; }
+        public MWMO MWMO { get; private set; }
+        public MWID MWID { get; private set; }
+        public MODF MODF { get; private set; }
+        public MDDF MDDF { get; private set; }
+
+        public List<string> ModelPaths { get; private set; }
 
         public void Read()
         {
-            Header = new MHDR(Data.GetChunkByName("MHDR"));
-
             MapChunks = new MapChunk[16 * 16];
-            int idx = 0;
-            foreach (var mapChunk in Data.Chunks.Where(c => c.Name == "MCNK"))
-                MapChunks[idx++] = new MapChunk(this, mapChunk);
+            int mcIdx = 0;
 
-            Liquid = new ChunkLiquid(this, Data.GetChunkByName("MH2O"));
+            foreach (var subChunk in Data.Chunks)
+            {
+                switch (subChunk.Name)
+                {
+                    case "MHDR":
+                        MHDR = new MHDR(subChunk);
+                        break;
+                    case "MWMO":
+                        MWMO = new MWMO(subChunk);
+                        break;
+                    case "MWID":
+                        MWID = new MWID(subChunk);
+                        break;
+                    case "MODF":
+                        MODF = new MODF(subChunk);
+                        break;
+                    case "MDDF":
+                        MDDF = new MDDF(subChunk);
+                        break;
+                    case "MH2O":
+                        Liquid = new LiquidChunk(this, subChunk);
+                        break;
+                    case "MCNK":
+                        MapChunks[mcIdx++] = new MapChunk(this, subChunk);
+                        break;
+                }
+            }
 
             foreach (var mapChunk in MapChunks)
                 mapChunk.GenerateIndices();
+
+            // Read models
+            ReadModels();
+        }
+
+        private void ReadModels()
+        {
+            if ((MWID == null || MWID.Offsets.Count() == 0) || (MWMO == null || MWMO.Filenames.Count() == 0))
+                return;
+
+            ModelPaths = new List<string>();
+            for (int i = 0; i < MWID.Offsets.Length * 4; i += 4)
+                ModelPaths.Add(MWMO.Filenames[i]);
         }
 
         public void SaveObj(string filename = null)
@@ -69,10 +112,8 @@ namespace WoWMap.Layers
                 var nf = CultureInfo.InvariantCulture.NumberFormat;
                 foreach (var v in vertices)
                     sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Z.ToString(nf) + " " + v.Y.ToString(nf));
-                //foreach (var t in triangles)
-                //    sw.WriteLine("f " + (t.V0 + 1) + " " + (t.V1 + 1) + " " + (t.V2 + 1));
                 foreach (var t in triangles)
-                    sw.WriteLine("f " + (t.V0 + 1) + " " + (t.V2 + 1) + " " + (t.V1 + 1));
+                    sw.WriteLine("f " + (t.V0 + 1) + " " + (t.V1 + 1) + " " + (t.V2 + 1));
             }
         }
     }

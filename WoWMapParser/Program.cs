@@ -20,9 +20,9 @@ namespace WoWMapParser
             Initialize();
 
             //ReadDBC();
-            //ReadADT();
+            ReadADT();
             //ReadWDT();
-            ReadWMO();
+            //ReadWMO();
 
             Console.WriteLine("Done.");
             //Console.ReadKey();

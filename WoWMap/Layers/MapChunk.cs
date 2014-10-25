@@ -115,12 +115,12 @@ namespace WoWMap.Layers
 
             Vertices = new Vector3[145];
 
-            var relPos = new Vector3(Constants.MaxXY - MCNK.Position.Y, Constants.MaxXY + MCNK.Position.X, MCNK.Position.Z);
+            var relPos = new Vector3(Constants.MaxXY - MCNK.Position.Y, Constants.MaxXY - MCNK.Position.X, MCNK.Position.Z);
             for (int i = 0, idx = 0; i < 17; i++)
             {
                 for (int j = 0; j < (((i % 2) != 0) ? 8 : 9); j++)
                 {
-                    var v = new Vector3(relPos.X + j * Constants.UnitSize, relPos.Y - i * Constants.UnitSize * 0.5f, MCVT.Heights[idx] + relPos.Z);
+                    var v = new Vector3(relPos.X + j * Constants.UnitSize, relPos.Y + i * Constants.UnitSize * 0.5f, MCVT.Heights[idx] + relPos.Z);
                     if ((i % 2) != 0) v.X += 0.5f * Constants.UnitSize;
                     Vertices[idx++] = v;
                 }
