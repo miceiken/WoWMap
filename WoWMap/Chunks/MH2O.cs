@@ -9,6 +9,9 @@ namespace WoWMap.Chunks
 {
     public class MH2O
     {
+        //public MH2O(Chunk c, uint h) : base(c, h) { }
+        //public MH2O(Chunk c) : base(c, c.Size) { }
+
         public MH2OHeader[] Headers;
 
         public void Read(BinaryReader br)

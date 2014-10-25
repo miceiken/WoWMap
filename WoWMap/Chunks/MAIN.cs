@@ -4,25 +4,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using WoWMap.Readers;
 
 namespace WoWMap.Chunks
 {
-    public class MAIN
+    public class MAIN : ChunkReader
     {
+        public MAIN(Chunk c, uint h) : base(c, h) { }
+        public MAIN(Chunk c) : base(c, c.Size) { }
+
         public MAINEntry[,] Entries;
 
-        public void Read(BinaryReader br)
+        public override void Read()
         {
+            var br = Chunk.GetReader();
+
             Entries = new MAINEntry[64, 64];
             for (int y = 0; y < 64; y++)
-            {
                 for (int x = 0; x < 64; x++)
-                {
-                    var entry = new MAINEntry();
-                    entry.Read(br);
-                    Entries[x, y] = entry;
-                }
-            }
+                    Entries[x, y] = MAINEntry.Read(br);
         }
 
         public class MAINEntry
@@ -30,10 +30,13 @@ namespace WoWMap.Chunks
             public MAINFlags Flags;
             public uint Area; // Set during runtime
 
-            public void Read(BinaryReader br)
+            public static MAINEntry Read(BinaryReader br)
             {
-                Flags = (MAINFlags)br.ReadUInt32();
-                Area = br.ReadUInt32();
+                return new MAINEntry
+                {
+                    Flags = (MAINFlags)br.ReadUInt32(),
+                    Area = br.ReadUInt32(),
+                };
             }
         }
 

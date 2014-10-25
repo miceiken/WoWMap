@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
-using System.Globalization;
 
-namespace WoWMap
+namespace WoWMap.Layers
 {
     public class ADT
     {
@@ -36,8 +36,7 @@ namespace WoWMap
 
         public void Read()
         {
-            Header = new MHDR();
-            Header.Read(Data.GetChunkByName("MHDR").GetReader());
+            Header = new MHDR(Data.GetChunkByName("MHDR"));
 
             MapChunks = new MapChunk[16 * 16];
             int idx = 0;
@@ -47,7 +46,7 @@ namespace WoWMap
             Liquid = new ChunkLiquid(this, Data.GetChunkByName("MH2O"));
 
             foreach (var mapChunk in MapChunks)
-                mapChunk.GenerateTriangles();
+                mapChunk.GenerateIndices();
         }
 
         public void SaveObj(string filename = null)
@@ -61,7 +60,7 @@ namespace WoWMap
             {
                 var vo = (uint)vertices.Count;
                 vertices.AddRange(mapChunk.Vertices);
-                triangles.AddRange(mapChunk.Triangles.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
+                triangles.AddRange(mapChunk.Indices.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
             }
 
             using (var sw = new StreamWriter(filename, false))

@@ -39,20 +39,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ADT.cs" />
+    <Compile Include="Layers\ADT.cs" />
     <Compile Include="Archive\CASC.cs" />
     <Compile Include="Archive\DBC.cs" />
     <Compile Include="Archive\Map.cs" />
-    <Compile Include="ChunkData.cs" />
-    <Compile Include="ChunkHeader.cs" />
+    <Compile Include="Readers\ChunkData.cs" />
+    <Compile Include="Readers\ChunkHeader.cs" />
     <Compile Include="Chunks\MAIN.cs" />
     <Compile Include="Chunks\MCVT.cs" />
     <Compile Include="Chunks\MFBO.cs" />
+    <Compile Include="Chunks\MOHD.cs" />
     <Compile Include="Chunks\MPHD.cs" />
-    <Compile Include="Geometry\ChunkLiquid.cs" />
-    <Compile Include="Geometry\MapChunk.cs" />
+    <Compile Include="Layers\LiquidChunk.cs" />
+    <Compile Include="Layers\MapChunk.cs" />
     <Compile Include="Helpers.cs" />
-    <Compile Include="Chunk.cs" />
+    <Compile Include="Readers\Chunk.cs" />
     <Compile Include="Chunks\MCIN.cs" />
     <Compile Include="Chunks\MCLQ.cs" />
     <Compile Include="Chunks\MCLY.cs" />
@@ -72,7 +73,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Geometry\Triangle.cs" />
     <Compile Include="Geometry\Vector3.cs" />
-    <Compile Include="WDT.cs" />
+    <Compile Include="Layers\WDT.cs" />
+    <Compile Include="Layers\WMO.cs" />
+    <Compile Include="Readers\ChunkReader.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CASCExplorer\CascLib\CascLib.csproj">

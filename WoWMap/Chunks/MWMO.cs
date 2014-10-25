@@ -4,17 +4,23 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using WoWMap.Readers;
 
 namespace WoWMap.Chunks
 {
-    public class MWMO
+    public class MWMO : ChunkReader
     {
+        public MWMO(Chunk c, uint h) : base(c, h) { }
+        public MWMO(Chunk c) : base(c, c.Size) { }
+
         public string[] Filenames;
 
-        public void Read(BinaryReader br, uint size)
+        public override void Read()
         {
-            var chunk = br.ReadBytes((int)size);
-            Filenames = Helpers.SplitStrings(chunk).ToArray();;
+            var br = Chunk.GetReader();
+
+            var chunk = br.ReadBytes((int)Chunk.Size);
+            Filenames = Helpers.SplitStrings(chunk).ToArray(); ;
         }
     }
 }

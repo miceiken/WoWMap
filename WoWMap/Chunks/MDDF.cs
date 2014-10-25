@@ -4,46 +4,47 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using WoWMap.Readers;
+using WoWMap.Geometry;
 
 namespace WoWMap.Chunks
 {
-    public class MDDF
+    public class MDDF : ChunkReader
     {
+        public MDDF(Chunk c, uint h) : base(c, h) { }
+        public MDDF(Chunk c) : base(c, c.Size) { }
+
         public MDDFEntry[] Entries;
 
-        public void Read(BinaryReader br, uint size)
+        public override void Read()
         {
-            Entries = new MDDFEntry[size / 12];
+            var br = Chunk.GetReader();
+
+            Entries = new MDDFEntry[Chunk.Size / 36];
             for (int i = 0; i < Entries.Length; i++)
-            {
-                var entry = new MDDFEntry();
-                entry.Read(br);
-                Entries[i] = entry;
-            }
+                Entries[i] = MDDFEntry.Read(br);
         }
 
-        // Sizeof = 12
         public class MDDFEntry
         {
             public uint MMIDEntry;
             public uint UniqueId;
-            public float[] Position;
-            public float[] Rotation;
+            public Vector3 Position;
+            public Vector3 Rotation;
             public ushort Scale;
-            public ushort Flags;        // MDDFFlags
+            public MDDFFlags Flags;
 
-            public void Read(BinaryReader br)
+            public static MDDFEntry Read(BinaryReader br)
             {
-                MMIDEntry = br.ReadUInt32();
-                UniqueId = br.ReadUInt32();
-                Position = new float[3];
-                for (int i = 0; i < 3; i++)
-                    Position[i] = br.ReadSingle();
-                Rotation = new float[3];
-                for (int i = 0; i < 3; i++)
-                    Rotation[i] = br.ReadSingle();
-                Scale = br.ReadUInt16();
-                Flags = br.ReadUInt16();
+                return new MDDFEntry
+                {
+                    MMIDEntry = br.ReadUInt32(),
+                    UniqueId = br.ReadUInt32(),
+                    Position = new Vector3(br),
+                    Rotation = new Vector3(br),
+                    Scale = br.ReadUInt16(),
+                    Flags = (MDDFFlags)br.ReadUInt16(),
+                };
             }
         }
 

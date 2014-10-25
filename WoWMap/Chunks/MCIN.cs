@@ -4,22 +4,24 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using WoWMap.Readers;
 
 namespace WoWMap.Chunks
 {
-    public class MCIN
+    public class MCIN : ChunkReader
     {
+        public MCIN(Chunk c, uint h) : base(c, h) { }
+        public MCIN(Chunk c) : base(c, c.Size) { }
+
         public MCINEntry[] Entries;
 
-        public void Read(BinaryReader br)
+        public override void Read()
         {
+            var br = Chunk.GetReader();
+
             Entries = new MCINEntry[256];
             for (int i = 0; i < 256; i++) // 16*16
-            {
-                var entry = new MCINEntry();
-                entry.Read(br);
-                Entries[i] = entry;
-            }
+                Entries[i] = MCINEntry.Read(br);
         }
 
         public class MCINEntry
@@ -29,12 +31,15 @@ namespace WoWMap.Chunks
             public uint Flags;      // Always 0
             public uint AsyncId;
 
-            public void Read(BinaryReader br)
+            public static MCINEntry Read(BinaryReader br)
             {
-                ofsMCNK = br.ReadUInt32();
-                Size = br.ReadUInt32();
-                Flags = br.ReadUInt32();
-                AsyncId = br.ReadUInt32();
+                return new MCINEntry
+                {
+                    ofsMCNK = br.ReadUInt32(),
+                    Size = br.ReadUInt32(),
+                    Flags = br.ReadUInt32(),
+                    AsyncId = br.ReadUInt32(),
+                };
             }
         }
     }

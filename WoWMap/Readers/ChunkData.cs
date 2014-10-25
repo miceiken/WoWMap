@@ -35,12 +35,12 @@ namespace WoWMap
             : this(CASC.OpenFile(filename))
         { }
 
+        public Stream Stream { get; private set; }
+        public List<Chunk> Chunks { get; private set; }
+
         public Chunk GetChunkByName(string name)
         {
             return Chunks.FirstOrDefault(c => c.Name == name);
-        }
-
-        public Stream Stream { get; private set; }
-        public List<Chunk> Chunks { get; private set; }
+        }        
     }
 }

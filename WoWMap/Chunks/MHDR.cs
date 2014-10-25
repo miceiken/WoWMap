@@ -4,11 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using WoWMap.Readers;
 
 namespace WoWMap.Chunks
 {
-    public class MHDR
+    public class MHDR : ChunkReader
     {
+        public MHDR(Chunk c, uint h) : base(c, h) { }
+        public MHDR(Chunk c) : base(c, c.Size) { }
+
         public MHDRFlags Flags;
         public uint ofsMCIN;
         public uint ofsMTEX;
@@ -29,8 +33,10 @@ namespace WoWMap.Chunks
             Northrend = 2 // Is set for some Northrend ones
         };
 
-        public void Read(BinaryReader br)
+        public override void Read()
         {
+            var br = Chunk.GetReader();
+
             Flags = (MHDRFlags)br.ReadUInt32();
             ofsMCIN = br.ReadUInt32();
             ofsMTEX = br.ReadUInt32();

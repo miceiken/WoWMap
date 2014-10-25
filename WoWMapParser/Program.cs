@@ -2,13 +2,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WoWMap;
 using WoWMap.Archive;
-using System.Diagnostics;
-using System.IO;
+using WoWMap.Layers;
 
 namespace WoWMapParser
 {
@@ -59,7 +60,7 @@ namespace WoWMapParser
 
         static void ReadADT()
         {
-            var adt = new ADT("Kalimdor", 40, 28);
+            var adt = new ADT("Azeroth", 28, 28);
             var sw = Stopwatch.StartNew();
             adt.Read();
             sw.Stop();

@@ -8,7 +8,7 @@ using WoWMap.Chunks;
 using WoWMap.Geometry;
 using WoWMap.Archive;
 
-namespace WoWMap
+namespace WoWMap.Layers
 {
     public class WDT
     {
@@ -41,8 +41,7 @@ namespace WoWMap
 
             IsValid = true;
 
-            MAIN = new MAIN();
-            MAIN.Read(chunk.GetReader());
+            MAIN = new MAIN(chunk);
 
             TileTable = new bool[64, 64];
             for (int y = 0; y < 64; y++)
@@ -56,11 +55,8 @@ namespace WoWMap
 
             IsGlobalModel = true;
 
-            MODF = new MODF();
-            MODF.Read(defChunk.GetReader());
-
-            MWMO = new MWMO();
-            MWMO.Read(fileChunk.GetReader(), fileChunk.Size);
+            MODF = new MODF(defChunk);
+            MWMO = new MWMO(fileChunk);
         }
     }
 }

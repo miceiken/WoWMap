@@ -4,11 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using WoWMap.Readers;
 
 namespace WoWMap.Chunks
 {
-    public class MCLY
+    public class MCLY : ChunkReader
     {
+        public MCLY(Chunk c, uint h) : base(c, h) { }
+        public MCLY(Chunk c) : base(c, c.Size) { }
+
         public uint TextureId;
         public uint Flags;
         public uint ofsMCAL;
@@ -30,8 +34,10 @@ namespace WoWMap.Chunks
             SkyboxReflection = 0x400
         };
 
-        public void Read(BinaryReader br)
+        public override void Read()
         {
+            var br = Chunk.GetReader();
+
             TextureId = br.ReadUInt32();
             Flags = br.ReadUInt32();
             ofsMCAL = br.ReadUInt32();

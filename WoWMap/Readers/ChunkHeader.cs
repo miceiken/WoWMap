@@ -11,34 +11,15 @@ namespace WoWMap
     // https://github.com/Marlamin/WoWFormatTest/blob/master/WoWFormatLib/Utils/BlizzHeader.cs
     public class ChunkHeader
     {
-        public char[] Header
-        {
-            get;
-            set;
-        }
-
-        public uint Size
-        {
-            get;
-            set;
-        }
-
-        public string Name
-        {
-            get { return new string(Header); }
-        }
-
-        public ChunkHeader()
-        {
-            Header = new char[4];
-            Size = 0;
-        }
+        public char[] Header { get; set; }
+        public uint Size { get; set; }
+        public string Name { get { return new string(Header); } }
 
         public ChunkHeader(char[] header, uint size)
         {
             Header = header;
             Array.Reverse(Header);
-            Size = size;            
+            Size = size;
         }
 
         public ChunkHeader(BinaryReader br)

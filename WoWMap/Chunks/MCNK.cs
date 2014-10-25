@@ -5,11 +5,15 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using WoWMap.Geometry;
+using WoWMap.Readers;
 
 namespace WoWMap.Chunks
 {
-    public class MCNK
+    public class MCNK : ChunkReader
     {
+        public MCNK(Chunk c, uint h) : base(c, h) { }
+        public MCNK(Chunk c) : base(c, c.Size) { }
+
         public MCNKFlags Flags;                                     // 0x000
         public uint IndexX;                                         // 0x004
         public uint IndexY;                                         // 0x008
@@ -52,8 +56,10 @@ namespace WoWMap.Chunks
             HighResolutionHoles = 0x10000
         };
 
-        public void Read(BinaryReader br)
+        public override void Read()
         {
+            var br = Chunk.GetReader();
+
             Flags = (MCNKFlags)br.ReadUInt32();
             IndexX = br.ReadUInt32();
             IndexY = br.ReadUInt32();

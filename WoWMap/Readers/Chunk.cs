@@ -23,6 +23,10 @@ namespace WoWMap
             Stream = stream;
         }
 
+        public Chunk(ChunkHeader header, Stream stream)
+            : this(header.Name, header.Size, (uint)stream.Position, stream)
+        { }
+
         public Stream GetStream()
         {
             Stream.Seek(Offset, SeekOrigin.Begin);

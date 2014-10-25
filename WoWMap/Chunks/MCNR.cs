@@ -4,23 +4,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using WoWMap.Readers;
 
 namespace WoWMap.Chunks
 {
-    public class MCNR
+    public class MCNR : ChunkReader
     {
+        public MCNR(Chunk c, uint h) : base(c, h) { }
+        public MCNR(Chunk c) : base(c, c.Size) { }
+
         public MCNREntry[] Entries;
         private ushort[] unk0;
 
-        public void Read(BinaryReader br)
+        public override void Read()
         {
+            var br = Chunk.GetReader();
+
             Entries = new MCNREntry[145];
             for (int i = 0; i < Entries.Length; i++)
-            {
-                var entry = new MCNREntry();
-                entry.Read(br);
-                Entries[i] = entry;
-            }
+                Entries[i] = MCNREntry.Read(br);
 
             unk0 = new ushort[13];
             for (int i = 0; i < 13; i++)
@@ -31,11 +33,13 @@ namespace WoWMap.Chunks
         {
             public short[] Normal;
 
-            public void Read( BinaryReader br)
+            public static MCNREntry Read(BinaryReader br)
             {
-                Normal = new short[3];
+                var entry = new MCNREntry();
+                entry.Normal = new short[3];
                 for (int i = 0; i < 3; i++)
-                    Normal[i] = br.ReadInt16();
+                    entry.Normal[i] = br.ReadInt16();
+                return entry;
             }
         }
     }

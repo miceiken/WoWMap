@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WoWMap.Chunks;
-using System.IO;
+using WoWMap.Geometry;
 
-namespace WoWMap.Geometry
+namespace WoWMap.Layers
 {
     public class MapChunk
     {
@@ -14,10 +15,8 @@ namespace WoWMap.Geometry
         {
             ADT = adt;
             Chunk = chunk;
-            var stream = chunk.GetStream();
-            MCNK = new MCNK();
-            MCNK.Read(chunk.GetReader());
 
+            MCNK = new MCNK(chunk);
             FindSubChunks();
 
             Holes = MCNK.Flags.HasFlag(MCNK.MCNKFlags.HighResolutionHoles) ?
@@ -31,7 +30,7 @@ namespace WoWMap.Geometry
         public MCNK MCNK { get; private set; }
         public MCVT MCVT { get; private set; }
         public Vector3[] Vertices { get; private set; }
-        public List<Triangle<uint>> Triangles { get; private set; }
+        public List<Triangle<uint>> Indices { get; private set; }
 
         public int Index
         {
@@ -49,12 +48,17 @@ namespace WoWMap.Geometry
                 stream.Seek(offset, SeekOrigin.Begin);
 
                 var subChunkHeader = new ChunkHeader(reader);
+                var subchunk = new Chunk(subChunkHeader, stream);
                 switch (subChunkHeader.Name)
                 {
                     case "MCVT":
-                        MCVT = new MCVT();
-                        MCVT.Read(reader);
+                        MCVT = new MCVT(subchunk);
                         break;
+                    case "MCRD": // TODO: implement http://pxr.dk/wowdev/wiki/index.php?title=Cataclysm#MCRD_.28optional.29
+                        break;
+                    case "MCRW": // TODO: implement
+                        break;
+
                     case "MCLV":
                     case "MCCV":
                     case "MCNR":
@@ -109,39 +113,8 @@ namespace WoWMap.Geometry
 
             Vertices = new Vector3[145];
 
-            //var relPos = new Vector3(Constants.MaxXY - MCNK.Position.Y, MCNK.Position.Z, Constants.MaxXY + MCNK.Position.X);
-
-            int idx = 0;
-            //for (int i = 0; i < 9; i++)
-            //{
-            //    for (int j = 0; j < 9; j++)
-            //    {
-            //        var vertex = new Vector3()
-            //        {
-            //            X = relPos.X + (i * Constants.UnitSize),
-            //            Y = MCVT.Heights[idx] + relPos.Y,
-            //            Z = relPos.Z - (j * Constants.UnitSize),
-            //        };
-            //        Vertices[idx++] = vertex;
-            //    }
-
-            //    if (i < 8)
-            //    {
-            //        for (int j = 0; j < 8; j++)
-            //        {
-            //            var vertex = new Vector3()
-            //            {
-            //                X = relPos.X + (i * Constants.UnitSize) + (Constants.UnitSize * 0.5f),
-            //                Y = MCVT.Heights[idx] + relPos.Y,
-            //                Z = relPos.Z - (j * Constants.UnitSize) - (Constants.UnitSize * 0.5f),
-            //            };
-            //            Vertices[idx++] = vertex;
-            //        }
-            //    }
-            //}
-
             var relPos = new Vector3(Constants.MaxXY - MCNK.Position.Y, Constants.MaxXY + MCNK.Position.X, MCNK.Position.Z);
-            for (int i = 0; i < 17; i++)
+            for (int i = 0, idx = 0; i < 17; i++)
             {
                 for (int j = 0; j < (((i % 2) != 0) ? 8 : 9); j++)
                 {
@@ -152,22 +125,11 @@ namespace WoWMap.Geometry
             }
         }
 
-        public void GenerateTriangles()
+        public void GenerateIndices()
         {
             if (MCVT == null || Vertices == null || Vertices.Count() == 0) return;
 
-            Triangles = new List<Triangle<uint>>(64 * 4);
-            //for (int y = 0; y < 8; y++)
-            //{
-            //    for (int x = 0; x < 8; x++)
-            //    {
-            //        if (HasHole(x, y)) continue;
-
-            //        var topLeft = (byte)((17 * y) + x);
-            //        var topRight = (byte)((17 * y) + x + 1);
-            //        var bottomLeft = (byte)((17 * (y + 1)) + x);
-            //        var bottomRight = (byte)((17 * (y + 1)) + x + 1);
-            //        var center = (byte)((17 * y) + 9 + x);
+            Indices = new List<Triangle<uint>>(64 * 4);
 
             //        var triangleType = TriangleType.Terrain;
             //        if (ADT.Liquid != null && ADT.Liquid.HeightMaps != null)
@@ -178,22 +140,18 @@ namespace WoWMap.Geometry
             //                triangleType = TriangleType.Water;
             //        }
 
-            //        Triangles.Add(new Triangle<byte>(triangleType, topRight, topLeft, center));
-            //        Triangles.Add(new Triangle<byte>(triangleType, topLeft, bottomLeft, center));
-            //        Triangles.Add(new Triangle<byte>(triangleType, bottomLeft, bottomRight, center));
-            //        Triangles.Add(new Triangle<byte>(triangleType, bottomRight, topRight, center));
-            //    }
-            //}
-
-            // TODO: Implement holes, and check for liquid - or keep a seperate liquid mesh
+            // TODO: Check for liquid - or keep a seperate liquid mesh
+            int unitidx = 0;
             for (uint j = 9; j < 8 * 8 + 9 * 8; j++)
             {
-                Triangles.Add(new Triangle<uint>(TriangleType.Terrain, j, j - 9, j + 8));
-                Triangles.Add(new Triangle<uint>(TriangleType.Terrain, j, j - 8, j - 9));
-                Triangles.Add(new Triangle<uint>(TriangleType.Terrain, j, j + 9, j - 8));
-                Triangles.Add(new Triangle<uint>(TriangleType.Terrain, j, j + 8, j + 9));
-                if ((j + 1) % (9 + 8) == 0)
-                    j += 9;
+                if (!HasHole(unitidx % 8, unitidx++ / 8))
+                {
+                    Indices.Add(new Triangle<uint>(TriangleType.Terrain, j, j - 9, j + 8));
+                    Indices.Add(new Triangle<uint>(TriangleType.Terrain, j, j - 8, j - 9));
+                    Indices.Add(new Triangle<uint>(TriangleType.Terrain, j, j + 9, j - 8));
+                    Indices.Add(new Triangle<uint>(TriangleType.Terrain, j, j + 8, j + 9));
+                }
+                if ((j + 1) % (9 + 8) == 0) j += 9;
             }
         }
     }
