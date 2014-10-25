@@ -10,19 +10,30 @@ using WoWMap.Geometry;
 
 namespace WoWMap.Layers
 {
+    public enum ADTType { Normal, Objects, Textures };
     public class ADT
     {
+        public ADTType Type { get; private set; }
+
         public string World { get; private set; }
         public int X { get; private set; }
         public int Y { get; private set; }
 
-        public ADT(string filename)
+        private ADT(string filename, ADTType type)
         {
+            switch (type)
+            {
+                case ADTType.Normal: filename += ".adt"; break;
+                case ADTType.Objects: filename += "_obj0.adt"; break;
+                case ADTType.Textures: filename += "_tex0.adt"; break;
+            }
+
             Data = new ChunkData(filename);
+            Type = type;
         }
 
-        public ADT(string world, int x, int y)
-            : this(string.Format(@"World\Maps\{0}\{0}_{1}_{2}.adt", world, x, y))
+        public ADT(string world, int x, int y, ADTType type = ADTType.Normal)
+            : this(string.Format(@"World\Maps\{0}\{0}_{1}_{2}", world, x, y), type)
         {
             World = world;
             X = x;
@@ -31,22 +42,34 @@ namespace WoWMap.Layers
 
         public ChunkData Data { get; private set; }
 
+        public ADT ADTObjects { get; private set; }         // _obj0.adt - Contains information about world objects
+        //public ADT ADTTextures { get; private set; }      // _tex0.adt - Contains information about world textures
+
         public MapChunk[] MapChunks { get; private set; }
         public LiquidChunk Liquid { get; private set; }
 
-        public MHDR MHDR { get; private set; }
-        public MMDX MMDX { get; private set; }
-        public MMID MMID { get; private set; }
-        public MWMO MWMO { get; private set; }
-        public MWID MWID { get; private set; }
-        public MDDF MDDF { get; private set; }
-        public MODF MODF { get; private set; }
+        public MHDR MHDR { get; private set; }      // Header
+        public MMDX MMDX { get; private set; }      // Filenames for doodads
+        public MMID MMID { get; private set; }      // Offsets for doodad filenames
+        public MWMO MWMO { get; private set; }      // Filenames for WMOs
+        public MWID MWID { get; private set; }      // Offsets for WMO filenames
+        public MDDF MDDF { get; private set; }      // Placement information for doodads
+        public MODF MODF { get; private set; }      // Placement information for WMOs
 
         public List<string> DoodadPaths { get; private set; }
         public List<string> ModelPaths { get; private set; }
 
         public void Read()
         {
+            if (Type == ADTType.Normal)
+            {
+                ADTObjects = new ADT(World, X, Y, ADTType.Objects);
+                ADTObjects.Read();
+
+                //ADTTextures = new ADT(World, X, Y, ADTType.Textures);
+                //ADTTextures.Read();
+            }
+
             MapChunks = new MapChunk[16 * 16];
             int mcIdx = 0;
 
@@ -62,12 +85,14 @@ namespace WoWMap.Layers
                         break;
                     case "MMID":
                         MMID = new MMID(subChunk);
+                        ReadDoodads();
                         break;
                     case "MWMO":
                         MWMO = new MWMO(subChunk);
                         break;
                     case "MWID":
                         MWID = new MWID(subChunk);
+                        ReadModels();
                         break;
                     case "MDDF":
                         MDDF = new MDDF(subChunk);
@@ -83,36 +108,34 @@ namespace WoWMap.Layers
                         break;
                 }
             }
-
-            foreach (var mapChunk in MapChunks)
-                mapChunk.GenerateIndices();
-
-            ReadModels();
-            ReadDoodads();
         }
 
+        // TODO: This will probably go wrong one day
         private void ReadModels()
         {
-            if ((MWID == null || MWID.Offsets.Count() == 0) || (MWMO == null || MWMO.Filenames.Count() == 0))
+            if (Type != ADTType.Objects || (MWID == null || MWMO == null))
                 return;
 
             ModelPaths = new List<string>();
             for (int i = 0; i < MWID.Offsets.Length; i++)
-                ModelPaths.Add(MWMO.Filenames[MWID.Offsets[i] / 4]);
+                ModelPaths.Add(MWMO.Filenames[MWID.Offsets[i]]);
         }
 
         private void ReadDoodads()
         {
-            if ((MMID == null || MMID.Offsets.Count() == 0) || (MMDX == null || MMDX.Filenames.Count() == 0))
+            if (Type != ADTType.Objects || (MMID == null || MMDX == null))
                 return;
 
             DoodadPaths = new List<string>();
             for (int i = 0; i < MMID.Offsets.Length; i++)
-                DoodadPaths.Add(MMDX.Filenames[MMID.Offsets[i] / 4]);
+                DoodadPaths.Add(MMDX.Filenames[MMID.Offsets[i]]);
         }
 
         public void SaveObj(string filename = null)
         {
+            if (Type != ADTType.Normal)
+                return;
+
             if (filename == null)
                 filename = string.Format("{0}_{1}_{2}.obj", World, X, Y);
             var vertices = new List<Vector3>();

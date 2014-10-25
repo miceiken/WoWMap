@@ -41,6 +41,7 @@
   <ItemGroup>
     <Compile Include="Chunks\MCRD.cs" />
     <Compile Include="Chunks\MCRW.cs" />
+    <Compile Include="Chunks\MD20.cs" />
     <Compile Include="Chunks\MLIQ.cs" />
     <Compile Include="Chunks\MODD.cs" />
     <Compile Include="Chunks\MODN.cs" />
@@ -53,10 +54,12 @@
     <Compile Include="Chunks\MOPY.cs" />
     <Compile Include="Chunks\MOVI.cs" />
     <Compile Include="Chunks\MOVT.cs" />
+    <Compile Include="Geometry\Transformation.cs" />
     <Compile Include="Layers\ADT.cs" />
     <Compile Include="Archive\CASC.cs" />
     <Compile Include="Archive\DBC.cs" />
     <Compile Include="Archive\Map.cs" />
+    <Compile Include="Layers\M2.cs" />
     <Compile Include="Layers\WMORoot.cs" />
     <Compile Include="Readers\ChunkData.cs" />
     <Compile Include="Readers\ChunkHeader.cs" />

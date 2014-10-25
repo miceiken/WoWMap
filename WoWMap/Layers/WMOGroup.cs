@@ -15,13 +15,20 @@ namespace WoWMap.Layers
         public WMOGroup(string filename)
         {
             Filename = filename;
-            Chunk = new ChunkData(filename).GetChunkByName("MOGP");
-            
+
+            var mainChunk = new ChunkData(filename);
+            MOGP = new MOGP(Chunk = mainChunk.GetChunkByName("MOGP"));
+
+            var stream = Chunk.GetStream();
+            stream.Seek(Chunk.Offset + MOGP.ChunkHeaderSize, SeekOrigin.Begin);
+            SubData = new ChunkData(stream, Chunk.Size - MOGP.ChunkHeaderSize);
+
             Read();
         }
 
         public string Filename { get; private set; }
         public Chunk Chunk { get; private set; }
+        public ChunkData SubData { get; private set; }
 
         public MOGP MOGP { get; private set; }
         public MOPY MOPY { get; private set; }
@@ -33,42 +40,32 @@ namespace WoWMap.Layers
 
         public void Read()
         {
-            var stream = Chunk.GetStream();
-            var reader = new BinaryReader(stream);
-
-            MOGP = new MOGP(Chunk);
-
-            var offset = Chunk.Offset + MOGP.ChunkHeaderSize;
-            while (offset < (Chunk.Offset + Chunk.Size))
+            foreach (var subChunk in SubData.Chunks)
             {
-                stream.Seek(offset, SeekOrigin.Begin);
-
-                var subChunkHeader = new ChunkHeader(reader);
-                var subchunk = new Chunk(subChunkHeader, stream);
-                switch (subChunkHeader.Name)
+                switch (subChunk.Name)
                 {
                     case "MOPY":
-                        MOPY = new MOPY(subchunk);
+                        MOPY = new MOPY(subChunk);
                         break;
                     case "MOVI":
-                        MOVI = new MOVI(subchunk);
+                        MOVI = new MOVI(subChunk);
                         break;
                     case "MOVT":
-                        MOVT = new MOVT(subchunk);
+                        MOVT = new MOVT(subChunk);
                         break;
                     case "MONR":
-                        MONR = new MONR(subchunk);
+                        MONR = new MONR(subChunk);
                         break;
                     case "MODR":
-                        MODR = new MODR(subchunk);
+                        MODR = new MODR(subChunk);
                         break;
                     case "MLIQ":
-                        MLIQ = new MLIQ(subchunk);
+                        MLIQ = new MLIQ(subChunk);
                         break;
                 }
-
-                offset += 8 + subChunkHeader.Size;
             }
+
+            // Do shit
         }
     }
 }

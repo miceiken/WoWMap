@@ -35,28 +35,32 @@ namespace WoWMap.Layers
 
         public void Read()
         {
-            // Tile Table
-            var chunk = Data.GetChunkByName("MAIN");
-            if (chunk == null) return;
+            foreach (var subChunk in Data.Chunks)
+            {
+                switch (subChunk.Name)
+                {
+                    case "MAIN":
+                        MAIN = new MAIN(subChunk);
 
-            IsValid = true;
+                        IsValid = true;
 
-            MAIN = new MAIN(chunk);
+                        TileTable = new bool[64, 64];
+                        for (int y = 0; y < 64; y++)
+                            for (int x = 0; x < 64; x++)
+                                TileTable[x, y] = MAIN.Entries[x, y].Flags.HasFlag(MAIN.MAINFlags.HasADT);                        
+                        break;
 
-            TileTable = new bool[64, 64];
-            for (int y = 0; y < 64; y++)
-                for (int x = 0; x < 64; x++)
-                    TileTable[x, y] = MAIN.Entries[x, y].Flags.HasFlag(MAIN.MAINFlags.HasADT);
+                    case "MWMO":
+                        MWMO = new MWMO(subChunk);
+                        break;
 
-            // Global Model
-            var fileChunk = Data.GetChunkByName("MWMO");
-            var defChunk = Data.GetChunkByName("MODF");
-            if (fileChunk == null || defChunk == null) return;
+                    case "MODF":
+                        MODF = new MODF(subChunk);
+                        break;
+                }
+            }
 
-            IsGlobalModel = true;
-
-            MODF = new MODF(defChunk);
-            MWMO = new MWMO(fileChunk);
+            IsGlobalModel = (MODF != null && MWMO != null);
         }
     }
 }

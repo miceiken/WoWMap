@@ -13,15 +13,15 @@ namespace WoWMap.Chunks
         public MCRD(Chunk c, uint h) : base(c, h) { }
         public MCRD(Chunk c) : base(c, c.Size) { }
 
-        public uint[] MDDFEntries;
+        public uint[] MDDFEntryIndex;
 
         public override void Read()
         {
             var br = Chunk.GetReader();
 
-            MDDFEntries = new uint[Chunk.Size / 4];
-            for (int i = 0; i < MDDFEntries.Length; i++)
-                MDDFEntries[i] = br.ReadUInt32();
+            MDDFEntryIndex = new uint[Chunk.Size / 4];
+            for (int i = 0; i < MDDFEntryIndex.Length; i++)
+                MDDFEntryIndex[i] = br.ReadUInt32();
         }
     }
 }

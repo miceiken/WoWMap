@@ -11,69 +11,42 @@ namespace WoWMap.Layers
 {
     public class MapChunk
     {
-        public MapChunk(ADT adt, Chunk chunk)
+        public MapChunk(ADT adt, Chunk chunk, bool isObj0 = false)
         {
             ADT = adt;
             Chunk = chunk;
 
-            MCNK = new MCNK(chunk);
-            //SubData = new ChunkData(chunk.GetStream());
-            FindSubChunks();
+            var stream = chunk.GetStream();
+            if (adt.Type == ADTType.Normal)
+            {
+                MCNK = new MCNK(chunk);
+                Holes = MCNK.Flags.HasFlag(MCNK.MCNKFlags.HighResolutionHoles) ? HighResHoles : TransformToHighRes(MCNK.Holes);
 
-            Holes = MCNK.Flags.HasFlag(MCNK.MCNKFlags.HighResolutionHoles) ?
-                HighResHoles : TransformToHighRes(MCNK.Holes);
+                stream.Seek(chunk.Offset + MCNK.ChunkHeaderSize, SeekOrigin.Begin);
+                SubData = new ChunkData(stream, chunk.Size - MCNK.ChunkHeaderSize);
+            }
+            else
+                SubData = new ChunkData(stream, chunk.Size);
 
-            GenerateVertices();
+            Read();
         }
 
         public ADT ADT { get; private set; }
         public Chunk Chunk { get; private set; }
         public ChunkData SubData { get; private set; }
+
         public MCNK MCNK { get; private set; }
         public MCVT MCVT { get; private set; }
+
+        public MCRD MCRD { get; private set; }
+        public MCRW MCRW { get; private set; }
+
         public Vector3[] Vertices { get; private set; }
         public List<Triangle<uint>> Indices { get; private set; }
 
         public int Index
         {
             get { return (int)(MCNK.IndexX + (16 * MCNK.IndexY)); }
-        }
-
-        public void FindSubChunks()
-        {
-            var stream = Chunk.GetStream();
-            var reader = new BinaryReader(stream);
-
-            var offset = Chunk.Offset + MCNK.ChunkHeaderSize;
-            while (offset < (Chunk.Offset + Chunk.Size))
-            {
-                stream.Seek(offset, SeekOrigin.Begin);
-
-                var subChunkHeader = new ChunkHeader(reader);
-                var subchunk = new Chunk(subChunkHeader, stream);
-                switch (subChunkHeader.Name)
-                {
-                    case "MCVT":
-                        MCVT = new MCVT(subchunk);
-                        break;
-                    case "MCRD": // TODO: implement http://pxr.dk/wowdev/wiki/index.php?title=Cataclysm#MCRD_.28optional.29
-                        break;
-                    case "MCRW": // TODO: implement
-                        break;
-
-                    case "MCLV":
-                    case "MCCV":
-                    case "MCNR":
-                    case "MCLY":
-                    case "MCRF":
-                    case "MCAL":
-                    case "MCLQ":
-                    case "MCSE":
-                        break;
-                }
-
-                offset += 8 + subChunkHeader.Size;
-            }
         }
 
         #region Holes
@@ -109,10 +82,36 @@ namespace WoWMap.Layers
 
         #endregion
 
+        private void Read()
+        {
+            foreach (var subChunk in SubData.Chunks)
+            {
+                switch (subChunk.Name)
+                {
+                    case "MCVT":
+                        MCVT = new MCVT(subChunk);
+
+                        GenerateVertices();
+                        GenerateIndices();
+                        break;
+
+                    case "MCRD":
+                        MCRD = new MCRD(subChunk);
+
+                        GenerateDoodads();
+                        break;
+
+                    case "MCRW":
+                        MCRW = new MCRW(subChunk);
+
+                        GenerateWMOs();
+                        break;
+                }
+            }
+        }
+
         private void GenerateVertices()
         {
-            if (MCVT == null) return;
-
             Vertices = new Vector3[145];
 
             var relPos = new Vector3(Constants.MaxXY - MCNK.Position.Y, Constants.MaxXY - MCNK.Position.X, MCNK.Position.Z);
@@ -129,8 +128,6 @@ namespace WoWMap.Layers
 
         public void GenerateIndices()
         {
-            if (MCVT == null || Vertices == null || Vertices.Count() == 0) return;
-
             Indices = new List<Triangle<uint>>(64 * 4);
 
             //        var triangleType = TriangleType.Terrain;
@@ -155,6 +152,52 @@ namespace WoWMap.Layers
                 }
                 if ((j + 1) % (9 + 8) == 0) j += 9;
             }
+        }
+
+        private void GenerateWMOs()
+        {
+            if (ADT.Type != ADTType.Objects || ADT.MODF == null)
+                return;
+
+            var drawn = new HashSet<uint>();
+            for (int i = 0; i < MCRW.MODFEntryIndex.Length; i++)
+            {
+                var modfEntry = ADT.MODF.Entries[MCRW.MODFEntryIndex[i]];
+                if (drawn.Contains(modfEntry.UniqueId))
+                    continue;
+                drawn.Add(modfEntry.UniqueId);
+
+                if (modfEntry.MWIDEntryIndex >= ADT.ModelPaths.Count)
+                    continue;
+
+                var path = ADT.ModelPaths[(int)modfEntry.MWIDEntryIndex];
+                var WMO = new WMORoot(path);
+            }
+
+            // TODO: Make WMO geometry
+        }
+
+        private void GenerateDoodads()
+        {
+            if (ADT.Type != ADTType.Objects || ADT.MDDF == null)
+                return;
+
+            var drawn = new HashSet<uint>();
+            for (int i = 0; i < MCRD.MDDFEntryIndex.Length; i++)
+            {
+                var mddfEntry = ADT.MDDF.Entries[MCRD.MDDFEntryIndex[i]];
+                if (drawn.Contains(mddfEntry.UniqueId))
+                    continue;
+                drawn.Add(mddfEntry.UniqueId);
+
+                if (mddfEntry.MMIDEntryIndex >= ADT.DoodadPaths.Count)
+                    continue;
+
+                var path = ADT.DoodadPaths[(int)mddfEntry.MMIDEntryIndex];
+                var doodad = new M2(path);
+            }
+
+            // TODO: Make Doodad geometry
         }
     }
 }

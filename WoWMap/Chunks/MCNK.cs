@@ -43,7 +43,7 @@ namespace WoWMap.Chunks
         public uint ofsMCLV;                                        // 0x078
         private uint unused;                                        // 0x07C
 
-        public static readonly int ChunkHeaderSize = 128;
+        public static readonly uint ChunkHeaderSize = 128;
 
         [Flags]
         public enum MCNKFlags : uint

@@ -27,7 +27,7 @@ namespace WoWMap.Chunks
 
         public class MDDFEntry
         {
-            public uint MMIDEntry;
+            public uint MMIDEntryIndex;
             public uint UniqueId;
             public Vector3 Position;
             public Vector3 Rotation;
@@ -38,7 +38,7 @@ namespace WoWMap.Chunks
             {
                 return new MDDFEntry
                 {
-                    MMIDEntry = br.ReadUInt32(),
+                    MMIDEntryIndex = br.ReadUInt32(),
                     UniqueId = br.ReadUInt32(),
                     Position = new Vector3(br),
                     Rotation = new Vector3(br),

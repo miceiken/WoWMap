@@ -14,37 +14,52 @@ namespace WoWMap.Chunks
         public MODF(Chunk c, uint h) : base(c, h) { }
         public MODF(Chunk c) : base(c, c.Size) { }
 
-        public uint MWIDEntry;
-        public uint UniqueId;
-        public Vector3 Position;
-        public Vector3 Rotation;
-        public Vector3 LowerBounds;
-        public Vector3 UpperBounds;
-        public MODFFlags Flags;
-        public ushort DoodadSet;
-        public ushort NameSet;
-        private ushort padding;
-
-        [Flags]
-        public enum MODFFlags : ushort
-        {
-            Destroyable = 1
-        };
+        public MODFEntry[] Entries;
 
         public override void Read()
         {
             var br = Chunk.GetReader();
 
-            MWIDEntry = br.ReadUInt32();
-            UniqueId = br.ReadUInt32();
-            Position = new Vector3(br);
-            Rotation = new Vector3(br);
-            LowerBounds = new Vector3(br);
-            UpperBounds = new Vector3(br);
-            Flags = (MODFFlags)br.ReadUInt16();
-            DoodadSet = br.ReadUInt16();
-            NameSet = br.ReadUInt16();
-            padding = br.ReadUInt16();
+            Entries = new MODFEntry[Chunk.Size / 64];
+            for (int i = 0; i < Entries.Length; i++)
+                Entries[i] = MODFEntry.Read(br);
+        }
+
+        public class MODFEntry
+        {
+            public uint MWIDEntryIndex;
+            public uint UniqueId;
+            public Vector3 Position;
+            public Vector3 Rotation;
+            public Vector3 LowerBounds;
+            public Vector3 UpperBounds;
+            public MODFFlags Flags;
+            public ushort DoodadSet;
+            public ushort NameSet;
+            private ushort padding;
+
+            [Flags]
+            public enum MODFFlags : ushort
+            {
+                Destroyable = 1
+            };
+
+            public static MODFEntry Read(BinaryReader br)
+            {
+                return new MODFEntry
+                {
+                    MWIDEntryIndex = br.ReadUInt32(),
+                    UniqueId = br.ReadUInt32(),
+                    Position = new Vector3(br),
+                    Rotation = new Vector3(br),
+                    LowerBounds = new Vector3(br),
+                    UpperBounds = new Vector3(br),
+                    Flags = (MODFFlags)br.ReadUInt16(),
+                    DoodadSet = br.ReadUInt16(),
+                    NameSet = br.ReadUInt16(),
+                    padding = br.ReadUInt16(),
+                };
+            }
         }
     }
 }

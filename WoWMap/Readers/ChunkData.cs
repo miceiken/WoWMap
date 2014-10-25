@@ -10,15 +10,20 @@ namespace WoWMap
 {
     public class ChunkData
     {
-        public ChunkData(Stream stream)
-        {
+        public ChunkData(Stream stream, uint chunkSize = 0)
+        {            
             Stream = stream;
             Chunks = new List<Chunk>();
+
+            var maxRead = (uint)stream.Position + chunkSize;
+            if (chunkSize == 0)
+                maxRead = (uint)stream.Length;
+            maxRead = Math.Min(maxRead, (uint)stream.Length);
 
             var br = new BinaryReader(stream);
             var baseOffset = (uint)stream.Position;
             var calcOffset = 0u;
-            while ((calcOffset + baseOffset) < stream.Length && (calcOffset < stream.Length))
+            while ((calcOffset + baseOffset) < maxRead && (calcOffset < maxRead))
             {
                 var header = new ChunkHeader(br);
                 calcOffset += 8; // Add 8 bytes as we read header name + size
@@ -26,7 +31,7 @@ namespace WoWMap
                 calcOffset += header.Size; // Move past the chunk
 
                 // We seek from our current position to save some time
-                if ((calcOffset + baseOffset) < stream.Length && calcOffset < stream.Length)
+                if ((calcOffset + baseOffset) < maxRead && calcOffset < maxRead)
                     stream.Seek(header.Size, SeekOrigin.Current);
             }
         }

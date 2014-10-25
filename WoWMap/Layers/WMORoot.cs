@@ -18,7 +18,7 @@ namespace WoWMap.Layers
             Filename = filename;
             Data = new ChunkData(filename);
 
-            Read();            
+            Read();
         }
 
         public string Filename { get; private set; }
@@ -35,12 +35,38 @@ namespace WoWMap.Layers
 
         public void Read()
         {
-            MOHD = new MOHD(Data.GetChunkByName("MOHD"));
-            MOGN = new MOGN(Data.GetChunkByName("MOGN"));
-            MOGI = new MOGI(Data.GetChunkByName("MOGI"));
-            MODD = new MODD(Data.GetChunkByName("MODD"));
-            MODN = new MODN(Data.GetChunkByName("MODN"));
-            MODS = new MODS(Data.GetChunkByName("MODS"));
+            foreach (var subChunk in Data.Chunks)
+            {
+                switch (subChunk.Name)
+                {
+                    case "MOHD":
+                        MOHD = new MOHD(subChunk);
+                        break;
+                    case "MOGN":
+                        MOGN = new MOGN(subChunk);
+                        break;
+                    case "MOGI":
+                        MOGI = new MOGI(subChunk);
+                        break;
+                    case "MODD":
+                        MODD = new MODD(subChunk);
+                        break;
+                    case "MODN":
+                        MODN = new MODN(subChunk);
+                        break;
+                    case "MODS":
+                        MODS = new MODS(subChunk);
+                        break;
+                }
+            }
+
+            ReadGroups();
+        }
+
+        public void ReadGroups()
+        {
+            if (MOHD == null || MOHD.nGroups == 0)
+                return;
 
             var directory = Filename.Substring(0, Filename.LastIndexOf('.'));
             Groups = new List<WMOGroup>();

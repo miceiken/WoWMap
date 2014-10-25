@@ -22,8 +22,10 @@ namespace WoWMap.Layers
 
         public ADT ADT { get; private set; }
         public Chunk Chunk { get; private set; }
+
         public MH2O MH2O { get; private set; }
         public MH2O.MH2OHeightmapData[] HeightMaps { get; private set; }
+
         public List<Vector3> Vertices { get; private set; }
         public List<Triangle<uint>> Triangles { get; private set; }
 

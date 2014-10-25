@@ -54,14 +54,6 @@ namespace WoWMap
             return Encoding.ASCII.GetString(buffer.ToArray());
         }
 
-        public static Vector3[] Transform(Vector3[] verts, int idx)
-        {
-            var tVerts = new Vector3[verts.Length];
-            for (int i = 0; i < verts.Length; i++)
-                tVerts[i] = new Vector3(-Constants.ChunkSize * (idx % 16), verts[i].Z, -Constants.ChunkSize * (idx / 16));
-            return tVerts;
-        }
-
         public static Vector3 ReadVector3(this BinaryReader br)
         {
             return new Vector3(br);
