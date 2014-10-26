@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using WoWMap.Readers;
 using WoWMap.Geometry;
+using SharpDX;
 
 namespace WoWMap.Chunks
 {
@@ -40,8 +41,8 @@ namespace WoWMap.Chunks
                 {
                     MMIDEntryIndex = br.ReadUInt32(),
                     UniqueId = br.ReadUInt32(),
-                    Position = new Vector3(br),
-                    Rotation = new Vector3(br),
+                    Position = br.ReadVector3(),
+                    Rotation = br.ReadVector3(),
                     Scale = br.ReadUInt16(),
                     Flags = (MDDFFlags)br.ReadUInt16(),
                 };

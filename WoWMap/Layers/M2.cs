@@ -7,6 +7,7 @@ using System.IO;
 using WoWMap.Archive;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
+using SharpDX;
 
 namespace WoWMap.Layers
 {
@@ -28,6 +29,8 @@ namespace WoWMap.Layers
 
         public MD20 MD20 { get; private set; }
 
+        public bool IsCollidable { get; private set; }
+
         public Vector3[] Vertices { get; private set; }
         public Vector3[] Normals { get; private set; }
         public Triangle<ushort>[] Indices { get; private set; }
@@ -39,6 +42,8 @@ namespace WoWMap.Layers
                 || MD20.OffsetBoundingTriangles == 0
                 || MD20.BoundingRadius == 0.0f)
                 return;
+
+            IsCollidable = true;
 
             ReadVertices();
             ReadIndices();

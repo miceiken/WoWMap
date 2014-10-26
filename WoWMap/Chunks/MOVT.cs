@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using SharpDX;
 using WoWMap.Geometry;
 using WoWMap.Readers;
 

@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
+using SharpDX;
 
 namespace WoWMap.Layers
 {
@@ -43,6 +44,12 @@ namespace WoWMap.Layers
 
         public Vector3[] Vertices { get; private set; }
         public List<Triangle<uint>> Indices { get; private set; }
+
+        public List<Vector3> DoodadVertices { get; private set; }
+        public List<Triangle<uint>> DoodadIndices { get; private set; }
+
+        public List<Vector3> WMOVertices { get; private set; }
+        public List<Triangle<uint>> WMOIndices { get; private set; }
 
         public int Index
         {
@@ -110,6 +117,8 @@ namespace WoWMap.Layers
             }
         }
 
+        #region MCVT - HeightMap
+
         private void GenerateVertices()
         {
             Vertices = new Vector3[145];
@@ -154,6 +163,10 @@ namespace WoWMap.Layers
             }
         }
 
+        #endregion
+
+        #region MCRW/MODF - WMOs
+
         private void GenerateWMOs()
         {
             if (ADT.Type != ADTType.Objects || ADT.MODF == null)
@@ -162,20 +175,76 @@ namespace WoWMap.Layers
             var drawn = new HashSet<uint>();
             for (int i = 0; i < MCRW.MODFEntryIndex.Length; i++)
             {
-                var modfEntry = ADT.MODF.Entries[MCRW.MODFEntryIndex[i]];
-                if (drawn.Contains(modfEntry.UniqueId))
+                var wmo = ADT.MODF.Entries[MCRW.MODFEntryIndex[i]];
+                if (drawn.Contains(wmo.UniqueId))
                     continue;
-                drawn.Add(modfEntry.UniqueId);
+                drawn.Add(wmo.UniqueId);
 
-                if (modfEntry.MWIDEntryIndex >= ADT.ModelPaths.Count)
+                if (wmo.MWIDEntryIndex >= ADT.ModelPaths.Count)
                     continue;
 
-                var path = ADT.ModelPaths[(int)modfEntry.MWIDEntryIndex];
-                var WMO = new WMORoot(path);
+                var path = ADT.ModelPaths[(int)wmo.MWIDEntryIndex];
+                var model = new WMORoot(path);
+
+                InsertWMOGeometry(wmo, model);
             }
-
-            // TODO: Make WMO geometry
         }
+
+        private void InsertWMOGeometry(MODF.MODFEntry wmo, WMORoot model)
+        {
+            if (WMOVertices == null)
+                WMOVertices = new List<Vector3>(1000);
+            if (WMOIndices == null)
+                WMOIndices = new List<Triangle<uint>>(1000);
+
+            var transform = Transformation.GetTransformation(wmo.Position, wmo.Rotation);
+            foreach (var group in model.Groups)
+            {
+                var vo = (uint)WMOVertices.Count;
+                foreach (var v in group.MOVT.Vertices)
+                    WMOVertices.Add((Vector3)Vector3.Transform(v, transform));
+
+                for (int i = 0; i < group.MOVI.Indices.Length; i++)
+                {
+                    if (((byte)group.MOPY.Entries[i].Flags & 0x04) != 0 && group.MOPY.Entries[i].MaterialId != 0xFF)
+                        continue;
+
+                    var idx = group.MOVI.Indices[i];
+                    WMOIndices.Add(new Triangle<uint>(TriangleType.Wmo, vo + idx.V0, vo + idx.V1, vo + idx.V2));
+                }
+            }
+            
+            if (wmo.DoodadSet >= 0 && wmo.DoodadSet < model.MODS.Entries.Length)
+            {
+                var set = model.MODS.Entries[wmo.DoodadSet];
+                var instances = new List<MODD.MODDEntry>((int)set.nDoodads);
+                for (uint i = set.FirstInstanceIndex; i < (set.nDoodads + set.FirstInstanceIndex); i++)
+                {
+                    if (i >= model.MODD.Entries.Length)
+                        break;
+                    instances.Add(model.MODD.Entries[(int)i]);
+                }
+
+                foreach (var instance in instances)
+                {
+                    var path = model.MODN.Filenames[instance.ofsMODN];
+                    var doodad = new M2(path);
+
+                    if (!doodad.IsCollidable)
+                        continue;
+
+                    var vo = (uint)WMOVertices.Count;
+                    foreach (var v in doodad.Vertices)
+                        WMOVertices.Add((Vector3)Vector3.Transform(v, transform));
+                    foreach (var t in doodad.Indices)
+                        WMOIndices.Add(new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo));
+                }
+            }
+        }
+
+        #endregion
+
+        #region MCRD/MDDF - Doodads
 
         private void GenerateDoodads()
         {
@@ -185,19 +254,34 @@ namespace WoWMap.Layers
             var drawn = new HashSet<uint>();
             for (int i = 0; i < MCRD.MDDFEntryIndex.Length; i++)
             {
-                var mddfEntry = ADT.MDDF.Entries[MCRD.MDDFEntryIndex[i]];
-                if (drawn.Contains(mddfEntry.UniqueId))
+                var doodad = ADT.MDDF.Entries[MCRD.MDDFEntryIndex[i]];
+                if (drawn.Contains(doodad.UniqueId))
                     continue;
-                drawn.Add(mddfEntry.UniqueId);
+                drawn.Add(doodad.UniqueId);
 
-                if (mddfEntry.MMIDEntryIndex >= ADT.DoodadPaths.Count)
+                if (doodad.MMIDEntryIndex >= ADT.DoodadPaths.Count)
                     continue;
 
-                var path = ADT.DoodadPaths[(int)mddfEntry.MMIDEntryIndex];
-                var doodad = new M2(path);
+                var path = ADT.DoodadPaths[(int)doodad.MMIDEntryIndex];
+                var model = new M2(path);
+
+                if (!model.IsCollidable)
+                    continue;
+
+                if (DoodadVertices == null)
+                    DoodadVertices = new List<Vector3>((MCRD.MDDFEntryIndex.Length / 4) * model.Vertices.Length);
+                if (DoodadIndices == null)
+                    DoodadIndices = new List<Triangle<uint>>((MCRD.MDDFEntryIndex.Length / 4) * model.Indices.Length);
+
+                var transform = Transformation.GetTransformation(doodad.Position, doodad.Rotation, doodad.Scale);
+                var vo = (uint)DoodadVertices.Count;
+                foreach (var v in model.Vertices)
+                    DoodadVertices.Add((Vector3)Vector3.Transform(v, transform)); // this looks stupid tho?
+                foreach (var t in model.Indices)
+                    DoodadIndices.Add(new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo));
             }
-
-            // TODO: Make Doodad geometry
         }
+
+        #endregion
     }
 }

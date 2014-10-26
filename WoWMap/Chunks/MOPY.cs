@@ -13,26 +13,41 @@ namespace WoWMap.Chunks
         public MOPY(Chunk c, uint h) : base(c, h) { }
         public MOPY(Chunk c) : base(c, c.Size) { }
 
-        public MOPYFlags Flags;
-        public byte MaterialId;
-
-        [Flags]
-        public enum MOPYFlags : byte
-        {
-            NoCamCollide,
-            Detail,
-            Collision,
-            Hint,
-            Render,
-            CollideHit
-        };
+        public MOPYEntry[] Entries;
 
         public override void Read()
         {
             var br = Chunk.GetReader();
 
-            Flags = (MOPYFlags)br.ReadByte();
-            MaterialId = br.ReadByte();
+            Entries = new MOPYEntry[Chunk.Size / 2];
+            for (int i = 0; i < Entries.Length; i++)
+                Entries[i] = MOPYEntry.Read(br);
+        }
+
+        public class MOPYEntry
+        {
+            public MOPYFlags Flags;
+            public byte MaterialId;
+
+            [Flags]
+            public enum MOPYFlags : byte
+            {
+                NoCamCollide,
+                Detail,
+                Collision,
+                Hint,
+                Render,
+                CollideHit
+            };
+
+            public static MOPYEntry Read(BinaryReader br)
+            {
+                return new MOPYEntry
+                {
+                    Flags = (MOPYFlags)br.ReadByte(),
+                    MaterialId = br.ReadByte(),
+                };
+            }
         }
     }
 }

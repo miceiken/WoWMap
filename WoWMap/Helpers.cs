@@ -5,20 +5,25 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using WoWMap.Geometry;
+using SharpDX;
 
 namespace WoWMap
 {
     public static class Helpers
     {
-        public static IEnumerable<string> SplitStrings(byte[] data)
+        public static Dictionary<uint, string> GetIndexedStrings(byte[] data)
         {
+            var ret = new Dictionary<uint, string>();
+
             var sb = new StringBuilder();
-            for (int i = 0; i < data.Length; i++)
+            var offset = 0u;
+            for (uint i = 0; i < data.Length; i++)
             {
                 if (data[i] == '\0') // Terminate string
                 {
                     if (sb.Length > 1)
-                        yield return sb.ToString();
+                        ret.Add(offset, sb.ToString());
+                    offset = i+1;
                     sb = new StringBuilder();
 
                     continue;
@@ -26,6 +31,8 @@ namespace WoWMap
 
                 sb.Append((char)data[i]);
             }
+
+            return ret;
         }
 
         public static string ReadCString(byte[] data)
@@ -56,7 +63,7 @@ namespace WoWMap
 
         public static Vector3 ReadVector3(this BinaryReader br)
         {
-            return new Vector3(br);
+            return new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
         }
     }
 }

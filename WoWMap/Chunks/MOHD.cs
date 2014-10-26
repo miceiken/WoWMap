@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using WoWMap.Geometry;
 using WoWMap.Readers;
+using SharpDX;
 
 namespace WoWMap.Chunks
 {
@@ -47,7 +48,7 @@ namespace WoWMap.Chunks
             WmoId = br.ReadUInt32();
             BoundingBox = new Vector3[2];
             for (int i = 0; i < 2; i++)
-                BoundingBox[i] = new Vector3(br);
+                BoundingBox[i] = br.ReadVector3();
             Flags = br.ReadUInt32();
         }
     }

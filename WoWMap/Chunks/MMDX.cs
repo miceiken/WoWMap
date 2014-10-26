@@ -22,14 +22,7 @@ namespace WoWMap.Chunks
             var br = Chunk.GetReader();
 
             var chunk = br.ReadBytes((int)Chunk.Size);
-            _filenames = Helpers.SplitStrings(chunk).ToArray();
-
-            Filenames = new Dictionary<uint, string>();
-            for (uint i = 0, off = 0; i < _filenames.Length; i++)
-            {
-                Filenames.Add(off, _filenames[i]);
-                off += (uint)_filenames[i].Length + 1;
-            }
+            Filenames = Helpers.GetIndexedStrings(chunk);
         }
     }
 }

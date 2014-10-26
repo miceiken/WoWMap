@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using WoWMap.Geometry;
 using WoWMap.Readers;
+using SharpDX;
 
 namespace WoWMap.Chunks
 {
@@ -87,7 +88,7 @@ namespace WoWMap.Chunks
             nSoundEmitters = br.ReadUInt32();
             ofsMCLQ = br.ReadUInt32();
             nMCLQ = br.ReadUInt32();
-            Position = new Vector3(br);
+            Position = br.ReadVector3();
             ofsMCCV = br.ReadUInt32();
             ofsMCLV = br.ReadUInt32();
             unused = br.ReadUInt32();

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using WoWMap.Geometry;
 using WoWMap.Readers;
+using SharpDX;
 
 namespace WoWMap.Chunks
 {

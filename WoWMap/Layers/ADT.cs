@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
+using SharpDX;
 
 namespace WoWMap.Layers
 {
@@ -141,11 +142,23 @@ namespace WoWMap.Layers
             var vertices = new List<Vector3>();
             var triangles = new List<Triangle<uint>>();
 
-            foreach (var mapChunk in MapChunks)
+            var sources = new ADT[] { this, ADTObjects, /* ADTTextures */ };
+            foreach (var source in sources)
             {
-                var vo = (uint)vertices.Count;
-                vertices.AddRange(mapChunk.Vertices);
-                triangles.AddRange(mapChunk.Indices.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
+                foreach (var mapChunk in source.MapChunks)
+                {
+                    var subVertices = new IEnumerable<Vector3>[] { mapChunk.Vertices, mapChunk.WMOVertices, mapChunk.DoodadVertices };
+                    var subIndices = new IEnumerable<Triangle<uint>>[] { mapChunk.Indices, mapChunk.WMOIndices, mapChunk.WMOIndices };
+                    for (int i = 0; i < 3; i++)
+                    {
+                        if (subVertices[i] == null || subIndices[i] == null)
+                            continue;
+
+                        var vo = (uint)vertices.Count;
+                        vertices.AddRange(subVertices[i]);
+                        triangles.AddRange(subIndices[i].Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
+                    }
+                }
             }
 
             using (var sw = new StreamWriter(filename, false))

@@ -19,7 +19,7 @@ namespace WoWMap.Chunks
             var br = Chunk.GetReader();
 
             var chunk = br.ReadBytes((int)Chunk.Size);
-            GroupNames = Helpers.SplitStrings(chunk).ToArray();
+            GroupNames = Helpers.GetIndexedStrings(chunk).Values.ToArray();
         }
     }
 }
