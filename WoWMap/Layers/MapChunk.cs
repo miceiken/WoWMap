@@ -197,7 +197,7 @@ namespace WoWMap.Layers
             if (WMOIndices == null)
                 WMOIndices = new List<Triangle<uint>>(1000);
 
-            var transform = Transformation.GetTransformation(wmo.Position, wmo.Rotation);
+            var transform = Transformation.GetWmoTransform(wmo.Position, wmo.Rotation);
             foreach (var group in model.Groups)
             {
                 var vo = (uint)WMOVertices.Count;
@@ -227,15 +227,18 @@ namespace WoWMap.Layers
 
                 foreach (var instance in instances)
                 {
-                    var path = model.MODN.Filenames[instance.ofsMODN];
-                    var doodad = new M2(path);
+                    string path;
+                    if (!model.MODN.Filenames.TryGetValue(instance.ofsMODN, out path))
+                        continue;
 
+                    var doodad = new M2(path);
                     if (!doodad.IsCollidable)
                         continue;
 
+                    var doodadTransform = Transformation.GetWmoDoodadTransformation(instance, wmo);
                     var vo = (uint)WMOVertices.Count;
                     foreach (var v in doodad.Vertices)
-                        WMOVertices.Add((Vector3)Vector3.Transform(v, transform));
+                        WMOVertices.Add((Vector3)Vector3.Transform(v, doodadTransform));
                     foreach (var t in doodad.Indices)
                         WMOIndices.Add(new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo));
                 }
@@ -273,12 +276,12 @@ namespace WoWMap.Layers
                 if (DoodadIndices == null)
                     DoodadIndices = new List<Triangle<uint>>((MCRD.MDDFEntryIndex.Length / 4) * model.Indices.Length);
 
-                var transform = Transformation.GetTransformation(doodad.Position, doodad.Rotation, doodad.Scale);
+                var transform = Transformation.GetDoodadTransform(doodad.Position, doodad.Rotation, doodad.Scale / 1024.0f);
                 var vo = (uint)DoodadVertices.Count;
                 foreach (var v in model.Vertices)
-                    DoodadVertices.Add((Vector3)Vector3.Transform(v, transform)); // this looks stupid tho?
+                    DoodadVertices.Add((Vector3)Vector3.Transform(v, transform));
                 foreach (var t in model.Indices)
-                    DoodadIndices.Add(new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo));
+                    DoodadIndices.Add(new Triangle<uint>(TriangleType.Doodad, t.V1 + vo, t.V0 + vo, t.V2 + vo));
             }
         }
 
