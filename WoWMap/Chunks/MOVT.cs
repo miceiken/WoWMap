@@ -23,7 +23,7 @@ namespace WoWMap.Chunks
 
             Vertices = new Vector3[Chunk.Size / 12];
             for (int i = 0; i < Vertices.Length; i++)
-                Vertices[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), -br.ReadSingle()); // br.ReadVector3();
+                Vertices[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), -br.ReadSingle());
         }
     }
 }

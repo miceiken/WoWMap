@@ -143,23 +143,43 @@ namespace WoWMap.Layers
             var triangles = new List<Triangle<uint>>();
 
             var sources = new ADT[] { this, ADTObjects, /* ADTTextures */ };
-            foreach (var source in sources)
-            {
-                foreach (var mapChunk in source.MapChunks)
-                {
-                    var subVertices = new IEnumerable<Vector3>[] { mapChunk.Vertices, mapChunk.WMOVertices, mapChunk.DoodadVertices };
-                    var subIndices = new IEnumerable<Triangle<uint>>[] { mapChunk.Indices, mapChunk.WMOIndices, mapChunk.WMOIndices };
-                    for (int i = 0; i < 3; i++)
-                    {
-                        if (subVertices[i] == null || subIndices[i] == null)
-                            continue;
+            //foreach (var source in sources)
+            //{
+            //    foreach (var mapChunk in source.MapChunks)
+            //    {
+            //        var subVertices = new IEnumerable<Vector3>[] { mapChunk.Vertices, mapChunk.WMOVertices, mapChunk.DoodadVertices };
+            //        var subIndices = new IEnumerable<Triangle<uint>>[] { mapChunk.Indices, mapChunk.WMOIndices, mapChunk.WMOIndices };
+            //        for (int i = 0; i < 3; i++)
+            //        {
+            //            if (subVertices[i] == null || subIndices[i] == null)
+            //                continue;
 
-                        var vo = (uint)vertices.Count;
-                        vertices.AddRange(subVertices[i]);
-                        triangles.AddRange(subIndices[i].Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
-                    }
-                }
+            //            var vo = (uint)vertices.Count;
+            //            vertices.AddRange(subVertices[i]);
+            //            triangles.AddRange(subIndices[i].Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
+            //        }
+            //    }
+            //}
+
+            // Rendering just tile WMOs
+            foreach (var wmoChunks in ADTObjects.MapChunks)
+            {
+                if (wmoChunks.WMOVertices == null || wmoChunks.WMOIndices == null)
+                    continue;
+                var vo = (uint)vertices.Count;
+                vertices.AddRange(wmoChunks.WMOVertices);
+                triangles.AddRange(wmoChunks.WMOIndices.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
             }
+
+            // Rendering just tile Doodads
+            //foreach (var doodadChunks in ADTObjects.MapChunks)
+            //{
+            //    if (doodadChunks.DoodadVertices == null || doodadChunks.DoodadIndices == null)
+            //        continue;
+            //    var vo = (uint)vertices.Count;
+            //    vertices.AddRange(doodadChunks.DoodadVertices);
+            //    triangles.AddRange(doodadChunks.DoodadIndices.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
+            //}
 
             using (var sw = new StreamWriter(filename, false))
             {
