@@ -61,7 +61,7 @@ namespace WoWMapParser
 
         static void ReadADT()
         {
-            var adt = new ADT("Kalimdor", 32, 36);
+            var adt = new ADT("Azeroth", 34, 50);
             var sw = Stopwatch.StartNew();
             adt.Read();
             sw.Stop();

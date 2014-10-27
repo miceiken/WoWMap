@@ -1,12 +1,13 @@
-﻿using System;
+﻿using SharpDX;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WoWMap.Archive;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
-using System.IO;
 
 namespace WoWMap.Layers
 {
@@ -38,6 +39,9 @@ namespace WoWMap.Layers
         public MODR MODR { get; private set; }
         public MLIQ MLIQ { get; private set; }
 
+        private List<Vector3> LiquidVertices;
+        private List<Triangle<uint>> LiquidIndices;
+
         public void Read()
         {
             foreach (var subChunk in SubData.Chunks)
@@ -61,11 +65,34 @@ namespace WoWMap.Layers
                         break;
                     case "MLIQ":
                         MLIQ = new MLIQ(subChunk);
+
+                        ReadLiquid();
                         break;
                 }
             }
+        }
 
-            // Do shit
+        public void ReadLiquid()
+        {
+            LiquidVertices = new List<Vector3>((int)(MLIQ.Height * MLIQ.Width));
+            LiquidIndices = new List<Triangle<uint>>((int)((MLIQ.Height*MLIQ.Width)*4));
+
+            var relPos = MLIQ.Position;
+            for (int y = 0; y < MLIQ.Height; y++)
+            {
+                for (int x = 0; x < MLIQ.Width; x++)
+                {
+                    if (MLIQ.ShouldRender(x, y))
+                        continue;
+
+                    var vo = (uint)LiquidVertices.Count;
+                }
+            }
+        }
+
+        private Vector3 ReadLiquidVertice(Matrix transform, Vector3 basePos, float height, int x, int y)
+        {
+            return (Vector3)Vector3.Transform(basePos + new Vector3(x * Constants.UnitSize, y * Constants.UnitSize, height), transform);
         }
     }
 }
