@@ -139,16 +139,6 @@ namespace WoWMap.Layers
         {
             Indices = new List<Triangle<uint>>(64 * 4);
 
-            //        var triangleType = TriangleType.Terrain;
-            //        if (ADT.Liquid != null && ADT.Liquid.HeightMaps != null)
-            //        {
-            //            var data = ADT.Liquid.HeightMaps[Index];
-            //            var maxHeight = Math.Max(Math.Max(Math.Max(Math.Max(Vertices[topLeft].Z, Vertices[topRight].Z), Vertices[bottomLeft].Z), Vertices[bottomRight].Z), Vertices[center].Z);
-            //            if (data != null && data.IsWater(x, y, maxHeight))
-            //                triangleType = TriangleType.Water;
-            //        }
-
-            // TODO: Check for liquid - or keep a seperate liquid mesh
             int unitidx = 0;
             for (uint j = 9; j < 8 * 8 + 9 * 8; j++)
             {

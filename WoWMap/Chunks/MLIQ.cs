@@ -39,7 +39,7 @@ namespace WoWMap.Chunks
             YVertices = br.ReadUInt32();
             Width = br.ReadUInt32();
             Height = br.ReadUInt32();
-            Position = br.ReadVector3();
+            Position = br.ReadVector3(); // new Vector3(br.ReadSingle(), br.ReadSingle(), -br.ReadSingle());
             MaterialId = br.ReadUInt16();
             HeightMap = new float[XVertices, YVertices];
             for (int y = 0; y < YVertices; y++)

@@ -74,15 +74,15 @@ namespace WoWMap.Layers
 
         public void ReadLiquid()
         {
-            LiquidVertices = new List<Vector3>((int)(MLIQ.Height * MLIQ.Width));
-            LiquidIndices = new List<Triangle<uint>>((int)((MLIQ.Height * MLIQ.Width) * 4));
+            LiquidVertices = new List<Vector3>((int)(MLIQ.Height * MLIQ.Width) * 4);
+            LiquidIndices = new List<Triangle<uint>>((int)((MLIQ.Height * MLIQ.Width) * 2));
 
             var relPos = MLIQ.Position;
             for (int y = 0; y < MLIQ.Height; y++)
             {
                 for (int x = 0; x < MLIQ.Width; x++)
                 {
-                    if (MLIQ.ShouldRender(x, y))
+                    if (!MLIQ.ShouldRender(x, y))
                         continue;
 
                     var vo = (uint)LiquidVertices.Count;
@@ -92,7 +92,7 @@ namespace WoWMap.Layers
                     LiquidVertices.Add(relPos + new Vector3(x * Constants.UnitSize, (y + 1) * Constants.UnitSize, MLIQ.HeightMap[x, y + 1]));
                     LiquidVertices.Add(relPos + new Vector3((x + 1) * Constants.UnitSize, (y + 1) * Constants.UnitSize, MLIQ.HeightMap[x + 1, y + 1]));
 
-                    LiquidIndices.Add(new Triangle<uint>(TriangleType.Water, vo, vo + 2, vo + 2));
+                    LiquidIndices.Add(new Triangle<uint>(TriangleType.Water, vo, vo + 2, vo + 1));
                     LiquidIndices.Add(new Triangle<uint>(TriangleType.Water, vo + 2, vo + 3, vo + 1));
                 }
             }

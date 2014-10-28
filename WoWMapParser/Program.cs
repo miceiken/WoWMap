@@ -84,8 +84,31 @@ namespace WoWMapParser
 
         static void ReadWMO()
         {
-            const string path = @"World\WMO\Northrend\Battleground\ND_BG_Keep01.wmo";
+            const string path = @"World\wmo\Northrend\HowlingFjord\DaggercapCave.wmo";
             var wmo = new WMORoot(path);
+            using (var sw = new StreamWriter(Path.GetFileNameWithoutExtension(path) + ".obj", false))
+            {
+                //sw.WriteLine("o " + filename);
+                var nf = System.Globalization.CultureInfo.InvariantCulture.NumberFormat;
+                int vo = 0;
+                foreach (var g in wmo.Groups)
+                {
+                    foreach (var v in g.MOVT.Vertices)
+                        sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Z.ToString(nf) + " " + v.Y.ToString(nf));
+                    foreach (var t in g.MOVI.Indices)
+                        sw.WriteLine("f " + (t.V0 + vo + 1) + " " + (t.V1 + vo + 1) + " " + (t.V2 + vo + 1));
+                    vo += g.MOVT.Vertices.Count();
+
+                    if (g.LiquidVertices == null || g.LiquidIndices == null)
+                        continue;
+
+                    foreach (var v in g.LiquidVertices)
+                        sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Z.ToString(nf) + " " + v.Y.ToString(nf));
+                    foreach (var t in g.LiquidIndices)
+                        sw.WriteLine("f " + (t.V0 + vo + 1) + " " + (t.V1 + vo + 1) + " " + (t.V2 + vo + 1));
+                    vo += g.LiquidVertices.Count;
+                }
+            }
         }
     }
 }
