@@ -213,7 +213,7 @@ namespace WoWMap.Layers
                     WMOIndices.Add(new Triangle<uint>(TriangleType.Wmo, vo + idx.V0, vo + idx.V1, vo + idx.V2));
                 }
             }
-            
+
             if (wmo.DoodadSet >= 0 && wmo.DoodadSet < model.MODS.Entries.Length)
             {
                 var set = model.MODS.Entries[wmo.DoodadSet];

@@ -139,72 +139,41 @@ namespace WoWMap.Layers
 
             if (filename == null)
                 filename = string.Format("{0}_{1}_{2}.obj", World, X, Y);
-            var vertices = new List<Vector3>((256 * 145) + (256 * 2 * 1000));
-            var triangles = new List<Triangle<uint>>((256 * 256) + (256 * 1000 * 4));
-
-            //var sources = new ADT[] { this, ADTObjects, /* ADTTextures */ };
-            //foreach (var source in sources)
-            //{
-            //    foreach (var mapChunk in source.MapChunks)
-            //    {
-            //        var subVertices = new IEnumerable<Vector3>[] { mapChunk.Vertices, mapChunk.WMOVertices, mapChunk.DoodadVertices };
-            //        var subIndices = new IEnumerable<Triangle<uint>>[] { mapChunk.Indices, mapChunk.WMOIndices, mapChunk.DoodadIndices };
-            //        for (int i = 0; i < 3; i++)
-            //        {
-            //            if (subVertices[i] == null || subIndices[i] == null)
-            //                continue;
-
-            //            var vo = (uint)vertices.Count;
-            //            vertices.AddRange(subVertices[i]);
-            //            triangles.AddRange(subIndices[i].Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
-            //        }
-            //    }
-            //}
-
-            foreach (var mapChunk in MapChunks)
-            {
-                var vo = (uint)vertices.Count;
-                vertices.AddRange(mapChunk.Vertices);
-                triangles.AddRange(mapChunk.Indices.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
-            }
-
-            ////Rendering just tile WMOs
-            //foreach (var wmoChunks in ADTObjects.MapChunks)
-            //{
-            //    if (wmoChunks.WMOVertices == null || wmoChunks.WMOIndices == null)
-            //        continue;
-            //    var vo = (uint)vertices.Count;
-            //    vertices.AddRange(wmoChunks.WMOVertices);
-            //    triangles.AddRange(wmoChunks.WMOIndices.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
-            //}
-
-            // //Rendering just tile Doodads
-            //foreach (var doodadChunks in ADTObjects.MapChunks)
-            //{
-            //    if (doodadChunks.DoodadVertices == null || doodadChunks.DoodadIndices == null)
-            //        continue;
-            //    var vo = (uint)vertices.Count;
-            //    vertices.AddRange(doodadChunks.DoodadVertices);
-            //    triangles.AddRange(doodadChunks.DoodadIndices.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
-            //}
-
-            // Rendering just tile water
-
-            if (Liquid != null && (Liquid.Vertices != null && Liquid.Indices != null))
-            {
-                var vo = (uint)vertices.Count;
-                vertices.AddRange(Liquid.Vertices);
-                triangles.AddRange(Liquid.Indices.Select(t => new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
-            }
 
             using (var sw = new StreamWriter(filename, false))
             {
                 sw.WriteLine("o " + filename);
                 var nf = CultureInfo.InvariantCulture.NumberFormat;
-                foreach (var v in vertices)
-                    sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Z.ToString(nf) + " " + v.Y.ToString(nf));
-                foreach (var t in triangles)
-                    sw.WriteLine("f " + (t.V0 + 1) + " " + (t.V1 + 1) + " " + (t.V2 + 1));
+
+                uint vo = 0;
+                var sources = new ADT[] { this, ADTObjects, /* ADTTextures */ };
+                foreach (var source in sources)
+                {
+                    foreach (var mapChunk in source.MapChunks)
+                    {
+                        var subVertices = new IEnumerable<Vector3>[] { mapChunk.Vertices, mapChunk.WMOVertices, mapChunk.DoodadVertices };
+                        var subIndices = new IEnumerable<Triangle<uint>>[] { mapChunk.Indices, mapChunk.WMOIndices, mapChunk.DoodadIndices };
+                        for (int i = 0; i < 3; i++)
+                        {
+                            if (subVertices[i] == null || subIndices[i] == null)
+                                continue;
+
+                            foreach (var v in subVertices[i])
+                                sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Z.ToString(nf) + " " + v.Y.ToString(nf));
+                            foreach (var t in subIndices[i])
+                                sw.WriteLine("f " + (t.V0 + vo + 1) + " " + (t.V1 + vo + 1) + " " + (t.V2 + vo + 1));
+                            vo += (uint)subVertices[i].Count();
+                        }
+                    }
+                    if (source.Liquid != null && (source.Liquid.Vertices.Count > 0 && source.Liquid.Indices.Count > 0))
+                    {
+                        foreach (var v in source.Liquid.Vertices)
+                            sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Z.ToString(nf) + " " + v.Y.ToString(nf));
+                        foreach (var t in source.Liquid.Indices)
+                            sw.WriteLine("f " + (t.V0 + vo + 1) + " " + (t.V1 + vo + 1) + " " + (t.V2 + vo + 1));
+                        vo += (uint)source.Liquid.Vertices.Count;
+                    }
+                }
             }
         }
     }

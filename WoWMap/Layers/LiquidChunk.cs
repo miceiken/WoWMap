@@ -43,6 +43,7 @@ namespace WoWMap.Layers
             MH2O.Read(Chunk.GetReader());
             HeightMaps = new Chunks.MH2O.MH2OHeightmapData[256];
 
+            var tilePos = new Vector3(Constants.TileSize * ADT.X, Constants.TileSize * ADT.Y, 0);
             for (int i = 0; i < MH2O.Headers.Length; i++)
             {
                 var header = MH2O.Headers[i];
@@ -71,17 +72,15 @@ namespace WoWMap.Layers
 
                 HeightMaps[i] = heightMap;
 
-
-                var basePos = new Vector3(Constants.MaxXY - (Constants.ChunkSize * (i / 16)), Constants.MaxXY - (Constants.ChunkSize * (i % 16)), 0);
-                Console.WriteLine("MH2O #{0}: X{1}, Y{2} - Position {3}", i, (i / 16), (i % 16), basePos);
+                var basePos = new Vector3((Constants.ChunkSize * (i % 16)) + tilePos.X, (Constants.ChunkSize * (i / 16)) + tilePos.Y, 0);
                 for (int y = information.YOffset; y < (information.YOffset + information.Height); y++)
                 {
                     for (int x = information.XOffset; x < (information.XOffset + information.Width); x++)
                     {
-                        if (!heightMap.RenderMask.ShouldRender(x, y)) continue;
+                        if (!heightMap.RenderMask.ShouldRender(x, y))
+                            continue;
 
-                        var v = new Vector3(basePos.X - (y * Constants.UnitSize), basePos.Y - (x * Constants.UnitSize), heightMap.Heightmap[x, y]);
-                        Console.WriteLine("\t- X{0}, Y{1} - Position {2}", x, y, v);
+                        var v = new Vector3((x * Constants.UnitSize) + basePos.X, (y * Constants.UnitSize) + basePos.Y, heightMap.Heightmap[x, y]);
                         var vo = (uint)Vertices.Count;
                         Vertices.Add(v);
                         Vertices.Add(new Vector3(v.X + Constants.UnitSize, v.Y, v.Z));
