@@ -39,8 +39,8 @@ namespace WoWMap.Layers
         public MODR MODR { get; private set; }
         public MLIQ MLIQ { get; private set; }
 
-        private List<Vector3> LiquidVertices;
-        private List<Triangle<uint>> LiquidIndices;
+        public List<Vector3> LiquidVertices;
+        public List<Triangle<uint>> LiquidIndices;
 
         public void Read()
         {
@@ -75,7 +75,7 @@ namespace WoWMap.Layers
         public void ReadLiquid()
         {
             LiquidVertices = new List<Vector3>((int)(MLIQ.Height * MLIQ.Width));
-            LiquidIndices = new List<Triangle<uint>>((int)((MLIQ.Height*MLIQ.Width)*4));
+            LiquidIndices = new List<Triangle<uint>>((int)((MLIQ.Height * MLIQ.Width) * 4));
 
             var relPos = MLIQ.Position;
             for (int y = 0; y < MLIQ.Height; y++)
@@ -86,13 +86,16 @@ namespace WoWMap.Layers
                         continue;
 
                     var vo = (uint)LiquidVertices.Count;
+
+                    LiquidVertices.Add(relPos + new Vector3(x * Constants.UnitSize, y * Constants.UnitSize, MLIQ.HeightMap[x, y]));
+                    LiquidVertices.Add(relPos + new Vector3((x + 1) * Constants.UnitSize, y * Constants.UnitSize, MLIQ.HeightMap[x + 1, y]));
+                    LiquidVertices.Add(relPos + new Vector3(x * Constants.UnitSize, (y + 1) * Constants.UnitSize, MLIQ.HeightMap[x, y + 1]));
+                    LiquidVertices.Add(relPos + new Vector3((x + 1) * Constants.UnitSize, (y + 1) * Constants.UnitSize, MLIQ.HeightMap[x + 1, y + 1]));
+
+                    LiquidIndices.Add(new Triangle<uint>(TriangleType.Water, vo, vo + 2, vo + 2));
+                    LiquidIndices.Add(new Triangle<uint>(TriangleType.Water, vo + 2, vo + 3, vo + 1));
                 }
             }
-        }
-
-        private Vector3 ReadLiquidVertice(Matrix transform, Vector3 basePos, float height, int x, int y)
-        {
-            return (Vector3)Vector3.Transform(basePos + new Vector3(x * Constants.UnitSize, y * Constants.UnitSize, height), transform);
         }
     }
 }

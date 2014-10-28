@@ -243,6 +243,18 @@ namespace WoWMap.Layers
                         WMOIndices.Add(new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo));
                 }
             }
+
+            foreach (var group in model.Groups)
+            {
+                if ((group.LiquidVertices == null || group.LiquidVertices.Count == 0) || (group.LiquidIndices == null || group.LiquidIndices.Count == 0))
+                    continue;
+
+                var vo = (uint)WMOVertices.Count;
+                foreach (var v in group.LiquidVertices)
+                    WMOVertices.Add((Vector3)Vector3.Transform(v, transform));
+                foreach (var t in group.LiquidIndices)
+                    WMOIndices.Add(new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo));
+            }
         }
 
         #endregion

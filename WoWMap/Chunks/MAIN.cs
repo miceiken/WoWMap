@@ -40,6 +40,7 @@ namespace WoWMap.Chunks
             }
         }
 
+        [Flags]
         public enum MAINFlags : uint
         {
             HasADT = 1,

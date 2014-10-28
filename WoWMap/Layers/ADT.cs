@@ -111,7 +111,6 @@ namespace WoWMap.Layers
             }
         }
 
-        // TODO: This will probably go wrong one day
         private void ReadModels()
         {
             if (Type != ADTType.Objects || (MWID == null || MWMO == null))
@@ -151,9 +150,9 @@ namespace WoWMap.Layers
                 {
                     foreach (var mapChunk in source.MapChunks)
                     {
-                        var subVertices = new IEnumerable<Vector3>[] { mapChunk.Vertices, mapChunk.WMOVertices, mapChunk.DoodadVertices };
-                        var subIndices = new IEnumerable<Triangle<uint>>[] { mapChunk.Indices, mapChunk.WMOIndices, mapChunk.DoodadIndices };
-                        for (int i = 0; i < 3; i++)
+                        var subVertices = new IEnumerable<Vector3>[] { /* mapChunk.Vertices, */ mapChunk.WMOVertices, /* mapChunk.DoodadVertices */ };
+                        var subIndices = new IEnumerable<Triangle<uint>>[] { /* mapChunk.Indices, */ mapChunk.WMOIndices, /* mapChunk.DoodadIndices */ };
+                        for (int i = 0; i < 1; i++)
                         {
                             if (subVertices[i] == null || subIndices[i] == null)
                                 continue;
