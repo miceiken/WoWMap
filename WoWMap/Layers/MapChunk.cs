@@ -176,23 +176,23 @@ namespace WoWMap.Layers
                 var path = ADT.ModelPaths[(int)wmo.MWIDEntryIndex];
                 var model = new WMORoot(path);
 
-                InsertWMOGeometry(wmo, model);
+                if (WMOVertices == null)
+                    WMOVertices = new List<Vector3>(1000);
+                if (WMOIndices == null)
+                    WMOIndices = new List<Triangle<uint>>(1000);
+
+                InsertWMOGeometry(wmo, model, WMOVertices, WMOIndices);
             }
         }
 
-        private void InsertWMOGeometry(MODF.MODFEntry wmo, WMORoot model)
+        public static void InsertWMOGeometry(MODF.MODFEntry wmo, WMORoot model, List<Vector3> vertices, List<Triangle<uint>> indices)
         {
-            if (WMOVertices == null)
-                WMOVertices = new List<Vector3>(1000);
-            if (WMOIndices == null)
-                WMOIndices = new List<Triangle<uint>>(1000);
-
             var transform = Transformation.GetWmoTransform(wmo.Position, wmo.Rotation);
             foreach (var group in model.Groups)
             {
-                var vo = (uint)WMOVertices.Count;
+                var vo = (uint)vertices.Count;
                 foreach (var v in group.MOVT.Vertices)
-                    WMOVertices.Add((Vector3)Vector3.Transform(v, transform));
+                    vertices.Add((Vector3)Vector3.Transform(v, transform));
 
                 for (int i = 0; i < group.MOVI.Indices.Length; i++)
                 {
@@ -200,7 +200,7 @@ namespace WoWMap.Layers
                         continue;
 
                     var idx = group.MOVI.Indices[i];
-                    WMOIndices.Add(new Triangle<uint>(TriangleType.Wmo, vo + idx.V0, vo + idx.V1, vo + idx.V2));
+                    indices.Add(new Triangle<uint>(TriangleType.Wmo, vo + idx.V0, vo + idx.V1, vo + idx.V2));
                 }
             }
 
@@ -226,11 +226,11 @@ namespace WoWMap.Layers
                         continue;
 
                     var doodadTransform = Transformation.GetWmoDoodadTransformation(instance, wmo);
-                    var vo = (uint)WMOVertices.Count;
+                    var vo = (uint)vertices.Count;
                     foreach (var v in doodad.Vertices)
-                        WMOVertices.Add((Vector3)Vector3.Transform(v, doodadTransform));
+                        vertices.Add((Vector3)Vector3.Transform(v, doodadTransform));
                     foreach (var t in doodad.Indices)
-                        WMOIndices.Add(new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo));
+                        indices.Add(new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo));
                 }
             }
 
@@ -239,11 +239,11 @@ namespace WoWMap.Layers
                 if ((group.LiquidVertices == null || group.LiquidVertices.Count == 0) || (group.LiquidIndices == null || group.LiquidIndices.Count == 0))
                     continue;
 
-                var vo = (uint)WMOVertices.Count;
+                var vo = (uint)vertices.Count;
                 foreach (var v in group.LiquidVertices)
-                    WMOVertices.Add((Vector3)Vector3.Transform(v, transform));
+                    vertices.Add((Vector3)Vector3.Transform(v, transform));
                 foreach (var t in group.LiquidIndices)
-                    WMOIndices.Add(new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo));
+                    indices.Add(new Triangle<uint>(t.Type, t.V0 + vo, t.V1 + vo, t.V2 + vo));
             }
         }
 

@@ -45,6 +45,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Builders\ContinentBuilder.cs" />
+    <Compile Include="Builders\DungeonBuilder.cs" />
+    <Compile Include="Builders\TileBuilder.cs" />
     <Compile Include="Chunks\MCRD.cs" />
     <Compile Include="Chunks\MCRW.cs" />
     <Compile Include="Chunks\MD20.cs" />
@@ -60,6 +63,7 @@
     <Compile Include="Chunks\MOPY.cs" />
     <Compile Include="Chunks\MOVI.cs" />
     <Compile Include="Chunks\MOVT.cs" />
+    <Compile Include="Geometry\Geometry.cs" />
     <Compile Include="Geometry\Transformation.cs" />
     <Compile Include="Layers\ADT.cs" />
     <Compile Include="Archive\CASC.cs" />
@@ -104,6 +108,10 @@
     <ProjectReference Include="..\CASCExplorer\CascLib\CascLib.csproj">
       <Project>{e08e1e48-6585-4137-8405-661c62c10713}</Project>
       <Name>CascLib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SharpNav\SharpNav\SharpNav.csproj">
+      <Project>{0e3c6e73-cce6-4148-b847-36487ffea225}</Project>
+      <Name>SharpNav</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

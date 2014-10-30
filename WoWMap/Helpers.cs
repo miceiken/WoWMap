@@ -65,5 +65,10 @@ namespace WoWMap
         {
             return new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
         }
+
+        public static SharpNav.Vector3 ToV3(this SharpDX.Vector3 v)
+        {
+            return new SharpNav.Vector3(v.X, v.Y, v.Z);
+        }
     }
 }
