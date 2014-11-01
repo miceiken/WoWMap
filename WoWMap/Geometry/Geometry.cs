@@ -9,9 +9,27 @@ using Vector3 = SharpDX.Vector3;
 using SharpDX;
 using SharpNav;
 using SharpNav.Geometry;
+using System.Globalization;
+using System.IO;
 
 namespace WoWMap.Geometry
 {
+    public enum PolyArea : byte
+    {
+        Terrain = 1,
+        Water = 2,
+        Road = 3,
+        Danger = 4,
+    };
+
+    [Flags]
+    public enum PolyFlag : byte
+    {
+        Walk = 1,
+        Swim = 2,
+        FlightMaster = 4,
+    };
+
     public class Geometry
     {
         public List<Vector3> Vertices { get; private set; }
@@ -21,6 +39,19 @@ namespace WoWMap.Geometry
         {
             Vertices = new List<Vector3>(10000);
             Indices = new List<Triangle<uint>>(10000);
+        }
+
+        public void SaveWavefrontObject(string filename)
+        {
+            using (var sw = new StreamWriter(filename, false))
+            {
+                sw.WriteLine("o " + filename);
+                var nf = CultureInfo.InvariantCulture.NumberFormat;
+                foreach (var v in this.Vertices)
+                    sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Z.ToString(nf) + " " + v.Y.ToString(nf));
+                foreach (var t in this.Indices)
+                    sw.WriteLine("f " + (t.V0 + 1) + " " + (t.V1 + 1) + " " + (t.V2 + 1));
+            }
         }
 
         public void AddGeometry(IEnumerable<Vector3> vertices, IEnumerable<Triangle<uint>> indices)
@@ -34,7 +65,7 @@ namespace WoWMap.Geometry
 
         public void AddADT(ADT source)
         {
-            foreach (var s in new ADT[] { source, source.ADTObjects })
+            foreach (var s in new ADT[] { source, source.ADTObjects, /* source.ADTTextures */ })
             {
                 foreach (var mc in s.MapChunks)
                 {
@@ -61,7 +92,7 @@ namespace WoWMap.Geometry
             AddGeometry(verts, inds);
         }
 
-        public void GetRawData(out float[] vertices, out int[] indices, out byte[] areas)
+        public void GetRawData(out float[] vertices, out int[] indices, out AreaId[] areas)
         {
             vertices = new float[Vertices.Count * 3];
             for (int i = 0; i < Vertices.Count; i++)
@@ -79,21 +110,17 @@ namespace WoWMap.Geometry
                 indices[(i * 3) + 1] = (int)tri.V1;
                 indices[(i * 3) + 2] = (int)tri.V2;
             }
-            areas = new byte[Indices.Count];
+            areas = new AreaId[Indices.Count];
             for (int i = 0; i < Indices.Count; i++)
             {
                 switch (Indices[i].Type)
                 {
-                    /*case TriangleType.Water:
-                        AreaId.
-                        areas[i] = (byte)PolyArea.Water;
+                    case TriangleType.Water:
+                        areas[i] = (AreaId)PolyArea.Water;
                         break;
 
                     default:
-                        areas[i] = (byte)PolyArea.Terrain;
-                        break;*/
-                    default:
-                        areas[i] = (byte)AreaId.Walkable;
+                        areas[i] = (AreaId)PolyArea.Terrain;
                         break;
                 }
             }
@@ -103,11 +130,11 @@ namespace WoWMap.Geometry
         {
             float[] vertices;
             int[] indices;
-            byte[] areas;
+            AreaId[] areas;
             GetRawData(out vertices, out indices, out areas);
             var settings = WoWSettings;
-            var tris = TriangleEnumerable.FromIndexedFloat(vertices, indices, 0, 0, 0, indices.Length / 3);            
-            
+            var tris = TriangleEnumerable.FromIndexedFloat(vertices, indices, 0, 0, 0, indices.Length / 3);
+
             var area = AreaIdGenerator.From(tris, AreaId.Walkable)
                 //.MarkAboveHeight(areaSettings.MaxLevelHeight, AreaId.Null)
                 //.MarkBelowHeight(areaSettings.MinLevelHeight, AreaId.Null)
@@ -130,7 +157,7 @@ namespace WoWMap.Geometry
 
             var buildData = new NavMeshBuilder(pmesh, dmesh, new SharpNav.Pathfinding.OffMeshConnection[0], settings);
             var tiledNavMesh = new TiledNavMesh(buildData);
-            
+
             var navMeshQuery = new NavMeshQuery(tiledNavMesh, 65536);
         }
 

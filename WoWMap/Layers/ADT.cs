@@ -130,50 +130,5 @@ namespace WoWMap.Layers
             for (int i = 0; i < MMID.Offsets.Length; i++)
                 DoodadPaths.Add(MMDX.Filenames[MMID.Offsets[i]]);
         }
-
-        public void SaveObj(string filename = null)
-        {
-            if (Type != ADTType.Normal)
-                return;
-
-            if (filename == null)
-                filename = string.Format("{0}_{1}_{2}.obj", World, X, Y);
-
-            using (var sw = new StreamWriter(filename, false))
-            {
-                sw.WriteLine("o " + filename);
-                var nf = CultureInfo.InvariantCulture.NumberFormat;
-
-                uint vo = 0;
-                var sources = new ADT[] { this, ADTObjects, /* ADTTextures */ };
-                foreach (var source in sources)
-                {
-                    foreach (var mapChunk in source.MapChunks)
-                    {
-                        var subVertices = new IEnumerable<Vector3>[] { mapChunk.Vertices, mapChunk.WMOVertices, mapChunk.DoodadVertices };
-                        var subIndices = new IEnumerable<Triangle<uint>>[] { mapChunk.Indices, mapChunk.WMOIndices, mapChunk.DoodadIndices };
-                        for (int i = 0; i < 1; i++)
-                        {
-                            if (subVertices[i] == null || subIndices[i] == null)
-                                continue;
-
-                            foreach (var v in subVertices[i])
-                                sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Z.ToString(nf) + " " + v.Y.ToString(nf));
-                            foreach (var t in subIndices[i])
-                                sw.WriteLine("f " + (t.V0 + vo + 1) + " " + (t.V1 + vo + 1) + " " + (t.V2 + vo + 1));
-                            vo += (uint)subVertices[i].Count();
-                        }
-                    }
-                    if (source.Liquid != null && (source.Liquid.Vertices.Count > 0 && source.Liquid.Indices.Count > 0))
-                    {
-                        foreach (var v in source.Liquid.Vertices)
-                            sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Z.ToString(nf) + " " + v.Y.ToString(nf));
-                        foreach (var t in source.Liquid.Indices)
-                            sw.WriteLine("f " + (t.V0 + vo + 1) + " " + (t.V1 + vo + 1) + " " + (t.V2 + vo + 1));
-                        vo += (uint)source.Liquid.Vertices.Count;
-                    }
-                }
-            }
-        }
     }
 }

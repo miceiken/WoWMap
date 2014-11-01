@@ -1,4 +1,4 @@
-﻿#define REDIRECT_OUTPUT
+﻿//#define REDIRECT_OUTPUT
 
 using System;
 using System.Collections.Generic;
@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using WoWMap;
 using WoWMap.Archive;
 using WoWMap.Layers;
+using WoWMap.Geometry;
 
 namespace WoWMapParser
 {
@@ -61,14 +62,24 @@ namespace WoWMapParser
 
         static void ReadADT()
         {
-            var adt = new ADT("Northrend", 42, 30);
-            var sw = Stopwatch.StartNew();
-            adt.Read();
-            sw.Stop();
-
-            adt.SaveObj();
-
-            Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", adt.Data.Chunks.Count, "err", sw.ElapsedMilliseconds);
+            const string continent = "Azeroth";
+            var geom = new Geometry();
+            
+            for (int y = 27; y < 29; y++)
+            {
+                for (int x = 28; x < 30; x++)
+                {
+                    Console.Write("Parsing {0} [{1}, {2}]", continent, x, y);
+                    var sw = Stopwatch.StartNew();
+                    var adt = new ADT(continent, x, y);
+                    adt.Read();
+                    sw.Stop();
+                    Console.WriteLine(" (done! {0}ms)", sw.ElapsedMilliseconds);                    
+                    geom.AddADT(adt);
+                }
+            }
+            
+            geom.SaveWavefrontObject("Azeroth.obj");
         }
 
         static void ReadWDT()

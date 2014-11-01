@@ -32,7 +32,7 @@ namespace WoWMap.Geometry
                 translation = Matrix.Identity;
             else
                 translation = Matrix.Translation(position.X, position.Z, position.Y);
-            var rotTranslation = Matrix.RotationZ((rotation.Y-90.0f).ToRadians()) * Matrix.RotationY(rotation.X.ToRadians()) * Matrix.RotationX(rotation.Z.ToRadians());
+            var rotTranslation = Matrix.RotationZ((-rotation.Y+90.0f).ToRadians()) * Matrix.RotationY(rotation.X.ToRadians()) * Matrix.RotationX(rotation.Z.ToRadians());
 
             if (scale < 1.0f || scale > 1.0f)
                 return Matrix.Scaling(scale) * rotTranslation * translation;
