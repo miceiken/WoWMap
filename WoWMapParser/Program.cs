@@ -26,7 +26,7 @@ namespace WoWMapParser
             //ReadWMO();
 
             Console.WriteLine("Done.");
-            //Console.ReadKey();
+            Console.ReadKey();
         }
 
         static void Initialize()
@@ -63,23 +63,26 @@ namespace WoWMapParser
         static void ReadADT()
         {
             const string continent = "Azeroth";
-            var geom = new Geometry();
+            var allGeom = new Geometry();
             
             for (int y = 27; y < 29; y++)
             {
                 for (int x = 28; x < 30; x++)
                 {
+                    //var geom = new Geometry();
                     Console.Write("Parsing {0} [{1}, {2}]", continent, x, y);
                     var sw = Stopwatch.StartNew();
                     var adt = new ADT(continent, x, y);
                     adt.Read();
                     sw.Stop();
-                    Console.WriteLine(" (done! {0}ms)", sw.ElapsedMilliseconds);                    
-                    geom.AddADT(adt);
+                    Console.WriteLine(" (done! {0}ms)", sw.ElapsedMilliseconds);
+                    //geom.AddADT(adt);
+                    //geom.GenerateNavmesh(Geometry.GetBoundingBox(x, y, geom.Vertices));
+                    allGeom.AddADT(adt);
                 }
             }
-            
-            geom.SaveWavefrontObject("Azeroth.obj");
+
+            allGeom.SaveWavefrontObject("Azeroth.obj");
         }
 
         static void ReadWDT()

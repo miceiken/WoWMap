@@ -26,8 +26,6 @@ namespace WoWMap.Builders
             var geo = new Geometry.Geometry();
             Source.Read();
             geo.AddADT(Source);
-
-            geo.PrepareNavmesh();
         }
     }
 }

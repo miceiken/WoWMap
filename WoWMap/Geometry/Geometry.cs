@@ -126,7 +126,20 @@ namespace WoWMap.Geometry
             }
         }
 
-        public void PrepareNavmesh()
+        public static BBox3 GetBoundingBox(int x, int y, IEnumerable<Vector3> vertices)
+        {
+            var bBoxMin = new Vector3(Constants.MaxXY + (Constants.TileSize * x), vertices.Select(v => v.Y).Min(), Constants.MaxXY + (Constants.TileSize * y));
+            bBoxMin.X -= (WoWSettings.AgentWidth + 8) * WoWSettings.CellSize;
+            bBoxMin.Z -= (WoWSettings.AgentWidth + 8) * WoWSettings.CellSize;
+
+            var bBoxMax = new Vector3(Constants.MaxXY + (Constants.TileSize * (x + 1)), vertices.Select(v => v.Y).Max(), Constants.MaxXY + (Constants.TileSize * (y + 1)));
+            bBoxMax.X += (WoWSettings.AgentWidth + 8) * WoWSettings.CellSize;
+            bBoxMax.Z += (WoWSettings.AgentWidth + 8) * WoWSettings.CellSize;
+
+            return new BBox3(bBoxMin.ToV3(), bBoxMax.ToV3());
+        }
+
+        public void GenerateNavmesh(BBox3 bbox)
         {
             float[] vertices;
             int[] indices;
@@ -141,9 +154,13 @@ namespace WoWMap.Geometry
                 //.MarkBelowSlope(areaSettings.MaxTriSlope, AreaId.Null)
                 .ToArray();
 
-            var hf = new Heightfield(tris.GetBoundingBox(), settings);
+            if (bbox == default(BBox3))
+                bbox = tris.GetBoundingBox(settings.CellSize);
+
+            var hf = new Heightfield(bbox, settings);
             hf.RasterizeTrianglesWithAreas(tris.ToArray(), area);
             hf.FilterLedgeSpans(settings.VoxelAgentHeight, settings.VoxelMaxClimb);
+            hf.FilterLowHangingWalkableObstacles(settings.VoxelMaxClimb);
             hf.FilterWalkableLowHeightSpans(settings.VoxelAgentHeight);
 
             var chf = new CompactHeightfield(hf, settings);
