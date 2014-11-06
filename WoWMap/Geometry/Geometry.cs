@@ -99,8 +99,8 @@ namespace WoWMap.Geometry
             {
                 var vert = Vertices[i];
                 vertices[(i * 3) + 0] = vert.X;
-                vertices[(i * 3) + 1] = vert.Y;
-                vertices[(i * 3) + 2] = vert.Z;
+                vertices[(i * 3) + 1] = vert.Z;
+                vertices[(i * 3) + 2] = vert.Y;
             }
             indices = new int[Indices.Count * 3];
             for (int i = 0; i < Indices.Count; i++)
@@ -128,11 +128,11 @@ namespace WoWMap.Geometry
 
         public static BBox3 GetBoundingBox(int x, int y, IEnumerable<Vector3> vertices)
         {
-            var bBoxMin = new Vector3(Constants.MaxXY + (Constants.TileSize * x), vertices.Select(v => v.Y).Min(), Constants.MaxXY + (Constants.TileSize * y));
+            var bBoxMin = new Vector3((Constants.TileSize * x), vertices.Select(v => v.Z).Min(), (Constants.TileSize * y));
             bBoxMin.X -= (WoWSettings.AgentWidth + 8) * WoWSettings.CellSize;
             bBoxMin.Z -= (WoWSettings.AgentWidth + 8) * WoWSettings.CellSize;
 
-            var bBoxMax = new Vector3(Constants.MaxXY + (Constants.TileSize * (x + 1)), vertices.Select(v => v.Y).Max(), Constants.MaxXY + (Constants.TileSize * (y + 1)));
+            var bBoxMax = new Vector3((Constants.TileSize * (x + 1)), vertices.Select(v => v.Z).Max(), (Constants.TileSize * (y + 1)));
             bBoxMax.X += (WoWSettings.AgentWidth + 8) * WoWSettings.CellSize;
             bBoxMax.Z += (WoWSettings.AgentWidth + 8) * WoWSettings.CellSize;
 
@@ -146,19 +146,15 @@ namespace WoWMap.Geometry
             AreaId[] areas;
             GetRawData(out vertices, out indices, out areas);
             var settings = WoWSettings;
-            var tris = TriangleEnumerable.FromIndexedFloat(vertices, indices, 0, 0, 0, indices.Length / 3);
 
-            var area = AreaIdGenerator.From(tris, AreaId.Walkable)
+            var area = AreaIdGenerator.From(vertices, indices, AreaId.Walkable)
                 //.MarkAboveHeight(areaSettings.MaxLevelHeight, AreaId.Null)
                 //.MarkBelowHeight(areaSettings.MinLevelHeight, AreaId.Null)
                 //.MarkBelowSlope(areaSettings.MaxTriSlope, AreaId.Null)
                 .ToArray();
 
-            if (bbox == default(BBox3))
-                bbox = tris.GetBoundingBox(settings.CellSize);
-
             var hf = new Heightfield(bbox, settings);
-            hf.RasterizeTrianglesWithAreas(tris.ToArray(), area);
+            hf.RasterizeTrianglesWithAreas(vertices, area);
             hf.FilterLedgeSpans(settings.VoxelAgentHeight, settings.VoxelMaxClimb);
             hf.FilterLowHangingWalkableObstacles(settings.VoxelMaxClimb);
             hf.FilterWalkableLowHeightSpans(settings.VoxelAgentHeight);
@@ -166,7 +162,7 @@ namespace WoWMap.Geometry
             var chf = new CompactHeightfield(hf, settings);
             chf.Erode(settings.VoxelAgentWidth);
             chf.BuildDistanceField();
-            chf.BuildRegions(settings.VoxelAgentWidth + 8, settings.MinRegionSize, settings.MergedRegionSize);
+            chf.BuildRegions(settings.VoxelAgentHeight + 8, settings.MinRegionSize, settings.MergedRegionSize);
 
             var cset = new ContourSet(chf, settings);
             var pmesh = new PolyMesh(cset, settings);

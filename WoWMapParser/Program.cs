@@ -21,7 +21,8 @@ namespace WoWMapParser
             Initialize();
 
             //ReadDBC();
-            ReadADT();
+            //ReadADT();
+            CreateNavmesh();
             //ReadWDT();
             //ReadWMO();
 
@@ -83,6 +84,17 @@ namespace WoWMapParser
             }
 
             allGeom.SaveWavefrontObject("Azeroth.obj");
+        }
+
+        static void CreateNavmesh()
+        {
+            const string continent = "Azeroth";
+            var geom = new Geometry();
+            var adt = new ADT(continent, 28, 28);
+            adt.Read();
+            geom.AddADT(adt);
+            var bbox = Geometry.GetBoundingBox(28, 28, geom.Vertices);
+            geom.GenerateNavmesh(bbox);
         }
 
         static void ReadWDT()
