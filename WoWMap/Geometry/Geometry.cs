@@ -147,14 +147,8 @@ namespace WoWMap.Geometry
             GetRawData(out vertices, out indices, out areas);
             var settings = WoWSettings;
 
-            var area = AreaIdGenerator.From(vertices, indices, AreaId.Walkable)
-                //.MarkAboveHeight(areaSettings.MaxLevelHeight, AreaId.Null)
-                //.MarkBelowHeight(areaSettings.MinLevelHeight, AreaId.Null)
-                //.MarkBelowSlope(areaSettings.MaxTriSlope, AreaId.Null)
-                .ToArray();
-
             var hf = new Heightfield(bbox, settings);
-            hf.RasterizeTrianglesWithAreas(vertices, area);
+            hf.RasterizeTrianglesWithAreas(vertices, areas);
             hf.FilterLedgeSpans(settings.VoxelAgentHeight, settings.VoxelMaxClimb);
             hf.FilterLowHangingWalkableObstacles(settings.VoxelMaxClimb);
             hf.FilterWalkableLowHeightSpans(settings.VoxelAgentHeight);
@@ -162,7 +156,7 @@ namespace WoWMap.Geometry
             var chf = new CompactHeightfield(hf, settings);
             chf.Erode(settings.VoxelAgentWidth);
             chf.BuildDistanceField();
-            chf.BuildRegions(settings.VoxelAgentHeight + 8, settings.MinRegionSize, settings.MergedRegionSize);
+            chf.BuildRegions((int)(settings.AgentWidth / settings.CellSize) + 8, settings.MinRegionSize, settings.MergedRegionSize);
 
             var cset = new ContourSet(chf, settings);
             var pmesh = new PolyMesh(cset, settings);
@@ -184,14 +178,14 @@ namespace WoWMap.Geometry
                 cfg.CellHeight = 0.3f;
                 cfg.MinRegionSize = (int)Math.Pow(6, 2);
                 cfg.MergedRegionSize = (int)Math.Pow(12, 2);
-                cfg.MaxClimb = 50f;
-                cfg.SampleDistance = 3;
-                cfg.MaxSampleError = 1;
+                cfg.MaxClimb = 1f;                
                 cfg.AgentHeight = 2.1f;
                 cfg.AgentWidth = 0.6f;
+                cfg.MaxEdgeLength = (int)(cfg.AgentWidth / cfg.CellSize) * 8;
+                cfg.MaxEdgeError = 1.3f;
                 cfg.VertsPerPoly = 6;
-                cfg.MaxEdgeLength = (int)(cfg.AgentWidth * 8);
-                cfg.MaxEdgeError = 1;
+                cfg.SampleDistance = 3;
+                cfg.MaxSampleError = 1; // 1.25f?
 
                 return cfg;
             }
