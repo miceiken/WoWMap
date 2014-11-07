@@ -38,7 +38,7 @@ namespace WoWMap.Chunks
             {
                 var e = new MODDEntry();
                 e.ofsMODN = br.ReadUInt32();
-                e.Position = new Vector3(br.ReadSingle(), br.ReadSingle(), -br.ReadSingle());
+                e.Position = br.ReadVector3();
                 e.Rotation = new float[4];
                 for (int i = 0; i < 4; i++)
                     e.Rotation[i] = br.ReadSingle();

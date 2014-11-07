@@ -43,7 +43,7 @@ namespace WoWMap.Layers
             MH2O.Read(Chunk.GetReader());
             HeightMaps = new Chunks.MH2O.MH2OHeightmapData[256];
 
-            var tilePos = new Vector3(Constants.TileSize * ADT.X, Constants.TileSize * ADT.Y, 0);
+            var tilePos = ADT.TilePosition;
             for (int i = 0; i < MH2O.Headers.Length; i++)
             {
                 var header = MH2O.Headers[i];
@@ -72,7 +72,7 @@ namespace WoWMap.Layers
 
                 HeightMaps[i] = heightMap;
 
-                var basePos = new Vector3((Constants.ChunkSize * (i % 16)) + tilePos.X, (Constants.ChunkSize * (i / 16)) + tilePos.Y, 0);
+                var basePos = new Vector3(tilePos.X - (Constants.ChunkSize * (i % 16)), tilePos.Y - (Constants.ChunkSize * (i / 16)), 0);
                 for (int y = information.YOffset; y < (information.YOffset + information.Height); y++)
                 {
                     for (int x = information.XOffset; x < (information.XOffset + information.Width); x++)
@@ -80,12 +80,12 @@ namespace WoWMap.Layers
                         if (!heightMap.RenderMask.ShouldRender(x, y))
                             continue;
 
-                        var v = new Vector3((x * Constants.UnitSize) + basePos.X, (y * Constants.UnitSize) + basePos.Y, heightMap.Heightmap[x, y]);
+                        var v = new Vector3(basePos.X - (x * Constants.UnitSize), basePos.Y - (y * Constants.UnitSize), heightMap.Heightmap[x, y]);
                         var vo = (uint)Vertices.Count;
                         Vertices.Add(v);
-                        Vertices.Add(new Vector3(v.X + Constants.UnitSize, v.Y, v.Z));
-                        Vertices.Add(new Vector3(v.X, v.Y + Constants.UnitSize, v.Z));
-                        Vertices.Add(new Vector3(v.X + Constants.UnitSize, v.Y + Constants.UnitSize, v.Z));
+                        Vertices.Add(new Vector3(v.X - Constants.UnitSize, v.Y, v.Z));
+                        Vertices.Add(new Vector3(v.X, v.Y - Constants.UnitSize, v.Z));
+                        Vertices.Add(new Vector3(v.X - Constants.UnitSize, v.Y - Constants.UnitSize, v.Z));
 
                         Indices.Add(new Triangle<uint>(TriangleType.Water, vo, vo + 2, vo + 1));
                         Indices.Add(new Triangle<uint>(TriangleType.Water, vo + 2, vo + 3, vo + 1));

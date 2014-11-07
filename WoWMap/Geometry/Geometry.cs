@@ -128,18 +128,18 @@ namespace WoWMap.Geometry
 
         public static BBox3 GetBoundingBox(int x, int y, IEnumerable<Vector3> vertices)
         {
-            var bBoxMin = new Vector3((Constants.TileSize * x), vertices.Select(v => v.Z).Min(), (Constants.TileSize * y));
-            bBoxMin.X -= (WoWSettings.AgentWidth + 8) * WoWSettings.CellSize;
-            bBoxMin.Z -= (WoWSettings.AgentWidth + 8) * WoWSettings.CellSize;
+            var bBoxMin = new Vector3(Constants.MaxXY - (Constants.TileSize * x), vertices.Select(v => v.Z).Min(), Constants.MaxXY - (Constants.TileSize * y));
+            bBoxMin.X -= ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
+            bBoxMin.Z -= ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
 
-            var bBoxMax = new Vector3((Constants.TileSize * (x + 1)), vertices.Select(v => v.Z).Max(), (Constants.TileSize * (y + 1)));
-            bBoxMax.X += (WoWSettings.AgentWidth + 8) * WoWSettings.CellSize;
-            bBoxMax.Z += (WoWSettings.AgentWidth + 8) * WoWSettings.CellSize;
+            var bBoxMax = new Vector3(Constants.MaxXY - (Constants.TileSize * (x + 1)), vertices.Select(v => v.Z).Max(), Constants.MaxXY - (Constants.TileSize * (y + 1)));
+            bBoxMax.X += ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
+            bBoxMax.Z += ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
 
             return new BBox3(bBoxMin.ToV3(), bBoxMax.ToV3());
         }
 
-        public void GenerateNavmesh(BBox3 bbox)
+        public NavMeshBuilder GenerateNavmesh(BBox3 bbox)
         {
             float[] vertices;
             int[] indices;
@@ -163,9 +163,8 @@ namespace WoWMap.Geometry
             var dmesh = new PolyMeshDetail(pmesh, chf, settings);
 
             var buildData = new NavMeshBuilder(pmesh, dmesh, new SharpNav.Pathfinding.OffMeshConnection[0], settings);
-            var tiledNavMesh = new TiledNavMesh(buildData);
 
-            var navMeshQuery = new NavMeshQuery(tiledNavMesh, 65536);
+            return buildData;
         }
 
         public static NavMeshGenerationSettings WoWSettings

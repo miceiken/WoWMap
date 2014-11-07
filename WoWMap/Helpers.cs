@@ -70,5 +70,10 @@ namespace WoWMap
         {
             return new SharpNav.Vector3(v.X, v.Y, v.Z);
         }
+
+        public static float ToRadians(this float angle)
+        {
+            return (float)(Math.PI / 180) * angle;
+        }
     }
 }

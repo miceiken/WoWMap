@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Runtime.Serialization.Formatters.Binary;
 using WoWMap;
 using WoWMap.Archive;
 using WoWMap.Layers;
@@ -20,9 +21,11 @@ namespace WoWMapParser
         {
             Initialize();
 
-            //ReadDBC();
-            //ReadADT();
-            CreateNavmesh();
+            //ReadMapsDBC();
+            ReadADT();
+            //ReadADTs();
+            //CreateNavmesh();
+            //TestNavmesh();
             //ReadWDT();
             //ReadWMO();
 
@@ -45,7 +48,7 @@ namespace WoWMapParser
             Console.WriteLine("CASC initialized in {0}ms", sw.ElapsedMilliseconds);
         }
 
-        static void ReadDBC()
+        static void ReadMapsDBC()
         {
             const string path = @"DBFilesClient\Map.dbc";
             var sw = Stopwatch.StartNew();
@@ -62,6 +65,16 @@ namespace WoWMapParser
         }
 
         static void ReadADT()
+        {
+            var adt = new ADT("Azeroth", 28, 28);
+            adt.Read();
+
+            var geom = new Geometry();
+            geom.AddADT(adt);
+            geom.SaveWavefrontObject("Azeroth_28_28.obj");
+        }
+
+        static void ReadADTs()
         {
             const string continent = "Azeroth";
             var allGeom = new Geometry();
@@ -88,13 +101,35 @@ namespace WoWMapParser
 
         static void CreateNavmesh()
         {
-            const string continent = "Azeroth";
             var geom = new Geometry();
-            var adt = new ADT(continent, 28, 28);
+            var sw = Stopwatch.StartNew();
+            var adt = new ADT("Azeroth", 28, 28);
             adt.Read();
+            sw.Stop();
+            Console.WriteLine("Read ADT in {0}", sw.Elapsed);
             geom.AddADT(adt);
+            sw.Restart();
             var bbox = Geometry.GetBoundingBox(28, 28, geom.Vertices);
-            geom.GenerateNavmesh(bbox);
+            var build = geom.GenerateNavmesh(bbox);
+            sw.Stop();
+            Console.WriteLine("Generated navmesh in {0}", sw.Elapsed);
+
+            TestNavmesh(new SharpNav.TiledNavMesh(build));
+        }
+
+        static void TestNavmesh(SharpNav.TiledNavMesh tmesh)
+        {
+            // Azeroth 28 28 / Deathknell (wow-style coordinates)
+            // Outside church: 1843,734 1604,214 94,55994
+            // Inside church: 1844,074 1642,581 97,62832
+            // Outside spawn: 1672,226 1662,989 139,2343
+            // Inside spawn: 1665,264 1678,277 120,5302
+            // Outside cave: 2051,3 1807,121 102,5225
+            // Inside cave: 2082,813 1950,718 98,04765
+            // Outside house: 1861,465 1582,03 92,79533
+            // Upstairs house: 1859,929 1560,804 99,07755
+
+            var query = new SharpNav.NavMeshQuery(tmesh, 65535);
         }
 
         static void ReadWDT()

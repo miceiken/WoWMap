@@ -68,7 +68,7 @@
     <Compile Include="Layers\ADT.cs" />
     <Compile Include="Archive\CASC.cs" />
     <Compile Include="Archive\DBC.cs" />
-    <Compile Include="Archive\Map.cs" />
+    <Compile Include="Archive\MapRecord.cs" />
     <Compile Include="Layers\M2.cs" />
     <Compile Include="Layers\WMORoot.cs" />
     <Compile Include="Readers\ChunkData.cs" />
