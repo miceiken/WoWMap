@@ -20,7 +20,7 @@ namespace WoWMap.Layers
         public int X { get; private set; }
         public int Y { get; private set; }
 
-        public Vector3 TilePosition { get { return new Vector3(-((Constants.TileSize * X) - Constants.MaxXY), -((Constants.TileSize * Y) - Constants.MaxXY), 0); } }
+        public Vector3 TilePosition { get { return new Vector3((32 - Y) * Constants.TileSize, (32 - X) * Constants.TileSize, 0); } }
 
         private ADT(string filename, ADTType type)
         {

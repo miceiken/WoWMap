@@ -58,7 +58,7 @@ namespace WoWMap.Layers
 
             Vertices = new Vector3[MD20.CountBoundingVertices];
             for (int i = 0; i < Vertices.Length; i++)
-                Vertices[i] = br.ReadVector3();
+                Vertices[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), -br.ReadSingle());
         }
 
         private void ReadIndices()

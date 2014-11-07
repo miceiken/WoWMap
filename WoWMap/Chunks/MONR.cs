@@ -23,7 +23,7 @@ namespace WoWMap.Chunks
 
             Normals = new Vector3[Chunk.Size / 12];
             for (int i = 0; i < Normals.Length; i++)
-                Normals[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), -br.ReadSingle()); // br.ReadVector3();
+                Normals[i] = br.ReadVector3();
         }
     }
 }
