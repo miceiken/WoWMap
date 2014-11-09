@@ -128,11 +128,11 @@ namespace WoWMap.Geometry
 
         public static BBox3 GetBoundingBox(int x, int y, IEnumerable<Vector3> vertices)
         {
-            var bBoxMin = new Vector3(Constants.MaxXY - (Constants.TileSize * x), vertices.Select(v => v.Z).Min(), Constants.MaxXY - (Constants.TileSize * y));
+            var bBoxMin = new Vector3((32 - x) * Constants.TileSize, vertices.Select(v => v.Z).Min(), (32 - y) * Constants.TileSize);
             bBoxMin.X -= ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
             bBoxMin.Z -= ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
 
-            var bBoxMax = new Vector3(Constants.MaxXY - (Constants.TileSize * (x + 1)), vertices.Select(v => v.Z).Max(), Constants.MaxXY - (Constants.TileSize * (y + 1)));
+            var bBoxMax = new Vector3((32 - (x + 1)) * Constants.TileSize, vertices.Select(v => v.Z).Max(), (32 - (y + 1)) * Constants.TileSize);
             bBoxMax.X += ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
             bBoxMax.Z += ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
 
@@ -177,7 +177,7 @@ namespace WoWMap.Geometry
                 cfg.CellHeight = 0.3f;
                 cfg.MinRegionSize = (int)Math.Pow(6, 2);
                 cfg.MergedRegionSize = (int)Math.Pow(12, 2);
-                cfg.MaxClimb = 1f;                
+                cfg.MaxClimb = 1f;
                 cfg.AgentHeight = 2.1f;
                 cfg.AgentWidth = 0.6f;
                 cfg.MaxEdgeLength = (int)(cfg.AgentWidth / cfg.CellSize) * 8;

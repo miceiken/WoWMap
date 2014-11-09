@@ -80,7 +80,7 @@ namespace WoWMap.Layers
 
             Normals = new Vector3[MD20.CountBoundingNormals];
             for (int i = 0; i < Normals.Length; i++)
-                Normals[i] = br.ReadVector3();
+                Normals[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), -br.ReadSingle());
         }
     }
 }

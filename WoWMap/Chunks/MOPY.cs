@@ -32,12 +32,13 @@ namespace WoWMap.Chunks
             [Flags]
             public enum MOPYFlags : byte
             {
-                NoCamCollide,
-                Detail,
-                Collision,
-                Hint,
-                Render,
-                CollideHit
+                NoCamCollide = 0x01,
+                Detail = 0x02,
+                Collision = 0x04,
+                Hint = 0x08,
+                Render = 0x10,
+                CollideHit = 0x20,
+                WallSurface = 0x40,
             };
 
             public static MOPYEntry Read(BinaryReader br)

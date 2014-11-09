@@ -87,10 +87,10 @@ namespace WoWMap.Layers
 
                     var vo = (uint)LiquidVertices.Count;
 
-                    LiquidVertices.Add(relPos + new Vector3(x * Constants.UnitSize, y * Constants.UnitSize, MLIQ.HeightMap[x, y]));
-                    LiquidVertices.Add(relPos + new Vector3((x + 1) * Constants.UnitSize, y * Constants.UnitSize, MLIQ.HeightMap[x + 1, y]));
-                    LiquidVertices.Add(relPos + new Vector3(x * Constants.UnitSize, (y + 1) * Constants.UnitSize, MLIQ.HeightMap[x, y + 1]));
-                    LiquidVertices.Add(relPos + new Vector3((x + 1) * Constants.UnitSize, (y + 1) * Constants.UnitSize, MLIQ.HeightMap[x + 1, y + 1]));
+                    LiquidVertices.Add(relPos - new Vector3(x * Constants.UnitSize, y * Constants.UnitSize, MLIQ.HeightMap[x, y]));
+                    LiquidVertices.Add(relPos - new Vector3((x + 1) * Constants.UnitSize, y * Constants.UnitSize, MLIQ.HeightMap[x + 1, y]));
+                    LiquidVertices.Add(relPos - new Vector3(x * Constants.UnitSize, (y + 1) * Constants.UnitSize, MLIQ.HeightMap[x, y + 1]));
+                    LiquidVertices.Add(relPos - new Vector3((x + 1) * Constants.UnitSize, (y + 1) * Constants.UnitSize, MLIQ.HeightMap[x + 1, y + 1]));
 
                     LiquidIndices.Add(new Triangle<uint>(TriangleType.Water, vo, vo + 2, vo + 1));
                     LiquidIndices.Add(new Triangle<uint>(TriangleType.Water, vo + 2, vo + 3, vo + 1));

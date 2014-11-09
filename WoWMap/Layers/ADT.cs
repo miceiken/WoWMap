@@ -14,13 +14,15 @@ namespace WoWMap.Layers
     public enum ADTType { Normal, Objects, Textures };
     public class ADT
     {
+        public string Filename { get; private set; }
+
         public ADTType Type { get; private set; }
 
         public string World { get; private set; }
         public int X { get; private set; }
         public int Y { get; private set; }
 
-        public Vector3 TilePosition { get { return new Vector3((32 - Y) * Constants.TileSize, (32 - X) * Constants.TileSize, 0); } }
+        public Vector3 TilePosition { get { return new Vector3((32 - X) * Constants.TileSize, (32 - Y) * Constants.TileSize, 0); } }
 
         private ADT(string filename, ADTType type)
         {
@@ -31,6 +33,7 @@ namespace WoWMap.Layers
                 case ADTType.Textures: filename += "_tex0.adt"; break;
             }
 
+            Filename = filename;
             Data = new ChunkData(filename);
             Type = type;
         }

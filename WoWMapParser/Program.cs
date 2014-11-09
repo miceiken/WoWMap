@@ -67,36 +67,35 @@ namespace WoWMapParser
         static void ReadADT()
         {
             var adt = new ADT("Azeroth", 28, 28);
+            //var adt = new ADT("Kalimdor", 32, 36);
             adt.Read();
 
             var geom = new Geometry();
             geom.AddADT(adt);
-            geom.SaveWavefrontObject("Azeroth_28_28.obj");
+            geom.SaveWavefrontObject(Path.ChangeExtension(adt.Filename, ".obj"));
         }
 
         static void ReadADTs()
         {
             const string continent = "Azeroth";
             var allGeom = new Geometry();
-            
+
+            var sw = new Stopwatch();
             for (int y = 27; y < 29; y++)
             {
                 for (int x = 28; x < 30; x++)
                 {
-                    //var geom = new Geometry();
                     Console.Write("Parsing {0} [{1}, {2}]", continent, x, y);
-                    var sw = Stopwatch.StartNew();
+                    sw.Start();
                     var adt = new ADT(continent, x, y);
                     adt.Read();
-                    sw.Stop();
+                    sw.Reset();
                     Console.WriteLine(" (done! {0}ms)", sw.ElapsedMilliseconds);
-                    //geom.AddADT(adt);
-                    //geom.GenerateNavmesh(Geometry.GetBoundingBox(x, y, geom.Vertices));
                     allGeom.AddADT(adt);
                 }
             }
 
-            allGeom.SaveWavefrontObject("Azeroth.obj");
+            allGeom.SaveWavefrontObject(continent + ".obj");
         }
 
         static void CreateNavmesh()

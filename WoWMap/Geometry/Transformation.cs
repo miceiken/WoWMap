@@ -14,18 +14,19 @@ namespace WoWMap.Geometry
         public static Matrix GetTransform(Vector3 position, Vector3 rotation, float scale = 1.0f)
         {
             var translation = Matrix.Translation(-(position.X - Constants.MaxXY), -(position.Z - Constants.MaxXY), position.Y);
-            var rotTranslation = Matrix.RotationZ((rotation.Y + 90.0f).ToRadians()) * Matrix.RotationY(rotation.X.ToRadians()) * Matrix.RotationX((rotation.Z + 180.0f).ToRadians());
+            // Something is wrong with the following line, but I have no idea what. 
+            var rotTranslation = Matrix.RotationYawPitchRoll((rotation.X - 180.0f).ToRadians(), (rotation.Z).ToRadians(), (rotation.Y - 90.0f).ToRadians());
 
-            return (Matrix.Scaling(scale) * rotTranslation) * translation;
+            return Matrix.Scaling(scale) * rotTranslation * translation;
         }
 
         public static Matrix GetWmoDoodadTransform(MODD.MODDEntry modd, MODF.MODFEntry modf)
         {
             var modfTransform = GetTransform(modf.Position, modf.Rotation);
             var translation = Matrix.Translation(modd.Position);
-            var quatRotation = Matrix.RotationQuaternion(new Quaternion(-modd.Rotation[2], modd.Rotation[3], -modd.Rotation[1], modd.Rotation[0]));
+            var quatRotation = Matrix.RotationQuaternion(new Quaternion(-modd.Rotation[0], modd.Rotation[1], -modd.Rotation[2], modd.Rotation[3]));
 
-            return Matrix.Scaling(modd.Scale) * Matrix.RotationY((float)Math.PI) * quatRotation * translation * modfTransform;
+            return Matrix.Scaling(modd.Scale) * quatRotation * translation * modfTransform;
         }
     }
 }

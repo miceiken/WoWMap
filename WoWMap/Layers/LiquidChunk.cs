@@ -66,7 +66,7 @@ namespace WoWMap.Layers
                     heightMap.RenderMask = GetRenderMask(header, information);
                 }
                 else
-                { // Ocean (it's flat!!!!!!!!!!!!)
+                {
                     heightMap = GetOceanHeightMap(information.MinHeightLevel);
                 }
 
