@@ -72,7 +72,7 @@ namespace WoWMapParser
 
             var geom = new Geometry();
             geom.AddADT(adt);
-            geom.SaveWavefrontObject(Path.ChangeExtension(adt.Filename, ".obj"));
+            geom.SaveWavefrontObject(Path.GetFileNameWithoutExtension(adt.Filename) + ".obj");
         }
 
         static void ReadADTs()
@@ -129,6 +129,34 @@ namespace WoWMapParser
             // Upstairs house: 1859,929 1560,804 99,07755
 
             var query = new SharpNav.NavMeshQuery(tmesh, 65535);
+
+            var extents = new SharpNav.Vector3(2.5f, 2.5f, 2.5f);
+
+            // WoW(X, Y, Z) -> SharpNav(Y, Z, X) -- or so I think :-----D
+            var posStart = new SharpNav.Vector3(1662.9f, 139.2f, 1672.2f); // Outside spawn
+            var posEnd = new SharpNav.Vector3(1678.3f, 120.5f, 1665.3f); // Inside spawn
+
+            SharpNav.Vector3 aStartPos;
+            int snRef;
+            if (!query.FindNearestPoly(ref posStart, ref extents, out snRef, out aStartPos))
+                Console.WriteLine("No start poly");
+
+            //SharpNav.Vector3 rPos;
+            //int rRef;
+            //if (!query.FindRandomPoint(out rRef, out rPos))
+            //    Console.WriteLine("No end poly");
+
+            SharpNav.Vector3 aEndPos;
+            int enRef;
+            if (!query.FindNearestPoly(ref posEnd, ref extents, out enRef, out aEndPos))
+                Console.WriteLine("No end poly");
+
+            var path = new List<int>();
+            if (!query.FindPath(snRef, enRef, ref aStartPos, ref aEndPos, path))
+                Console.WriteLine("No path");
+
+            //if (!query.FindStraightPath(posStart, posEnd, path.ToArray(), path.Count))
+            //    return;
         }
 
         static void ReadWDT()

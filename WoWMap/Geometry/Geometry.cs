@@ -120,7 +120,7 @@ namespace WoWMap.Geometry
                         break;
 
                     default:
-                        areas[i] = (AreaId)PolyArea.Terrain;
+                        areas[i] = AreaId.Walkable; //(AreaId)PolyArea.Terrain;
                         break;
                 }
             }
@@ -128,13 +128,13 @@ namespace WoWMap.Geometry
 
         public static BBox3 GetBoundingBox(int x, int y, IEnumerable<Vector3> vertices)
         {
-            var bBoxMin = new Vector3((32 - x) * Constants.TileSize, vertices.Select(v => v.Z).Min(), (32 - y) * Constants.TileSize);
-            bBoxMin.X -= ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
-            bBoxMin.Z -= ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
+            var bBoxMin = new Vector3((32 - (x + 1)) * Constants.TileSize, vertices.Select(v => v.Z).Min(), (32 - (y + 1)) * Constants.TileSize);
+            //bBoxMin.X -= ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
+            //bBoxMin.Z -= ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
 
-            var bBoxMax = new Vector3((32 - (x + 1)) * Constants.TileSize, vertices.Select(v => v.Z).Max(), (32 - (y + 1)) * Constants.TileSize);
-            bBoxMax.X += ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
-            bBoxMax.Z += ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
+            var bBoxMax = new Vector3((32 - x) * Constants.TileSize, vertices.Select(v => v.Z).Max(), (32 - y) * Constants.TileSize);
+            //bBoxMax.X += ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
+            //bBoxMax.Z += ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
 
             return new BBox3(bBoxMin.ToV3(), bBoxMax.ToV3());
         }

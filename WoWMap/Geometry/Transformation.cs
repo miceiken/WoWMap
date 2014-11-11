@@ -24,7 +24,7 @@ namespace WoWMap.Geometry
         {
             var modfTransform = GetTransform(modf.Position, modf.Rotation);
             var translation = Matrix.Translation(modd.Position);
-            var quatRotation = Matrix.RotationQuaternion(new Quaternion(-modd.Rotation[0], modd.Rotation[1], -modd.Rotation[2], modd.Rotation[3]));
+            var quatRotation = Matrix.RotationQuaternion(new Quaternion(-modd.Rotation[0], -modd.Rotation[1], -modd.Rotation[2], modd.Rotation[3]));
 
             return Matrix.Scaling(modd.Scale) * quatRotation * translation * modfTransform;
         }
