@@ -66,8 +66,9 @@ namespace WoWMapParser
 
         static void ReadADT()
         {
-            var adt = new ADT("Azeroth", 28, 28);
+            //var adt = new ADT("Azeroth", 28, 28);
             //var adt = new ADT("Kalimdor", 32, 36);
+            var adt = new ADT("PvPZone01", 32, 30);
             adt.Read();
 
             var geom = new Geometry();
