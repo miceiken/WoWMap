@@ -5,6 +5,10 @@ This project aims to read and extract data from World of Warcrafts game data fil
 
 Feel free to contribute.
 
+
+
+[Screenshot](screenshot.jpg)
+
 ----------
 ## Credits ##
  - Contributers of the [WoWDev wiki](http://pxr.dk/wowdev/wiki/index.php?title=Main_Page)
