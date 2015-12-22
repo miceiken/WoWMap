@@ -22,7 +22,7 @@ namespace WoWMap.Chunks
             var br = Chunk.GetReader();
 
             Entries = new MODDEntry[Chunk.Size / 40];
-            for (int i = 0; i < Entries.Length; i++)
+            for (var i = 0; i < Entries.Length; i++)
                 Entries[i] = MODDEntry.Read(br);
         }
 
@@ -30,23 +30,20 @@ namespace WoWMap.Chunks
         {
             public uint ofsMODN;
             public Vector3 Position;
-            public float[] Rotation;        // Quaternion
+            public Quaternion Rotation;        // Quaternion
             public float Scale;
             public byte[] Color;
 
             public static MODDEntry Read(BinaryReader br)
             {
-                var e = new MODDEntry();
-                e.ofsMODN = br.ReadUInt32();
-                e.Position = new Vector3(br.ReadSingle(), br.ReadSingle(), -br.ReadSingle());
-                e.Rotation = new float[4];
-                for (int i = 0; i < 4; i++)
-                    e.Rotation[i] = br.ReadSingle();
-                e.Scale = br.ReadSingle();
-                e.Color = new byte[4];
-                for (int i = 0; i < 4; i++)
-                    e.Color[i] = br.ReadByte();
-                return e;
+                return new MODDEntry
+                {
+                    ofsMODN = br.ReadUInt32(),
+                    Position = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle()),
+                    Rotation = new Quaternion(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle()),
+                    Scale = br.ReadSingle(),
+                    Color = new[] { br.ReadByte(), br.ReadByte(), br.ReadByte(), br.ReadByte() }
+                };
             }
         }
     }

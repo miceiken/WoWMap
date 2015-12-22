@@ -84,7 +84,8 @@ namespace WoWMap.Layers
 
             foreach (var subChunk in Data.Chunks)
             {
-                Console.WriteLine("Found chunk {0}", subChunk.Name);
+                if (subChunk.Name != "MCNK")
+                    Console.WriteLine("Found chunk {0}", subChunk.Name);
                 switch (subChunk.Name)
                 {
                     case "MHDR":

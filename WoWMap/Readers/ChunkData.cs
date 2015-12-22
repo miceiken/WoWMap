@@ -11,7 +11,22 @@ namespace WoWMap
     public class ChunkData
     {
         public ChunkData(Stream stream, uint chunkSize = 0)
-        {            
+        {
+            FromStream(stream, chunkSize);
+        }
+
+        public ChunkData(string filename)
+        {
+            _localFile = @"files/" + filename.ToLowerInvariant();
+            FromStream(File.Exists(filename)
+                ? File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read)
+                : CASC.OpenFile(filename));
+        }
+
+        private string _localFile = string.Empty;
+
+        private void FromStream(Stream stream, uint chunkSize = 0)
+        {
             Stream = stream;
             Chunks = new List<Chunk>();
 
@@ -21,6 +36,7 @@ namespace WoWMap
             maxRead = Math.Min(maxRead, (uint)stream.Length);
 
             var br = new BinaryReader(stream);
+
             var baseOffset = (uint)stream.Position;
             var calcOffset = 0u;
             while ((calcOffset + baseOffset) < maxRead && (calcOffset < maxRead))
@@ -34,11 +50,21 @@ namespace WoWMap
                 if ((calcOffset + baseOffset) < maxRead && calcOffset < maxRead)
                     stream.Seek(header.Size, SeekOrigin.Current);
             }
-        }
 
-        public ChunkData(string filename)
-            : this(CASC.OpenFile(filename))
-        { }
+            if (string.IsNullOrEmpty(_localFile))
+                return;
+
+            // ReSharper disable AssignNullToNotNullAttribute
+            if (!Directory.Exists(Path.GetDirectoryName(_localFile)))
+                Directory.CreateDirectory(Path.GetDirectoryName(_localFile));
+            // ReSharper restore AssignNullToNotNullAttribute
+
+            using (var fs = File.Create(_localFile))
+            {
+                br.BaseStream.Position = 0;
+                br.BaseStream.CopyTo(fs);
+            }
+        }
 
         public Stream Stream { get; private set; }
         public List<Chunk> Chunks { get; private set; }

@@ -11,22 +11,27 @@ namespace WoWMap.Geometry
 {
     public static class Transformation
     {
-        public static Matrix GetTransform(Vector3 position, Vector3 rotation, float scale = 1.0f)
+        public static Matrix GetWMOTransform(Vector3 position, Vector3 rotation, float scale = 1.0f)
         {
-            var translation = Matrix.Translation(-(position.X - Constants.MaxXY), -(position.Z - Constants.MaxXY), position.Y);
-            // Something is wrong with the following line, but I have no idea what. 
-            var rotTranslation = Matrix.RotationYawPitchRoll((rotation.X - 180.0f).ToRadians(), (rotation.Z).ToRadians(), (rotation.Y - 90.0f).ToRadians());
+            var placementMatrix = Matrix.Identity;
+            placementMatrix *= Matrix.RotationX((float)(Math.PI / 2.0f));
+            placementMatrix *= Matrix.RotationY((float)(Math.PI / 2.0f));
 
-            return Matrix.Scaling(scale) * rotTranslation * translation;
+            placementMatrix *= Matrix.Translation(Constants.MaxXY - position.X, position.Y, Constants.MaxXY - position.Z);
+            placementMatrix *= Matrix.RotationY((rotation.Y - 270).ToRadians()); // Pitch
+            placementMatrix *= Matrix.RotationZ((-rotation.X).ToRadians()); // Roll
+            placementMatrix *= Matrix.RotationX((rotation.Z - 90).ToRadians()); // Yaw
+
+            return Matrix.Scaling(scale) * placementMatrix;
         }
 
-        public static Matrix GetWmoDoodadTransform(MODD.MODDEntry modd, MODF.MODFEntry modf)
+        public static Matrix GetDoodadTransform(MODD.MODDEntry modd, MODF.MODFEntry modf)
         {
-            var modfTransform = GetTransform(modf.Position, modf.Rotation);
-            var translation = Matrix.Translation(modd.Position);
-            var quatRotation = Matrix.RotationQuaternion(new Quaternion(-modd.Rotation[0], -modd.Rotation[1], -modd.Rotation[2], modd.Rotation[3]));
-
-            return Matrix.Scaling(modd.Scale) * quatRotation * translation * modfTransform;
+            var placementMatrix = Matrix.Identity * GetWMOTransform(modf.Position, modf.Rotation);
+            placementMatrix *= Matrix.Translation(modd.Position);
+            placementMatrix *= Matrix.RotationQuaternion(modd.Rotation);
+            placementMatrix *= Matrix.Scaling(modd.Scale);
+            return placementMatrix;
         }
     }
 }

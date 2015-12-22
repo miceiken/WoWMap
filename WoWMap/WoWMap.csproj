@@ -70,7 +70,6 @@
     <Compile Include="Archive\DBC.cs" />
     <Compile Include="Archive\MapRecord.cs" />
     <Compile Include="Layers\M2.cs" />
-    <Compile Include="Layers\Textures.cs" />
     <Compile Include="Layers\WMORoot.cs" />
     <Compile Include="Readers\ChunkData.cs" />
     <Compile Include="Readers\ChunkHeader.cs" />
