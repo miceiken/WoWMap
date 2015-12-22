@@ -58,7 +58,7 @@ namespace WoWMap.Layers
 
             Vertices = new Vector3[MD20.CountBoundingVertices];
             for (int i = 0; i < Vertices.Length; i++)
-                Vertices[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), -br.ReadSingle());
+                Vertices[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
         }
 
         private void ReadIndices()
@@ -80,7 +80,7 @@ namespace WoWMap.Layers
 
             Normals = new Vector3[MD20.CountBoundingNormals];
             for (int i = 0; i < Normals.Length; i++)
-                Normals[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), -br.ReadSingle());
+                Normals[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
         }
     }
 }

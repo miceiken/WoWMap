@@ -14,23 +14,27 @@ namespace WoWMap.Geometry
         public static Matrix GetWMOTransform(Vector3 position, Vector3 rotation, float scale = 1.0f)
         {
             var placementMatrix = Matrix.Identity;
-            placementMatrix *= Matrix.RotationX((float)(Math.PI / 2.0f));
-            placementMatrix *= Matrix.RotationY((float)(Math.PI / 2.0f));
+            placementMatrix = Matrix.Multiply(Matrix.RotationX((float)(Math.PI / 2.0f)), placementMatrix);
+            placementMatrix = Matrix.Multiply(Matrix.RotationY((float)(Math.PI / 2.0f)), placementMatrix);
 
-            placementMatrix *= Matrix.Translation(Constants.MaxXY - position.X, position.Y, Constants.MaxXY - position.Z);
-            placementMatrix *= Matrix.RotationY((rotation.Y - 270).ToRadians()); // Pitch
-            placementMatrix *= Matrix.RotationZ((-rotation.X).ToRadians()); // Roll
-            placementMatrix *= Matrix.RotationX((rotation.Z - 90).ToRadians()); // Yaw
+            placementMatrix = Matrix.Multiply(Matrix.Translation(Constants.MaxXY - position.X, position.Y, Constants.MaxXY - position.Z), placementMatrix);
+            placementMatrix = Matrix.Multiply(Matrix.RotationY((rotation.Y - 270).ToRadians()), placementMatrix); // Pitch
+            placementMatrix = Matrix.Multiply(Matrix.RotationZ((-rotation.X).ToRadians()), placementMatrix); // Roll
+            placementMatrix = Matrix.Multiply(Matrix.RotationX((rotation.Z - 90).ToRadians()), placementMatrix); // Yaw
+            placementMatrix = Matrix.Multiply(Matrix.Scaling(scale), placementMatrix);
 
-            return Matrix.Scaling(scale) * placementMatrix;
+            return placementMatrix;
         }
 
         public static Matrix GetDoodadTransform(MODD.MODDEntry modd, MODF.MODFEntry modf)
         {
-            var placementMatrix = Matrix.Identity * GetWMOTransform(modf.Position, modf.Rotation);
-            placementMatrix *= Matrix.Translation(modd.Position);
-            placementMatrix *= Matrix.RotationQuaternion(modd.Rotation);
-            placementMatrix *= Matrix.Scaling(modd.Scale);
+            var placementMatrix = Matrix.Identity;
+
+            placementMatrix = Matrix.Multiply(GetWMOTransform(modf.Position, modf.Rotation), placementMatrix); ;
+            placementMatrix = Matrix.Multiply(Matrix.Translation(modd.Position), placementMatrix); ;
+            placementMatrix = Matrix.Multiply(Matrix.RotationQuaternion(modd.Rotation), placementMatrix); ;
+            placementMatrix = Matrix.Multiply(Matrix.Scaling(modd.Scale), placementMatrix); ;
+            
             return placementMatrix;
         }
     }

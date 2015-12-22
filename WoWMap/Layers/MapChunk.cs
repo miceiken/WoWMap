@@ -127,8 +127,8 @@ namespace WoWMap.Layers
             {
                 for (int j = 0; j < (((i % 2) != 0) ? 8 : 9); j++)
                 {
-                    var v = new Vector3(MCNK.Position.Y - (j * Constants.UnitSize), MCNK.Position.X - (i * Constants.UnitSize * 0.5f), MCVT.Heights[idx] + MCNK.Position.Z);
-                    if ((i % 2) != 0) v.X -= 0.5f * Constants.UnitSize;
+                    var v = new Vector3(MCNK.Position.X - (i * Constants.UnitSize * 0.5f), MCNK.Position.Y - (j * Constants.UnitSize), MCVT.Heights[idx] + MCNK.Position.Z);
+                    if ((i % 2) != 0) v.Y -= 0.5f * Constants.UnitSize;
                     Vertices[idx++] = v;
                 }
             }
@@ -280,7 +280,7 @@ namespace WoWMap.Layers
                 var transform = Transformation.GetWMOTransform(doodad.Position, doodad.Rotation, doodad.Scale / 1024.0f); // Not a typo
                 var vo = (uint)DoodadVertices.Count;
                 foreach (var v in model.Vertices)
-                    DoodadVertices.Add((Vector3)Vector3.Transform(v, transform));
+                    DoodadVertices.Add( (Vector3) Vector3.Transform(v, transform));
                 foreach (var t in model.Indices)
                     DoodadIndices.Add(new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo));
             }
