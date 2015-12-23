@@ -12,7 +12,7 @@ namespace WoWMapRenderer
     public class Camera
     {
         protected Vector3 m_position = new Vector3(0, 100, 0);
-        protected Vector3 m_up = Vector3.UnitZ;
+        protected Vector3 m_up = Vector3.UnitY;
         protected Vector3 m_direction;
 
         protected const float m_pitchLimit = 1.4f;
@@ -34,10 +34,14 @@ namespace WoWMapRenderer
             m_direction.Normalize();
 
             // Create default camera matrices
-            Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, Width / Height, 0.01f, 1000);
             View = CreateLookAt();
+            SetViewport(Width, Height);
         }
 
+        public void SetViewport(float Width, float Height)
+        {
+            Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver2, Width / Height, 0.01f, 1000);
+        }
 
         /// <summary>
         /// Creates the instance of the camera at the given location.
@@ -51,6 +55,7 @@ namespace WoWMapRenderer
             m_direction.Normalize();
 
             View = CreateLookAt();
+            SetViewport(800, 600);
         }
 
 

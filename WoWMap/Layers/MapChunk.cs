@@ -40,6 +40,10 @@ namespace WoWMap.Layers
         public MCRD MCRD { get; private set; }
         public MCRW MCRW { get; private set; }
 
+        public MCNR MCNR { get; private set; }
+
+        public MCCV MCCV { get; private set; }
+
         public Vector3[] Vertices { get; private set; }
         public List<Triangle<uint>> Indices { get; private set; }
 
@@ -109,6 +113,14 @@ namespace WoWMap.Layers
                         MCRW = new MCRW(subChunk);
 
                         GenerateWMOs();
+                        break;
+
+                    case "MCNR":
+                        MCNR = new MCNR(subChunk);
+                        break;
+
+                    case "MCCV":
+                        MCCV = new MCCV(subChunk);
                         break;
                 }
             }

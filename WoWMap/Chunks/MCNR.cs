@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
+﻿using System.IO;
 using WoWMap.Readers;
+using OpenTK;
 
 namespace WoWMap.Chunks
 {
@@ -31,14 +27,17 @@ namespace WoWMap.Chunks
 
         public class MCNREntry
         {
-            public short[] Normal;
+            public Vector3 Normal;
 
             public static MCNREntry Read(BinaryReader br)
             {
                 var entry = new MCNREntry();
-                entry.Normal = new short[3];
-                for (int i = 0; i < 3; i++)
-                    entry.Normal[i] = br.ReadInt16();
+                entry.Normal = new Vector3
+                {
+                    X = br.ReadInt16()/127.0f,
+                    Y = br.ReadInt16()/127.0f,
+                    Z = br.ReadInt16()/127.0f
+                };
                 return entry;
             }
         }

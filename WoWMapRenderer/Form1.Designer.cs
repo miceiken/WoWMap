@@ -36,6 +36,7 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this._backgroundTaskProgress = new System.Windows.Forms.ToolStripProgressBar();
             this._feedbackText = new System.Windows.Forms.ToolStripStatusLabel();
+            this._cameraPos = new System.Windows.Forms.ToolStripStatusLabel();
             this._mapListBox = new System.Windows.Forms.ListBox();
             this.filterBox = new System.Windows.Forms.TextBox();
             this.menuStrip1.SuspendLayout();
@@ -47,7 +48,7 @@
             this.GL.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.GL.BackColor = System.Drawing.Color.Black;
+            this.GL.BackColor = System.Drawing.Color.White;
             this.GL.Location = new System.Drawing.Point(210, 27);
             this.GL.Name = "GL";
             this.GL.Size = new System.Drawing.Size(781, 437);
@@ -55,6 +56,7 @@
             this.GL.VSync = true;
             this.GL.Load += new System.EventHandler(this.OnRenderLoaded);
             this.GL.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.OnKeyPress);
+            this.GL.MouseMove += new System.Windows.Forms.MouseEventHandler(this.OnMouseMove);
             this.GL.Resize += new System.EventHandler(this.OnRenderResize);
             // 
             // menuStrip1
@@ -94,7 +96,8 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._backgroundTaskProgress,
-            this._feedbackText});
+            this._feedbackText,
+            this._cameraPos});
             this.statusStrip1.Location = new System.Drawing.Point(0, 476);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(1003, 22);
@@ -112,6 +115,11 @@
             // 
             this._feedbackText.Name = "_feedbackText";
             this._feedbackText.Size = new System.Drawing.Size(0, 17);
+            // 
+            // _cameraPos
+            // 
+            this._cameraPos.Name = "_cameraPos";
+            this._cameraPos.Size = new System.Drawing.Size(0, 17);
             // 
             // _mapListBox
             // 
@@ -167,6 +175,7 @@
         private System.Windows.Forms.ListBox _mapListBox;
         private System.Windows.Forms.TextBox filterBox;
         private System.Windows.Forms.ToolStripProgressBar _backgroundTaskProgress;
+        private System.Windows.Forms.ToolStripStatusLabel _cameraPos;
     }
 }
 
