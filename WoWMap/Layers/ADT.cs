@@ -49,7 +49,7 @@ namespace WoWMap.Layers
         public ChunkData Data { get; private set; }
 
         public ADT ADTObjects { get; private set; }         // _obj0.adt - Contains information about world objects
-        //public ADT ADTTextures { get; private set; }      // _tex0.adt - Contains information about world textures
+        public ADT ADTTextures { get; private set; }      // _tex0.adt - Contains information about world textures
 
         public MapChunk[] MapChunks { get; private set; }
         public LiquidChunk Liquid { get; private set; }
@@ -61,6 +61,7 @@ namespace WoWMap.Layers
         public MWID MWID { get; private set; }      // Offsets for WMO filenames
         public MDDF MDDF { get; private set; }      // Placement information for doodads
         public MODF MODF { get; private set; }      // Placement information for WMOs
+        public MTEX MTEX { get; private set; }      // Filenames for textures
 
         public List<string> DoodadPaths { get; private set; }
         public List<string> ModelPaths { get; private set; }
@@ -72,15 +73,19 @@ namespace WoWMap.Layers
                 ADTObjects = new ADT(World, X, Y, ADTType.Objects);
                 ADTObjects.Read();
 
-                //ADTTextures = new ADT(World, X, Y, ADTType.Textures);
-                //ADTTextures.Read();
+                ADTTextures = new ADT(World, X, Y, ADTType.Textures);
+                ADTTextures.Read();
             }
+
+            Console.WriteLine("* Reading {0} Type ADT.", Type);
 
             MapChunks = new MapChunk[16 * 16];
             int mcIdx = 0;
 
             foreach (var subChunk in Data.Chunks)
             {
+                if (subChunk.Name != "MCNK")
+                    Console.WriteLine("Found chunk {0}", subChunk.Name);
                 switch (subChunk.Name)
                 {
                     case "MHDR":
@@ -105,6 +110,9 @@ namespace WoWMap.Layers
                         break;
                     case "MODF":
                         MODF = new MODF(subChunk);
+                        break;
+                    case "MTEX":
+                        MTEX = new MTEX(subChunk);
                         break;
                     case "MH2O":
                         Liquid = new LiquidChunk(this, subChunk);

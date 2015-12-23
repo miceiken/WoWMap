@@ -48,7 +48,7 @@ namespace WoWMap.Geometry
                 sw.WriteLine("o " + filename);
                 var nf = CultureInfo.InvariantCulture.NumberFormat;
                 foreach (var v in this.Vertices)
-                    sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Z.ToString(nf) + " " + v.Y.ToString(nf));
+                    sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Y.ToString(nf) + " " + v.Z.ToString(nf));
                 foreach (var t in this.Indices)
                     sw.WriteLine("f " + (t.V0 + 1) + " " + (t.V1 + 1) + " " + (t.V2 + 1));
             }
@@ -99,8 +99,8 @@ namespace WoWMap.Geometry
             {
                 var vert = Vertices[i];
                 vertices[(i * 3) + 0] = vert.X;
-                vertices[(i * 3) + 1] = vert.Z;
-                vertices[(i * 3) + 2] = vert.Y;
+                vertices[(i * 3) + 1] = vert.Y;
+                vertices[(i * 3) + 2] = vert.Z;
             }
             indices = new int[Indices.Count * 3];
             for (int i = 0; i < Indices.Count; i++)

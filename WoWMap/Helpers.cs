@@ -75,5 +75,10 @@ namespace WoWMap
         {
             return (float)(Math.PI / 180) * angle;
         }
+
+        public static SharpDX.Vector3 ToVector3(this SharpDX.Vector4 v)
+        {
+            return new SharpDX.Vector3(v.X, v.Y, v.Z);
+        }
     }
 }

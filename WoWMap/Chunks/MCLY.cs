@@ -14,7 +14,7 @@ namespace WoWMap.Chunks
         public MCLY(Chunk c) : base(c, c.Size) { }
 
         public uint TextureId;
-        public uint Flags;
+        public MCLYFlags Flags;
         public uint ofsMCAL;
         public short EffectId;
         private short padding;
@@ -40,7 +40,7 @@ namespace WoWMap.Chunks
             var br = Chunk.GetReader();
 
             TextureId = br.ReadUInt32();
-            Flags = br.ReadUInt32();
+            Flags = (MCLYFlags)br.ReadUInt32();
             ofsMCAL = br.ReadUInt32();
             EffectId = br.ReadInt16();
             padding = br.ReadInt16();

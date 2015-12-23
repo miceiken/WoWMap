@@ -21,6 +21,8 @@ namespace WoWMap.Chunks
 
             var chunk = br.ReadBytes((int)Chunk.Size);
             Filenames = Helpers.GetIndexedStrings(chunk);
+            for (var i = 0; i < Filenames.Count(); ++i)
+                Console.WriteLine("Textures found: {0}", Filenames.ElementAt(i));
         }
     }
 }

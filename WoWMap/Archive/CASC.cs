@@ -20,6 +20,20 @@ namespace WoWMap.Archive
             Initialized = true;
         }
 
+        public static void InitializeOnline(LocaleFlags locale)
+        {
+            Locale = locale;
+            Handler = CASCHandler.OpenOnlineStorage("wow");
+            Handler.Root.SetFlags(locale, ContentFlags.None, false);
+
+            Initialized = true;
+        }
+
+        public static void InitializeOnline()
+        {
+            InitializeOnline(LocaleFlags.enUS);
+        }
+
         public static void Initialize(string path)
         {
             Initialize(path, LocaleFlags.enUS);

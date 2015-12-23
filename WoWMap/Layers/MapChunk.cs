@@ -127,8 +127,8 @@ namespace WoWMap.Layers
             {
                 for (int j = 0; j < (((i % 2) != 0) ? 8 : 9); j++)
                 {
-                    var v = new Vector3(MCNK.Position.Y - (j * Constants.UnitSize), MCNK.Position.X - (i * Constants.UnitSize * 0.5f), MCVT.Heights[idx] + MCNK.Position.Z);
-                    if ((i % 2) != 0) v.X -= 0.5f * Constants.UnitSize;
+                    var v = new Vector3(MCNK.Position.X - (i * Constants.UnitSize * 0.5f), MCNK.Position.Y - (j * Constants.UnitSize), MCVT.Heights[idx] + MCNK.Position.Z);
+                    if ((i % 2) != 0) v.Y -= 0.5f * Constants.UnitSize;
                     Vertices[idx++] = v;
                 }
             }
@@ -186,14 +186,13 @@ namespace WoWMap.Layers
 
         public static void InsertWMOGeometry(MODF.MODFEntry wmo, WMORoot model, List<Vector3> vertices, List<Triangle<uint>> indices)
         {
-            var transform = Transformation.GetTransform(wmo.Position, wmo.Rotation);
+            var transform = Transformation.GetWMOTransform(wmo.Position, wmo.Rotation);
             foreach (var group in model.Groups)
             {
                 var vo = (uint)vertices.Count;
-                foreach (var v in group.MOVT.Vertices)
-                    vertices.Add((Vector3)Vector3.Transform(v, transform));
+                vertices.AddRange(group.MOVT.Vertices.Select(v => Vector3.Transform(v, transform).ToVector3()));
 
-                for (int i = 0; i < group.MOVI.Indices.Length; i++)
+                for (var i = 0; i < group.MOVI.Indices.Length; i++)
                 {
                     if (((byte)group.MOPY.Entries[i].Flags & 0x04) != 0 && group.MOPY.Entries[i].MaterialId != 0xFF)
                         continue;
@@ -203,7 +202,7 @@ namespace WoWMap.Layers
                 }
             }
 
-            if (wmo.DoodadSet >= 0 && wmo.DoodadSet < model.MODS.Entries.Length)
+            if (wmo.DoodadSet < model.MODS.Entries.Length)
             {
                 var set = model.MODS.Entries[wmo.DoodadSet];
                 var instances = new List<MODD.MODDEntry>((int)set.nDoodads);
@@ -224,10 +223,11 @@ namespace WoWMap.Layers
                     if (!doodad.IsCollidable)
                         continue;
 
-                    var doodadTransform = Transformation.GetWmoDoodadTransform(instance, wmo);
+                    var doodadTransform = Transformation.GetDoodadTransform(instance, wmo);
                     var vo = (uint)vertices.Count;
-                    foreach (var v in doodad.Vertices)
-                        vertices.Add((Vector3)Vector3.Transform(v, doodadTransform));
+                    
+                    foreach (var vertex in doodad.Vertices)
+                        vertices.Add(Vector3.Transform(vertex, doodadTransform).ToVector3());
                     foreach (var t in doodad.Indices)
                         indices.Add(new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo));
                 }
@@ -277,10 +277,10 @@ namespace WoWMap.Layers
                 if (DoodadIndices == null)
                     DoodadIndices = new List<Triangle<uint>>((MCRD.MDDFEntryIndex.Length / 4) * model.Indices.Length);
 
-                var transform = Transformation.GetTransform(doodad.Position, doodad.Rotation, doodad.Scale / 1024.0f);
+                var transform = Transformation.GetWMOTransform(doodad.Position, doodad.Rotation, doodad.Scale / 1024.0f); // Not a typo
                 var vo = (uint)DoodadVertices.Count;
                 foreach (var v in model.Vertices)
-                    DoodadVertices.Add((Vector3)Vector3.Transform(v, transform));
+                    DoodadVertices.Add( (Vector3) Vector3.Transform(v, transform));
                 foreach (var t in model.Indices)
                     DoodadIndices.Add(new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo));
             }

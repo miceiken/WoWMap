@@ -42,7 +42,7 @@ namespace WoWMapParser
             Console.WriteLine("Initializing CASC - this may take a while...");
 
             var sw = Stopwatch.StartNew();
-            CASC.Initialize(@"D:\Games\World of Warcraft\");
+            CASC.InitializeOnline();
             sw.Stop();
 
             Console.WriteLine("CASC initialized in {0}ms", sw.ElapsedMilliseconds);
@@ -66,9 +66,9 @@ namespace WoWMapParser
 
         static void ReadADT()
         {
-            //var adt = new ADT("Azeroth", 28, 28);
+            var adt = new ADT("Azeroth", 28, 28);
             //var adt = new ADT("Kalimdor", 32, 36);
-            var adt = new ADT("PvPZone01", 32, 30);
+            //var adt = new ADT("PvPZone01", 32, 30);
             adt.Read();
 
             var geom = new Geometry();
