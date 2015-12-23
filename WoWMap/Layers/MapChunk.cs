@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
-using SharpDX;
+using OpenTK;
 
 namespace WoWMap.Layers
 {
@@ -97,7 +95,6 @@ namespace WoWMap.Layers
                 {
                     case "MCVT":
                         MCVT = new MCVT(subChunk);
-
                         GenerateVertices();
                         GenerateIndices();
                         break;
@@ -190,7 +187,7 @@ namespace WoWMap.Layers
             foreach (var group in model.Groups)
             {
                 var vo = (uint)vertices.Count;
-                vertices.AddRange(group.MOVT.Vertices.Select(v => Vector3.Transform(v, transform).ToVector3()));
+                vertices.AddRange(group.MOVT.Vertices.Select(v => Vector3.Transform(v, transform)));
 
                 for (var i = 0; i < group.MOVI.Indices.Length; i++)
                 {
@@ -225,9 +222,9 @@ namespace WoWMap.Layers
 
                     var doodadTransform = Transformation.GetDoodadTransform(instance, wmo);
                     var vo = (uint)vertices.Count;
-                    
+
                     foreach (var vertex in doodad.Vertices)
-                        vertices.Add(Vector3.Transform(vertex, doodadTransform).ToVector3());
+                        vertices.Add(Vector3.Transform(vertex, doodadTransform));
                     foreach (var t in doodad.Indices)
                         indices.Add(new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo));
                 }
@@ -277,7 +274,8 @@ namespace WoWMap.Layers
                 if (DoodadIndices == null)
                     DoodadIndices = new List<Triangle<uint>>((MCRD.MDDFEntryIndex.Length / 4) * model.Indices.Length);
 
-                var transform = Transformation.GetWMOTransform(doodad.Position, doodad.Rotation, doodad.Scale / 1024.0f); // Not a typo
+                // Doodads outside WMOs are treated like WMOs. Not a typo.
+                var transform = Transformation.GetWMOTransform(doodad.Position, doodad.Rotation, doodad.Scale / 1024.0f);
                 var vo = (uint)DoodadVertices.Count;
                 foreach (var v in model.Vertices)
                     DoodadVertices.Add( (Vector3) Vector3.Transform(v, transform));

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using WoWMap.Geometry;
-using SharpDX;
+using OpenTK;
 
 namespace WoWMap
 {
@@ -66,19 +66,19 @@ namespace WoWMap
             return new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
         }
 
-        public static SharpNav.Vector3 ToV3(this SharpDX.Vector3 v)
+        /*public static OpenTK.Vector3 ToV3(this SharpDX.Vector3 v)
         {
             return new SharpNav.Vector3(v.X, v.Y, v.Z);
-        }
+        }*/
 
         public static float ToRadians(this float angle)
         {
             return (float)(Math.PI / 180) * angle;
         }
 
-        public static SharpDX.Vector3 ToVector3(this SharpDX.Vector4 v)
+        public static Vector3 ToVector3(this Vector4 v)
         {
-            return new SharpDX.Vector3(v.X, v.Y, v.Z);
+            return new Vector3(v.X, v.Y, v.Z);
         }
     }
 }

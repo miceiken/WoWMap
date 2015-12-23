@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WoWMap.Layers;
 using WoWMap.Chunks;
-using Vector3 = SharpDX.Vector3;
-using SharpDX;
-using SharpNav;
-using SharpNav.Geometry;
+using OpenTK;
 using System.Globalization;
 using System.IO;
+using SharpNav;
+using SharpNav.Geometry;
 
 namespace WoWMap.Geometry
 {
@@ -47,20 +44,21 @@ namespace WoWMap.Geometry
             {
                 sw.WriteLine("o " + filename);
                 var nf = CultureInfo.InvariantCulture.NumberFormat;
-                foreach (var v in this.Vertices)
+                foreach (var v in Vertices)
                     sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Y.ToString(nf) + " " + v.Z.ToString(nf));
-                foreach (var t in this.Indices)
+                foreach (var t in Indices)
                     sw.WriteLine("f " + (t.V0 + 1) + " " + (t.V1 + 1) + " " + (t.V2 + 1));
             }
         }
 
         public void AddGeometry(IEnumerable<Vector3> vertices, IEnumerable<Triangle<uint>> indices)
         {
-            var vo = (uint)this.Vertices.Count;
+            // Rotate vertices back to z-up
+            var vo = (uint)Vertices.Count;
             foreach (var v in vertices)
-                this.Vertices.Add(v);
+                Vertices.Add(Vector3.Transform(v, Matrix4.CreateRotationX((float)(- Math.PI / 2.0f))));
             foreach (var i in indices)
-                this.Indices.Add(new Triangle<uint>(i.Type, i.V0 + vo, i.V1 + vo, i.V2 + vo));
+                Indices.Add(new Triangle<uint>(i.Type, i.V0 + vo, i.V1 + vo, i.V2 + vo));
         }
 
         public void AddADT(ADT source)
@@ -136,7 +134,7 @@ namespace WoWMap.Geometry
             //bBoxMax.X += ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
             //bBoxMax.Z += ((int)(WoWSettings.AgentWidth / WoWSettings.CellSize) + 8) * WoWSettings.CellSize;
 
-            return new BBox3(bBoxMin.ToV3(), bBoxMax.ToV3());
+            return new BBox3(bBoxMin, bBoxMax);
         }
 
         public NavMeshBuilder GenerateNavmesh(BBox3 bbox)

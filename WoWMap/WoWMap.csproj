@@ -31,8 +31,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="SharpDX">
-      <HintPath>$(SharpDXPackageBinDir)\SharpDX.dll</HintPath>
+    <Reference Include="OpenTK, Version=1.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
+      <HintPath>..\packages\OpenTK.1.1.1589.5942\lib\NET40\OpenTK.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpNav, Version=0.9.0.0, Culture=neutral, PublicKeyToken=b467138d8cacd85b, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\SharpNav.OpenTK.0.9.2\lib\net40\SharpNav.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -108,10 +112,6 @@
     <ProjectReference Include="..\CASCExplorer\CascLib\CascLib.csproj">
       <Project>{e08e1e48-6585-4137-8405-661c62c10713}</Project>
       <Name>CascLib</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SharpNav\SharpNav\SharpNav.csproj">
-      <Project>{0e3c6e73-cce6-4148-b847-36487ffea225}</Project>
-      <Name>SharpNav</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WoWMap.Readers;
 using WoWMap.Geometry;
-using SharpDX;
+using OpenTK;
 
 namespace WoWMap.Chunks
 {

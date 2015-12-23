@@ -17,13 +17,8 @@ namespace WoWMap
 
         public ChunkData(string filename)
         {
-            _localFile = @"files/" + filename.ToLowerInvariant();
-            FromStream(File.Exists(filename)
-                ? File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read)
-                : CASC.OpenFile(filename));
+            FromStream(CASC.OpenFile(filename));
         }
-
-        private string _localFile = string.Empty;
 
         private void FromStream(Stream stream, uint chunkSize = 0)
         {
@@ -49,20 +44,6 @@ namespace WoWMap
                 // We seek from our current position to save some time
                 if ((calcOffset + baseOffset) < maxRead && calcOffset < maxRead)
                     stream.Seek(header.Size, SeekOrigin.Current);
-            }
-
-            if (string.IsNullOrEmpty(_localFile))
-                return;
-
-            // ReSharper disable AssignNullToNotNullAttribute
-            if (!Directory.Exists(Path.GetDirectoryName(_localFile)))
-                Directory.CreateDirectory(Path.GetDirectoryName(_localFile));
-            // ReSharper restore AssignNullToNotNullAttribute
-
-            using (var fs = File.Create(_localFile))
-            {
-                br.BaseStream.Position = 0;
-                br.BaseStream.CopyTo(fs);
             }
         }
 

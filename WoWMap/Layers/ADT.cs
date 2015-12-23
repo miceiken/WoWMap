@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
-using SharpDX;
+using OpenTK;
 
 namespace WoWMap.Layers
 {
@@ -23,6 +23,50 @@ namespace WoWMap.Layers
         public int Y { get; private set; }
 
         public Vector3 TilePosition { get { return new Vector3((32 - X) * Constants.TileSize, (32 - Y) * Constants.TileSize, 0); } }
+
+        public List<Triangle<uint>> DoodadIndices
+        {
+            get
+            {
+                var ret = new List<Triangle<uint>>();
+                foreach (var mapChunk in MapChunks)
+                    ret.AddRange(mapChunk.DoodadIndices);
+                return ret;
+            }
+        }
+
+        public List<Vector3> DoodadVertices
+        {
+            get
+            {
+                var ret = new List<Vector3>();
+                foreach (var mapChunk in MapChunks)
+                    ret.AddRange(mapChunk.DoodadVertices);
+                return ret;
+            }
+        }
+
+        public List<Triangle<uint>> TerrainIndices
+        {
+            get
+            {
+                var ret = new List<Triangle<uint>>();
+                foreach (var mapChunk in MapChunks)
+                    ret.AddRange(mapChunk.Indices);
+                return ret;
+            }
+        }
+
+        public List<Vector3> TerrainVertices
+        {
+            get
+            {
+                var ret = new List<Vector3>();
+                foreach (var mapChunk in MapChunks)
+                    ret.AddRange(mapChunk.Vertices);
+                return ret;
+            }
+        }
 
         private ADT(string filename, ADTType type)
         {
@@ -130,7 +174,7 @@ namespace WoWMap.Layers
                 return;
 
             ModelPaths = new List<string>();
-            for (int i = 0; i < MWID.Offsets.Length; i++)
+            for (var i = 0; i < MWID.Offsets.Length; i++)
                 ModelPaths.Add(MWMO.Filenames[MWID.Offsets[i]]);
         }
 
@@ -140,7 +184,7 @@ namespace WoWMap.Layers
                 return;
 
             DoodadPaths = new List<string>();
-            for (int i = 0; i < MMID.Offsets.Length; i++)
+            for (var i = 0; i < MMID.Offsets.Length; i++)
                 DoodadPaths.Add(MMDX.Filenames[MMID.Offsets[i]]);
         }
     }

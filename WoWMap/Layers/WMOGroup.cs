@@ -1,5 +1,4 @@
-﻿using SharpDX;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,6 +7,7 @@ using System.Threading.Tasks;
 using WoWMap.Archive;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
+using OpenTK;
 
 namespace WoWMap.Layers
 {

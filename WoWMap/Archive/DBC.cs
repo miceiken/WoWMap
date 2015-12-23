@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Reflection;
 
 namespace WoWMap.Archive
 {
@@ -42,30 +43,29 @@ namespace WoWMap.Archive
                 br.BaseStream.Position = readPos;
                 Rows = new T[Header.RecordCount];
                 var tProperties = typeof(T).GetProperties();
-                for (int i = 0; i < Header.RecordCount; i++)
+                for (var i = 0; i < Header.RecordCount; i++)
                 {
                     var row = new T();
                     var startPos = br.BaseStream.Position;
 
-                    // Can't we use a foreach here?
-                    for (int j = 0; j < tProperties.Length; j++)
+                    foreach (var prop in tProperties)
                     {
-                        switch (Type.GetTypeCode(tProperties[j].PropertyType))
+                        switch (Type.GetTypeCode(prop.PropertyType))
                         {
                             case TypeCode.Int32:
-                                tProperties[j].SetValue(row, br.ReadInt32());
+                                prop.SetValue(row, br.ReadInt32());
                                 break;
                             case TypeCode.UInt32:
-                                tProperties[j].SetValue(row, br.ReadUInt32());
+                                prop.SetValue(row, br.ReadUInt32());
                                 break;
                             case TypeCode.Single:
-                                tProperties[j].SetValue(row, br.ReadSingle());
+                                prop.SetValue(row, br.ReadSingle());
                                 break;
                             case TypeCode.String:
-                                tProperties[j].SetValue(row, strTable[br.ReadInt32()]);
+                                prop.SetValue(row, strTable[br.ReadInt32()]);
                                 break;
                             default:
-                                Console.WriteLine("wat?? {0}", Type.GetTypeCode(tProperties[j].PropertyType));
+                                Console.WriteLine("wat?? {0}", Type.GetTypeCode(prop.PropertyType));
                                 break;
                         }
                     }

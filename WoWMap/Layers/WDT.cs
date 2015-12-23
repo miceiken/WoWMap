@@ -15,6 +15,7 @@ namespace WoWMap.Layers
         public WDT(string filename)
         {
             Data = new ChunkData(filename);
+            Read();
         }
 
         public ChunkData Data { get; private set; }
@@ -33,6 +34,19 @@ namespace WoWMap.Layers
             return TileTable[x, y];
         }
 
+        public int TileCount
+        {
+            get
+            {
+                var c = 0;
+                for (var y = 0; y < 64; y++)
+                    for (var x = 0; x < 64; x++)
+                        if (TileTable[x, y])
+                            ++c;
+                return c;
+            }
+        }
+
         public void Read()
         {
             foreach (var subChunk in Data.Chunks)
@@ -45,8 +59,8 @@ namespace WoWMap.Layers
                         IsValid = true;
 
                         TileTable = new bool[64, 64];
-                        for (int y = 0; y < 64; y++)
-                            for (int x = 0; x < 64; x++)
+                        for (var y = 0; y < 64; y++)
+                            for (var x = 0; x < 64; x++)
                                 TileTable[x, y] = MAIN.Entries[x, y].Flags.HasFlag(MAIN.MAINFlags.HasADT);                        
                         break;
 

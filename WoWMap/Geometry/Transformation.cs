@@ -5,35 +5,35 @@ using System.Text;
 using System.Threading.Tasks;
 using WoWMap.Layers;
 using WoWMap.Chunks;
-using SharpDX;
+using OpenTK;
 
 namespace WoWMap.Geometry
 {
     public static class Transformation
     {
-        public static Matrix GetWMOTransform(Vector3 position, Vector3 rotation, float scale = 1.0f)
+        public static Matrix4 GetWMOTransform(Vector3 position, Vector3 rotation, float scale = 1.0f)
         {
-            var placementMatrix = Matrix.Identity;
-            placementMatrix = Matrix.Multiply(Matrix.RotationX((float)(Math.PI / 2.0f)), placementMatrix);
-            placementMatrix = Matrix.Multiply(Matrix.RotationY((float)(Math.PI / 2.0f)), placementMatrix);
+            var placementMatrix = Matrix4.Identity;
+            placementMatrix = Matrix4.Mult(Matrix4.CreateRotationX((float)(Math.PI / 2.0f)), placementMatrix);
+            placementMatrix = Matrix4.Mult(Matrix4.CreateRotationY((float)(Math.PI / 2.0f)), placementMatrix);
 
-            placementMatrix = Matrix.Multiply(Matrix.Translation(Constants.MaxXY - position.X, position.Y, Constants.MaxXY - position.Z), placementMatrix);
-            placementMatrix = Matrix.Multiply(Matrix.RotationY((rotation.Y - 270).ToRadians()), placementMatrix); // Pitch
-            placementMatrix = Matrix.Multiply(Matrix.RotationZ((-rotation.X).ToRadians()), placementMatrix); // Roll
-            placementMatrix = Matrix.Multiply(Matrix.RotationX((rotation.Z - 90).ToRadians()), placementMatrix); // Yaw
-            placementMatrix = Matrix.Multiply(Matrix.Scaling(scale), placementMatrix);
+            placementMatrix = Matrix4.Mult(Matrix4.CreateTranslation(Constants.MaxXY - position.X, position.Y, Constants.MaxXY - position.Z), placementMatrix);
+            placementMatrix = Matrix4.Mult(Matrix4.CreateRotationY((rotation.Y - 270).ToRadians()), placementMatrix); // Pitch
+            placementMatrix = Matrix4.Mult(Matrix4.CreateRotationZ((-rotation.X).ToRadians()), placementMatrix); // Roll
+            placementMatrix = Matrix4.Mult(Matrix4.CreateRotationX((rotation.Z - 90).ToRadians()), placementMatrix); // Yaw
+            placementMatrix = Matrix4.Mult(Matrix4.CreateScale(scale), placementMatrix);
 
             return placementMatrix;
         }
 
-        public static Matrix GetDoodadTransform(MODD.MODDEntry modd, MODF.MODFEntry modf)
+        public static Matrix4 GetDoodadTransform(MODD.MODDEntry modd, MODF.MODFEntry modf)
         {
-            var placementMatrix = Matrix.Identity;
+            var placementMatrix = Matrix4.Identity;
 
-            placementMatrix = Matrix.Multiply(GetWMOTransform(modf.Position, modf.Rotation), placementMatrix); ;
-            placementMatrix = Matrix.Multiply(Matrix.Translation(modd.Position), placementMatrix); ;
-            placementMatrix = Matrix.Multiply(Matrix.RotationQuaternion(modd.Rotation), placementMatrix); ;
-            placementMatrix = Matrix.Multiply(Matrix.Scaling(modd.Scale), placementMatrix); ;
+            placementMatrix = Matrix4.Mult(GetWMOTransform(modf.Position, modf.Rotation), placementMatrix);
+            placementMatrix = Matrix4.Mult(Matrix4.CreateTranslation(modd.Position), placementMatrix);
+            placementMatrix = Matrix4.Mult(Matrix4.CreateFromQuaternion(modd.Rotation), placementMatrix);
+            placementMatrix = Matrix4.Mult(Matrix4.CreateScale(modd.Scale), placementMatrix);
             
             return placementMatrix;
         }

@@ -7,7 +7,7 @@ using System.IO;
 using WoWMap.Archive;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
-using SharpDX;
+using OpenTK;
 
 namespace WoWMap.Layers
 {

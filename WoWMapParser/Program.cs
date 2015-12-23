@@ -5,10 +5,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.Serialization.Formatters.Binary;
-using WoWMap;
+using OpenTK;
+using SharpNav;
 using WoWMap.Archive;
 using WoWMap.Layers;
 using WoWMap.Geometry;
@@ -66,11 +64,16 @@ namespace WoWMapParser
 
         static void ReadADT()
         {
-            var adt = new ADT("Azeroth", 28, 28);
             //var adt = new ADT("Kalimdor", 32, 36);
             //var adt = new ADT("PvPZone01", 32, 30);
+            /*var adt = new ADT("Azeroth", 28, 28);
             adt.Read();
+            var geom = new Geometry();
+            geom.AddADT(adt);
+            geom.SaveWavefrontObject(Path.GetFileNameWithoutExtension(adt.Filename) + ".obj");*/
 
+            var adt = new ADT("Azeroth", 29, 28);
+            adt.Read();
             var geom = new Geometry();
             geom.AddADT(adt);
             geom.SaveWavefrontObject(Path.GetFileNameWithoutExtension(adt.Filename) + ".obj");
@@ -114,10 +117,10 @@ namespace WoWMapParser
             sw.Stop();
             Console.WriteLine("Generated navmesh in {0}", sw.Elapsed);
 
-            TestNavmesh(new SharpNav.TiledNavMesh(build));
+            TestNavmesh(new TiledNavMesh(build));
         }
 
-        static void TestNavmesh(SharpNav.TiledNavMesh tmesh)
+        static void TestNavmesh(TiledNavMesh tmesh)
         {
             // Azeroth 28 28 / Deathknell (wow-style coordinates)
             // Outside church: 1843,734 1604,214 94,55994
@@ -129,15 +132,15 @@ namespace WoWMapParser
             // Outside house: 1861,465 1582,03 92,79533
             // Upstairs house: 1859,929 1560,804 99,07755
 
-            var query = new SharpNav.NavMeshQuery(tmesh, 65535);
+            var query = new NavMeshQuery(tmesh, 65535);
 
-            var extents = new SharpNav.Vector3(2.5f, 2.5f, 2.5f);
+            var extents = new Vector3(2.5f, 2.5f, 2.5f);
 
             // WoW(X, Y, Z) -> SharpNav(Y, Z, X) -- or so I think :-----D
-            var posStart = new SharpNav.Vector3(1662.9f, 139.2f, 1672.2f); // Outside spawn
-            var posEnd = new SharpNav.Vector3(1678.3f, 120.5f, 1665.3f); // Inside spawn
+            var posStart = new Vector3(1662.9f, 139.2f, 1672.2f); // Outside spawn
+            var posEnd = new Vector3(1678.3f, 120.5f, 1665.3f); // Inside spawn
 
-            SharpNav.Vector3 aStartPos;
+            Vector3 aStartPos;
             int snRef;
             if (!query.FindNearestPoly(ref posStart, ref extents, out snRef, out aStartPos))
                 Console.WriteLine("No start poly");
@@ -147,7 +150,7 @@ namespace WoWMapParser
             //if (!query.FindRandomPoint(out rRef, out rPos))
             //    Console.WriteLine("No end poly");
 
-            SharpNav.Vector3 aEndPos;
+            Vector3 aEndPos;
             int enRef;
             if (!query.FindNearestPoly(ref posEnd, ref extents, out enRef, out aEndPos))
                 Console.WriteLine("No end poly");
