@@ -12,12 +12,12 @@ namespace WoWMapRenderer
     public class Camera
     {
         protected Vector3 m_position = new Vector3(0, 100, 0);
-        protected Vector3 m_up = Vector3.UnitY;
+        protected Vector3 m_up = Vector3.UnitZ;
         protected Vector3 m_direction;
 
         protected const float m_pitchLimit = 1.4f;
 
-        protected const float m_speed = 0.25f;
+        protected const float m_speed = 3.5f;
         protected const float m_mouseSpeedX = 0.0045f;
         protected const float m_mouseSpeedY = 0.0025f;
 
@@ -89,10 +89,13 @@ namespace WoWMapRenderer
                 m_position -= m_up * m_speed;
 
 
-            // Calculate yaw to look around with a mouse
-            m_direction = Vector3.Transform(m_direction,
-                Matrix4.CreateFromAxisAngle(m_up, -m_mouseSpeedX * (mouse.X - m_prevMouse.X))
-            );
+            if (mouse.IsButtonDown(MouseButton.Left))
+            {
+                // Calculate yaw to look around with a mouse
+                m_direction = Vector3.Transform(m_direction,
+                    Matrix4.CreateFromAxisAngle(m_up, -m_mouseSpeedX*(mouse.X - m_prevMouse.X))
+                    );
+            }
 
             // Pitch is limited to m_pitchLimit
             float angle = m_mouseSpeedY * (mouse.Y - m_prevMouse.Y);

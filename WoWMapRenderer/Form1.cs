@@ -43,7 +43,7 @@ out vec4 outputColor;
 
 void main()
 {
-    outputColor = vec4(1.0, 0.0, 0.0, 1.0);
+    outputColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 }";
 
         private string VertexShader = @"#version 330
@@ -68,15 +68,20 @@ void main()
         private void OnRenderLoaded(object sender, EventArgs e)
         {
             // TODO Move this
-            Camera = new Camera(new Vector3(1731, 1651, 130), -Vector3.UnitZ);
+            Camera = new Camera(new Vector3(1731.5f, 1651.6f, 130.0f), -Vector3.UnitY);
+
             Camera.SetViewport(GL.Width, GL.Height);
-            var uniform = Matrix4.Mult(Camera.View, Camera.Projection);
+            OpenGL.GL.Viewport(0, 0, GL.Width, GL.Height);
+
+            var uniform = Matrix4.Mult(Camera.Projection, Camera.View);
 
             // Setup shaders
             _shader = new Shader();
             _shader.CreateShader(VertexShader, FragmentShader);
+            _shader.SetCurrent();
             
             OpenGL.GL.UniformMatrix4(_shader.GetUniformLocation("projection_modelview"), false, ref uniform);
+            OpenGL.GL.ClearColor(Color.White);
         }
 
         private void OnLoad(object sender, EventArgs e)
@@ -174,7 +179,7 @@ void main()
             _feedbackText.Text = string.Format("{0} ADTs loaded!", _adts.Count);
 
             LoadMap();
-            Camera = new Camera(new Vector3(1731.5f, 500.0f, 1651.6f), -Vector3.UnitY);
+            Camera = new Camera(new Vector3(1731.5f, 1651.6f, 130.0f), -Vector3.UnitY);
             Camera.SetViewport(GL.Width, GL.Height);
             Render();
         }
@@ -189,24 +194,21 @@ void main()
             Cleanup();
 
             // Setup the camera - Hardcoded for now
-            var uniform = Matrix4.Mult(Camera.Projection, Camera.View);
+            var uniform = Matrix4.Mult(Camera.View, Camera.Projection);
 
             OpenGL.GL.UniformMatrix4(_shader.GetUniformLocation("projection_modelview"), false, ref uniform);
 
             // Camera set - Clean again, to be safe
             OpenGL.GL.Clear(OpenGL.ClearBufferMask.ColorBufferBit | OpenGL.ClearBufferMask.DepthBufferBit);
 
-            /*OpenGL.GL.AlphaFunc(OpenGL.AlphaFunction.Greater, 0.5f);
-            OpenGL.GL.EnableClientState(OpenGL.ArrayCap.VertexArray);
-            OpenGL.GL.EnableClientState(OpenGL.ArrayCap.NormalArray);
-            OpenGL.GL.EnableClientState(OpenGL.ArrayCap.ColorArray);
             OpenGL.GL.PolygonMode(OpenGL.MaterialFace.FrontAndBack, OpenGL.PolygonMode.Line);
-            OpenGL.GL.Enable(OpenGL.EnableCap.AlphaTest);*/
+            OpenGL.GL.Disable(OpenGL.EnableCap.CullFace);
 
             foreach (var renderer in _renderers)
             {
                 OpenGL.GL.BindVertexArray(renderer.VAO);
                 OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
+                _shader.SetCurrent();
                 OpenGL.GL.DrawElements(OpenGL.PrimitiveType.Triangles, renderer.TriangleCount,
                     OpenGL.DrawElementsType.UnsignedInt, IntPtr.Zero);
             }
@@ -298,9 +300,6 @@ void main()
             OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
             OpenGL.GL.BufferData(OpenGL.BufferTarget.ElementArrayBuffer, (IntPtr) (indiceList.Count() * sizeof(int)),
                 indiceList.ToArray(), OpenGL.BufferUsageHint.StaticDraw);
-
-            OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ArrayBuffer, 0);
-            OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, 0);
 
             OpenGL.GL.ClearColor(OpenTK.Graphics.Color4.White);
 
