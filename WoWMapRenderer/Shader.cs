@@ -22,15 +22,18 @@ namespace WoWMapRenderer
             FragmentID = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(FragmentID, fragment);
             GL.CompileShader(FragmentID);
+            var fragmentErr = GL.GetShaderInfoLog(FragmentID);
 
             VertexID = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(VertexID, fragment);
             GL.CompileShader(VertexID);
+            var vertexErr = GL.GetShaderInfoLog(VertexID);
 
             ProgramID = GL.CreateProgram();
             GL.AttachShader(ProgramID, FragmentID);
             GL.AttachShader(ProgramID, VertexID);
             GL.LinkProgram(ProgramID);
+            var programErr = GL.GetProgramInfoLog(ProgramID);
         }
 
         public int GetAttribLocation(string attribName)

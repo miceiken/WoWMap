@@ -36,21 +36,6 @@ namespace WoWMapRenderer
         private Camera Camera;
         private Shader _shader;
 
-        #region Static Data
-        Matrix4[] modelview;
-        private int vao_root;
-        #endregion
-
-        #region Vertex Shader Attributes & Uniforms
-        private int program_id;
-        private int vertex_shader_id;
-        private int fragment_shader_id;
-        int attrib_vposition;
-        int attrib_type;
-        int uniform_length;
-        int uniform_modelview;
-        #endregion
-
         #region Shaders body
         private string FragmentShader = @"#version 330
  
@@ -189,6 +174,8 @@ void main()
             _feedbackText.Text = string.Format("{0} ADTs loaded!", _adts.Count);
 
             LoadMap();
+            Camera = new Camera(new Vector3(1731.5f, 500.0f, 1651.6f), -Vector3.UnitY);
+            Camera.SetViewport(GL.Width, GL.Height);
             Render();
         }
 
@@ -202,18 +189,19 @@ void main()
             Cleanup();
 
             // Setup the camera - Hardcoded for now
-            Camera = new Camera(new Vector3(1731.5f, 1651.6f, 130.0f), -Vector3.UnitZ);
-            Camera.SetViewport(GL.Width, GL.Height);
+            var uniform = Matrix4.Mult(Camera.Projection, Camera.View);
+
+            OpenGL.GL.UniformMatrix4(_shader.GetUniformLocation("projection_modelview"), false, ref uniform);
 
             // Camera set - Clean again, to be safe
             OpenGL.GL.Clear(OpenGL.ClearBufferMask.ColorBufferBit | OpenGL.ClearBufferMask.DepthBufferBit);
 
-            OpenGL.GL.AlphaFunc(OpenGL.AlphaFunction.Greater, 0.5f);
+            /*OpenGL.GL.AlphaFunc(OpenGL.AlphaFunction.Greater, 0.5f);
             OpenGL.GL.EnableClientState(OpenGL.ArrayCap.VertexArray);
             OpenGL.GL.EnableClientState(OpenGL.ArrayCap.NormalArray);
             OpenGL.GL.EnableClientState(OpenGL.ArrayCap.ColorArray);
             OpenGL.GL.PolygonMode(OpenGL.MaterialFace.FrontAndBack, OpenGL.PolygonMode.Line);
-            OpenGL.GL.Enable(OpenGL.EnableCap.AlphaTest);
+            OpenGL.GL.Enable(OpenGL.EnableCap.AlphaTest);*/
 
             foreach (var renderer in _renderers)
             {
@@ -223,6 +211,7 @@ void main()
                     OpenGL.DrawElementsType.UnsignedInt, IntPtr.Zero);
             }
 
+            OpenGL.GL.BindVertexArray(0);
 
             GL.SwapBuffers();
         }
@@ -295,7 +284,7 @@ void main()
                 IndiceVBO = OpenGL.GL.GenBuffer(),
                 VertexVBO = OpenGL.GL.GenBuffer(),
                 VAO = OpenGL.GL.GenVertexArray(),
-                TriangleCount = indiceList.Count() / 3
+                TriangleCount = indiceList.Count()
             };
 
             OpenGL.GL.BindVertexArray(renderer.VAO);
@@ -312,6 +301,8 @@ void main()
 
             OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ArrayBuffer, 0);
             OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, 0);
+
+            OpenGL.GL.ClearColor(OpenTK.Graphics.Color4.White);
 
             _renderers.Add(renderer);
         }
@@ -339,7 +330,10 @@ void main()
         {
             OpenGL.GL.Viewport(0, 0, GL.Width, GL.Height);
             if (Camera != null)
+            {
                 Camera.SetViewport(GL.Width, GL.Height);
+                Render();
+            }
         }
 
         private void OnMouseMove(object sender, MouseEventArgs e)
@@ -347,6 +341,12 @@ void main()
             Camera.Update();
             _cameraPos.Text = string.Format("Camera [ {0} {1} {2} ] Facing [ {3} {4} ]", Camera.Position.X, Camera.Position.Y,
                 Camera.Position.Z, Camera.Pitch, Camera.Yaw);
+            Render();
+        }
+
+        private void OnPaint(object sender, PaintEventArgs e)
+        {
+            Render();
         }
     }
 

@@ -55,6 +55,7 @@
             this.GL.TabIndex = 0;
             this.GL.VSync = true;
             this.GL.Load += new System.EventHandler(this.OnRenderLoaded);
+            this.GL.Paint += new System.Windows.Forms.PaintEventHandler(this.OnPaint);
             this.GL.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.OnKeyPress);
             this.GL.MouseMove += new System.Windows.Forms.MouseEventHandler(this.OnMouseMove);
             this.GL.Resize += new System.EventHandler(this.OnRenderResize);
