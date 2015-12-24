@@ -40,9 +40,9 @@ flat in int vert_type;
 void main()
 {
     outputColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-    if (vert_type == 1) // WMO
+    if (vert_type == 1) // Doodad
         outputColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
-    else if (vert_type == 2) // Doodad
+    else if (vert_type == 2) // WMO
         outputColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
 }";
 
@@ -287,14 +287,7 @@ void main()
             verticeList.Clear();
             indiceList.Clear();
 
-            /*#region Doodads
-            var doodadRenderer = new Renderer
-            {
-                IndiceVBO = OpenGL.GL.GenBuffer(),
-                VertexVBO = OpenGL.GL.GenBuffer(),
-                VAO = OpenGL.GL.GenVertexArray()
-            };
-
+            #region Doodads
             foreach (var adtChunk in currentADT.Objects.MapChunks)
             {
                 var off = (uint) verticeList.Count();
@@ -312,31 +305,19 @@ void main()
                 foreach (var triangle in adtChunk.DoodadIndices)
                     indiceList.AddRange(new[] { triangle.V0 + off, triangle.V1 + off, triangle.V2 + off });
             }
-            doodadRenderer.TriangleCount = indiceList.Count();
+            BindIndexed(verticeList, indiceList, 1);
             #endregion
 
             verticeList.Clear();
             indiceList.Clear();
 
+            #region WMO
             foreach (var adtChunk in currentADT.Objects.MapChunks)
             {
                 var off = (uint)verticeList.Count();
 
-                #region WMO
                 if (adtChunk.WMONormals == null)
                     continue;
-
-                var wmoRenderer = new Renderer
-                {
-                    IndiceVBO = OpenGL.GL.GenBuffer(),
-                    VertexVBO = OpenGL.GL.GenBuffer(),
-                    VAO = OpenGL.GL.GenVertexArray(),
-                    TriangleCount = adtChunk.WMOVertices.Count()
-                };
-
-                // TODO: Use doodad specific shader here for texturing
-
-                OpenGL.GL.BindVertexArray(wmoRenderer.VAO);
 
                 verticeList.AddRange(adtChunk.WMOVertices.Select((t, i) => new VertexData
                 {
@@ -347,24 +328,11 @@ void main()
 
                 foreach (var triangle in adtChunk.WMOIndices)
                     indiceList.AddRange(new[] { triangle.V0 + off, triangle.V1 + off, triangle.V2 + off });
+            }
 
-                OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ArrayBuffer, wmoRenderer.VertexVBO);
-                OpenGL.GL.BufferData(OpenGL.BufferTarget.ArrayBuffer,
-                    (IntPtr)(verticeList.Count() * 9 * sizeof(float)),
-                    verticeList.ToArray(), OpenGL.BufferUsageHint.StaticDraw);
-                OpenGL.GL.VertexAttribPointer(_terrainShader.GetAttribLocation("vPosition"), 3,
-                    OpenGL.VertexAttribPointerType.Float, false, 9 * sizeof(float), sizeof(float) * 6);
-                OpenGL.GL.EnableVertexAttribArray(_terrainShader.GetAttribLocation("vPosition"));
+            BindIndexed(verticeList, indiceList, 2);
 
-                OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, wmoRenderer.IndiceVBO);
-                OpenGL.GL.BufferData(OpenGL.BufferTarget.ElementArrayBuffer,
-                    (IntPtr)(indiceList.Count() * sizeof(uint)),
-                    indiceList.ToArray(), OpenGL.BufferUsageHint.StaticDraw);
-
-                _renderers.Add(wmoRenderer);
-
-                #endregion
-            }*/
+            #endregion
 
             verticeList.Clear();
             indiceList.Clear();
