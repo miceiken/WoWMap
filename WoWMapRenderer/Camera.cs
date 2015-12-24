@@ -70,23 +70,23 @@ namespace WoWMapRenderer
             // Move camera with WASD keys
             if (keyboard.IsKeyDown(Key.W))
                 // Move forward and backwards by adding m_position and m_direction vectors
-                m_position += m_direction * m_speed;
+                m_position += m_direction*m_speed;
 
             if (keyboard.IsKeyDown(Key.S))
-                m_position -= m_direction * m_speed;
+                m_position -= m_direction*m_speed;
 
             if (keyboard.IsKeyDown(Key.A))
                 // Strafe by adding a cross product of m_up and m_direction vectors
-                m_position += Vector3.Cross(m_up, m_direction) * m_speed;
+                m_position += Vector3.Cross(m_up, m_direction)*m_speed;
 
             if (keyboard.IsKeyDown(Key.D))
-                m_position -= Vector3.Cross(m_up, m_direction) * m_speed;
+                m_position -= Vector3.Cross(m_up, m_direction)*m_speed;
 
             if (keyboard.IsKeyDown(Key.Space))
-                m_position += m_up * m_speed;
+                m_position += m_up*m_speed;
 
             if (keyboard.IsKeyDown(Key.ControlLeft) || keyboard.IsKeyDown(Key.X))
-                m_position -= m_up * m_speed;
+                m_position -= m_up*m_speed;
 
 
             if (mouse.IsButtonDown(MouseButton.Left))
@@ -95,15 +95,15 @@ namespace WoWMapRenderer
                 m_direction = Vector3.Transform(m_direction,
                     Matrix4.CreateFromAxisAngle(m_up, -m_mouseSpeedX*(mouse.X - m_prevMouse.X))
                     );
-            }
 
-            // Pitch is limited to m_pitchLimit
-            float angle = m_mouseSpeedY * (mouse.Y - m_prevMouse.Y);
-            if ((Pitch < m_pitchLimit || angle > 0) && (Pitch > -m_pitchLimit || angle < 0))
-            {
-                m_direction = Vector3.Transform(m_direction,
-                    Matrix4.CreateFromAxisAngle(Vector3.Cross(m_up, m_direction), angle)
-                );
+                // Pitch is limited to m_pitchLimit
+                float angle = m_mouseSpeedY*(mouse.Y - m_prevMouse.Y);
+                if ((Pitch < m_pitchLimit || angle > 0) && (Pitch > -m_pitchLimit || angle < 0))
+                {
+                    m_direction = Vector3.Transform(m_direction,
+                        Matrix4.CreateFromAxisAngle(Vector3.Cross(m_up, m_direction), angle)
+                        );
+                }
             }
 
             m_prevMouse = mouse;
