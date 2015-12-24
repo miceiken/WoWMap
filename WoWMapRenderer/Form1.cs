@@ -34,7 +34,7 @@ namespace WoWMapRenderer
         private const string TerrainFragmentShader = @"#version 330
  
 out vec4 outputColor;
-in int vert_type;
+flat in int vert_type;
 
 // Remember all code paths are always executed by GPU
 void main()
@@ -49,15 +49,15 @@ void main()
         private const string TerrainVertexShader = @"#version 330
  
 in vec3 vPosition;
+in int type;
 
 uniform mat4 projection_modelview;
 flat out int vert_type;
-in int type;
 
 void main()
 {
-    vert_type = type;
     gl_Position = projection_modelview * vec4(vPosition, 1.0f);
+    vert_type = type;
 }";
         #endregion
 
@@ -282,13 +282,13 @@ void main()
                     indiceList.AddRange(new[] {triangle.V0 + off, triangle.V1 + off, triangle.V2 + off});
             }
 
-            BindIndexed(verticeList, indiceList, 0);
+            BindIndexed(verticeList, indiceList);
 
             verticeList.Clear();
             indiceList.Clear();
 
             /*#region Doodads
-            /*var doodadRenderer = new Renderer
+            var doodadRenderer = new Renderer
             {
                 IndiceVBO = OpenGL.GL.GenBuffer(),
                 VertexVBO = OpenGL.GL.GenBuffer(),
@@ -379,7 +379,7 @@ void main()
                 IndiceVBO = OpenGL.GL.GenBuffer(),
                 VertexVBO = OpenGL.GL.GenBuffer(),
                 VAO = OpenGL.GL.GenVertexArray(),
-                TriangleCount = verticeList.Count()
+                TriangleCount = indiceList.Count()
             };
 
             OpenGL.GL.BindVertexArray(renderer.VAO);
@@ -398,7 +398,7 @@ void main()
 
             OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ArrayBuffer, renderer.VertexVBO);
             OpenGL.GL.BufferData(OpenGL.BufferTarget.ArrayBuffer, (IntPtr)(verticeSize),
-                vertices.ToArray(), OpenGL.BufferUsageHint.StaticDraw);
+                vertices, OpenGL.BufferUsageHint.StaticDraw);
 
             OpenGL.GL.VertexAttribPointer(_terrainShader.GetAttribLocation("vPosition"), 3,
                 OpenGL.VertexAttribPointerType.Float, false, vertexSize, sizeof(float) * 6);

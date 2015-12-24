@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,11 +26,13 @@ namespace WoWMapRenderer
             GL.ShaderSource(VertexID, vertex);
             GL.CompileShader(VertexID);
             GL.AttachShader(ProgramID, VertexID);
+            var vertexErr = GL.GetShaderInfoLog(VertexID);
 
             FragmentID = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(FragmentID, fragment);
             GL.CompileShader(FragmentID);
             GL.AttachShader(ProgramID, FragmentID);
+            var fragmentErr = GL.GetShaderInfoLog(FragmentID);
             
             GL.LinkProgram(ProgramID);
         }
@@ -39,11 +42,11 @@ namespace WoWMapRenderer
             GL.UseProgram(ProgramID);
         }
 
-
         public int GetAttribLocation(string attribName)
         {
             if (!_attribLocations.ContainsKey(attribName))
                 _attribLocations[attribName] = GL.GetAttribLocation(ProgramID, attribName);
+            Debug.Assert(_attribLocations[attribName] != -1, "glGetAttribLocation(" + attribName + ")");
             return _attribLocations[attribName];
         }
 
@@ -51,6 +54,7 @@ namespace WoWMapRenderer
         {
             if (!_uniformLocations.ContainsKey(attrName))
                 _uniformLocations[attrName] = GL.GetUniformLocation(ProgramID, attrName);
+            Debug.Assert(_uniformLocations[attrName] != -1, "glGetUniformLocation(" + attrName + ")");
             return _uniformLocations[attrName];
         }
     }
