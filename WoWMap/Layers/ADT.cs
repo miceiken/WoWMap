@@ -24,50 +24,6 @@ namespace WoWMap.Layers
 
         public Vector3 TilePosition { get { return new Vector3((32 - X) * Constants.TileSize, (32 - Y) * Constants.TileSize, 0); } }
 
-        public List<Triangle<uint>> DoodadIndices
-        {
-            get
-            {
-                var ret = new List<Triangle<uint>>();
-                foreach (var mapChunk in MapChunks)
-                    ret.AddRange(mapChunk.DoodadIndices);
-                return ret;
-            }
-        }
-
-        public List<Vector3> DoodadVertices
-        {
-            get
-            {
-                var ret = new List<Vector3>();
-                foreach (var mapChunk in MapChunks)
-                    ret.AddRange(mapChunk.DoodadVertices);
-                return ret;
-            }
-        }
-
-        public List<Triangle<uint>> TerrainIndices
-        {
-            get
-            {
-                var ret = new List<Triangle<uint>>();
-                foreach (var mapChunk in MapChunks)
-                    ret.AddRange(mapChunk.Indices);
-                return ret;
-            }
-        }
-
-        public List<Vector3> TerrainVertices
-        {
-            get
-            {
-                var ret = new List<Vector3>();
-                foreach (var mapChunk in MapChunks)
-                    ret.AddRange(mapChunk.Vertices);
-                return ret;
-            }
-        }
-
         private ADT(string filename, ADTType type)
         {
             switch (type)
@@ -92,8 +48,8 @@ namespace WoWMap.Layers
 
         public ChunkData Data { get; private set; }
 
-        public ADT ADTObjects { get; private set; }         // _obj0.adt - Contains information about world objects
-        public ADT ADTTextures { get; private set; }      // _tex0.adt - Contains information about world textures
+        public ADT Objects { get; private set; }         // _obj0.adt - Contains information about world objects
+        public ADT Textures { get; private set; }      // _tex0.adt - Contains information about world textures
 
         public MapChunk[] MapChunks { get; private set; }
         public LiquidChunk Liquid { get; private set; }
@@ -114,11 +70,11 @@ namespace WoWMap.Layers
         {
             if (Type == ADTType.Normal)
             {
-                ADTObjects = new ADT(World, X, Y, ADTType.Objects);
-                ADTObjects.Read();
+                Objects = new ADT(World, X, Y, ADTType.Objects);
+                Objects.Read();
 
-                ADTTextures = new ADT(World, X, Y, ADTType.Textures);
-                ADTTextures.Read();
+                Textures = new ADT(World, X, Y, ADTType.Textures);
+                Textures.Read();
             }
 
             Console.WriteLine("* Reading {0} Type ADT.", Type);

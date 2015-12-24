@@ -63,7 +63,7 @@ namespace WoWMap.Geometry
 
         public void AddADT(ADT source)
         {
-            foreach (var s in new ADT[] { source, source.ADTObjects, /* source.ADTTextures */ })
+            foreach (var s in new [] { source, source.Objects, /* source.ADTTextures */ })
             {
                 foreach (var mc in s.MapChunks)
                 {
@@ -85,8 +85,9 @@ namespace WoWMap.Geometry
         public void AddDungeon(WMORoot model, MODF.MODFEntry def)
         {
             var verts = new List<Vector3>();
+            var norms = new List<Vector3>();
             var inds = new List<Triangle<uint>>();
-            MapChunk.InsertWMOGeometry(def, model, verts, inds);
+            MapChunk.InsertWMOGeometry(def, model, verts, inds, norms);
             AddGeometry(verts, inds);
         }
 

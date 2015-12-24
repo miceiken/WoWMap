@@ -16,7 +16,7 @@ namespace WoWMap.Chunks
         {
             var br = Chunk.GetReader();
 
-            Entries = new MCNREntry[145];
+            Entries = new MCNREntry[9 * 9 + 8 * 8];
             for (int i = 0; i < Entries.Length; i++)
                 Entries[i] = MCNREntry.Read(br);
 
@@ -31,12 +31,14 @@ namespace WoWMap.Chunks
 
             public static MCNREntry Read(BinaryReader br)
             {
-                var entry = new MCNREntry();
-                entry.Normal = new Vector3
+                var entry = new MCNREntry
                 {
-                    X = br.ReadInt16()/127.0f,
-                    Y = br.ReadInt16()/127.0f,
-                    Z = br.ReadInt16()/127.0f
+                    Normal = new Vector3
+                    {
+                        X = br.ReadByte() / 127.0f,
+                        Y = br.ReadByte() / 127.0f,
+                        Z = br.ReadByte() / 127.0f
+                    }
                 };
                 return entry;
             }

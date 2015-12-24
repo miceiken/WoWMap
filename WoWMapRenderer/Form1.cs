@@ -1,22 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using CASCExplorer;
 using WoWMap.Archive;
 using WoWMap.Layers;
 using OpenTK;
 using WoWMap;
-using WoWMap.Chunks;
-using WoWMap.Geometry;
 using OpenGL = OpenTK.Graphics.OpenGL;
 
 namespace WoWMapRenderer
@@ -31,32 +25,40 @@ namespace WoWMapRenderer
         private WDT _wdt;
         private Dictionary<int, ADT> _adts = new Dictionary<int, ADT>();
         private DBC<MapRecord> _mapRecords;
-        private List<ADTRenderer> _renderers = new List<ADTRenderer>();
+        private List<Renderer> _renderers = new List<Renderer>();
 
-        private Camera Camera;
-        private Shader _shader;
+        private Camera _camera;
+        private Shader _terrainShader;
 
         #region Shaders body
-        private string FragmentShader = @"#version 330
+        private const string TerrainFragmentShader = @"#version 330
  
 out vec4 outputColor;
+in int vert_type;
 
+// Remember all code paths are always executed by GPU
 void main()
 {
     outputColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    if (vert_type == 1) // WMO
+        outputColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+    else if (vert_type == 2) // Doodad
+        outputColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
 }";
 
-        private string VertexShader = @"#version 330
+        private const string TerrainVertexShader = @"#version 330
  
 in vec3 vPosition;
 
 uniform mat4 projection_modelview;
- 
+flat out int vert_type;
+in int type;
+
 void main()
 {
+    vert_type = type;
     gl_Position = projection_modelview * vec4(vPosition, 1.0f);
 }";
-
         #endregion
 
 
@@ -68,19 +70,19 @@ void main()
         private void OnRenderLoaded(object sender, EventArgs e)
         {
             // TODO Move this
-            Camera = new Camera(new Vector3(1731.5f, 1651.6f, 130.0f), -Vector3.UnitY);
+            _camera = new Camera(new Vector3(1731.5f, 1651.6f, 130.0f), Vector3.UnitY);
 
-            Camera.SetViewport(GL.Width, GL.Height);
+            _camera.SetViewport(GL.Width, GL.Height);
             OpenGL.GL.Viewport(0, 0, GL.Width, GL.Height);
 
-            var uniform = Matrix4.Mult(Camera.Projection, Camera.View);
+            var uniform = Matrix4.Mult(_camera.Projection, _camera.View);
 
             // Setup shaders
-            _shader = new Shader();
-            _shader.CreateShader(VertexShader, FragmentShader);
-            _shader.SetCurrent();
+            _terrainShader = new Shader();
+            _terrainShader.CreateShader(TerrainVertexShader, TerrainFragmentShader);
+            _terrainShader.SetCurrent();
             
-            OpenGL.GL.UniformMatrix4(_shader.GetUniformLocation("projection_modelview"), false, ref uniform);
+            OpenGL.GL.UniformMatrix4(_terrainShader.GetUniformLocation("projection_modelview"), false, ref uniform);
             OpenGL.GL.ClearColor(Color.White);
         }
 
@@ -136,7 +138,6 @@ void main()
                     var tileIndex = 0;
                     var adt = new ADT(Path.GetFileNameWithoutExtension(_wdtPath), 28, 28);
                     _adts.Add((28 << 8) | 28, adt);
-                    adt.Read();
                     _adtAction.ReportProgress(100, "Loading ADTs ...");
                     /*for (var i = 0; i < 64; ++i)
                     {
@@ -179,8 +180,8 @@ void main()
             _feedbackText.Text = string.Format("{0} ADTs loaded!", _adts.Count);
 
             LoadMap();
-            Camera = new Camera(new Vector3(1731.5f, 1651.6f, 130.0f), Vector3.UnitY);
-            Camera.SetViewport(GL.Width, GL.Height);
+            _camera = new Camera(new Vector3(1731.5f, 1651.6f, 130.0f), Vector3.UnitY);
+            _camera.SetViewport(GL.Width, GL.Height);
             Render();
         }
 
@@ -194,14 +195,14 @@ void main()
             Cleanup();
 
             // Setup the camera - Hardcoded for now
-            var uniform = Matrix4.Mult(Camera.View, Camera.Projection);
+            var uniform = Matrix4.Mult(_camera.View, _camera.Projection);
 
-            OpenGL.GL.UniformMatrix4(_shader.GetUniformLocation("projection_modelview"), false, ref uniform);
+            OpenGL.GL.UniformMatrix4(_terrainShader.GetUniformLocation("projection_modelview"), false, ref uniform);
 
             // Camera set - Clean again, to be safe
             OpenGL.GL.Clear(OpenGL.ClearBufferMask.ColorBufferBit | OpenGL.ClearBufferMask.DepthBufferBit);
 
-            // OpenGL.GL.PolygonMode(OpenGL.MaterialFace.FrontAndBack, OpenGL.PolygonMode.Line);
+            OpenGL.GL.PolygonMode(OpenGL.MaterialFace.FrontAndBack, OpenGL.PolygonMode.Line);
             OpenGL.GL.Enable(OpenGL.EnableCap.CullFace);
             OpenGL.GL.Enable(OpenGL.EnableCap.DepthTest);
             OpenGL.GL.DepthFunc(OpenGL.DepthFunction.Less);
@@ -210,8 +211,8 @@ void main()
             {
                 OpenGL.GL.BindVertexArray(renderer.VAO);
                 OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
-                _shader.SetCurrent();
-                OpenGL.GL.DrawElements(OpenGL.PrimitiveType.Triangles, renderer.TriangleCount * 4,
+                _terrainShader.SetCurrent();
+                OpenGL.GL.DrawElements(OpenGL.PrimitiveType.Triangles, renderer.TriangleCount,
                     OpenGL.DrawElementsType.UnsignedInt, IntPtr.Zero);
             }
 
@@ -233,13 +234,13 @@ void main()
             }*/
 
             var currentADT = _adts[(28 << 8) | 28];
+            currentADT.Read();
 
-            var verticeList = new List<Vertex>();
+            var verticeList = new List<VertexData>();
             var indiceList = new List<uint>();
 
-            for (var mapChunkIndex = 0; mapChunkIndex < currentADT.MapChunks.Length; ++mapChunkIndex)
+            foreach (var adtChunk in currentADT.MapChunks)
             {
-                var adtChunk = currentADT.MapChunks[mapChunkIndex];
                 if (adtChunk == null)
                     continue;
 
@@ -253,22 +254,21 @@ void main()
                     {
                         if (adtChunk.MCCV != null)
                         {
-                            verticeList.Add(new Vertex
+                            verticeList.Add(new VertexData
                             {
                                 Normal = adtChunk.MCNR.Entries[idx].Normal,
-                                Color =
-                                    new Vector3(adtChunk.MCCV.Entries[idx].Blue/127.0f,
-                                        adtChunk.MCCV.Entries[idx].Green/127.0f, adtChunk.MCCV.Entries[idx].Red/127.0f),
+                                Color = new Vector3(adtChunk.MCCV.Entries[idx].Blue/127.0f,
+                                    adtChunk.MCCV.Entries[idx].Green/127.0f, adtChunk.MCCV.Entries[idx].Red/127.0f),
                                 Position = adtChunk.Vertices[idx],
                                 // TextureCoordinates = ...
                             });
                         }
                         else
                         {
-                            verticeList.Add(new Vertex
+                            verticeList.Add(new VertexData
                             {
                                 Normal = adtChunk.MCNR.Entries[idx].Normal,
-                                Color = new Vector3(0.0f, 0.0f, 0.0f),
+                                Color = new Vector3(1.0f, 1.0f, 1.0f),
                                 Position = adtChunk.Vertices[idx],
                                 // TextureCoordinates = ...
                             });
@@ -280,32 +280,139 @@ void main()
                 // Generate indices
                 foreach (var triangle in adtChunk.Indices)
                     indiceList.AddRange(new[] {triangle.V0 + off, triangle.V1 + off, triangle.V2 + off});
+            }
 
-                ADTRenderer renderer = new ADTRenderer
+            BindIndexed(verticeList, indiceList, 0);
+
+            verticeList.Clear();
+            indiceList.Clear();
+
+            /*#region Doodads
+            /*var doodadRenderer = new Renderer
+            {
+                IndiceVBO = OpenGL.GL.GenBuffer(),
+                VertexVBO = OpenGL.GL.GenBuffer(),
+                VAO = OpenGL.GL.GenVertexArray()
+            };
+
+            foreach (var adtChunk in currentADT.Objects.MapChunks)
+            {
+                var off = (uint) verticeList.Count();
+
+                if (adtChunk.DoodadVertices == null)
+                    continue;
+
+                verticeList.AddRange(adtChunk.DoodadVertices.Select((t, i) => new VertexData
+                {
+                    Color = new Vector3(1.0f, 1.0f, 1.0f),
+                    Normal = adtChunk.DoodadNormals[i],
+                    Position = t
+                }));
+
+                foreach (var triangle in adtChunk.DoodadIndices)
+                    indiceList.AddRange(new[] { triangle.V0 + off, triangle.V1 + off, triangle.V2 + off });
+            }
+            doodadRenderer.TriangleCount = indiceList.Count();
+            #endregion
+
+            verticeList.Clear();
+            indiceList.Clear();
+
+            foreach (var adtChunk in currentADT.Objects.MapChunks)
+            {
+                var off = (uint)verticeList.Count();
+
+                #region WMO
+                if (adtChunk.WMONormals == null)
+                    continue;
+
+                var wmoRenderer = new Renderer
                 {
                     IndiceVBO = OpenGL.GL.GenBuffer(),
                     VertexVBO = OpenGL.GL.GenBuffer(),
                     VAO = OpenGL.GL.GenVertexArray(),
-                    TriangleCount = verticeList.Count()
+                    TriangleCount = adtChunk.WMOVertices.Count()
                 };
 
-                OpenGL.GL.BindVertexArray(renderer.VAO);
+                // TODO: Use doodad specific shader here for texturing
 
-                OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ArrayBuffer, renderer.VertexVBO);
-                OpenGL.GL.BufferData(OpenGL.BufferTarget.ArrayBuffer, (IntPtr) (verticeList.Count()*9*sizeof (float)),
+                OpenGL.GL.BindVertexArray(wmoRenderer.VAO);
+
+                verticeList.AddRange(adtChunk.WMOVertices.Select((t, i) => new VertexData
+                {
+                    Color = new Vector3(1.0f, 1.0f, 1.0f),
+                    Normal = adtChunk.WMONormals[i],
+                    Position = t
+                }));
+
+                foreach (var triangle in adtChunk.WMOIndices)
+                    indiceList.AddRange(new[] { triangle.V0 + off, triangle.V1 + off, triangle.V2 + off });
+
+                OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ArrayBuffer, wmoRenderer.VertexVBO);
+                OpenGL.GL.BufferData(OpenGL.BufferTarget.ArrayBuffer,
+                    (IntPtr)(verticeList.Count() * 9 * sizeof(float)),
                     verticeList.ToArray(), OpenGL.BufferUsageHint.StaticDraw);
-                OpenGL.GL.VertexAttribPointer(_shader.GetAttribLocation("vPosition"), 3,
-                    OpenGL.VertexAttribPointerType.Float, false, 9*sizeof (float), sizeof (float)*6);
-                OpenGL.GL.EnableVertexAttribArray(_shader.GetAttribLocation("vPosition"));
+                OpenGL.GL.VertexAttribPointer(_terrainShader.GetAttribLocation("vPosition"), 3,
+                    OpenGL.VertexAttribPointerType.Float, false, 9 * sizeof(float), sizeof(float) * 6);
+                OpenGL.GL.EnableVertexAttribArray(_terrainShader.GetAttribLocation("vPosition"));
 
-                OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
-                OpenGL.GL.BufferData(OpenGL.BufferTarget.ElementArrayBuffer, (IntPtr) (indiceList.Count()*sizeof (uint)),
+                OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, wmoRenderer.IndiceVBO);
+                OpenGL.GL.BufferData(OpenGL.BufferTarget.ElementArrayBuffer,
+                    (IntPtr)(indiceList.Count() * sizeof(uint)),
                     indiceList.ToArray(), OpenGL.BufferUsageHint.StaticDraw);
 
-                OpenGL.GL.ClearColor(OpenTK.Graphics.Color4.White);
+                _renderers.Add(wmoRenderer);
 
-                _renderers.Add(renderer);
-            }
+                #endregion
+            }*/
+
+            verticeList.Clear();
+            indiceList.Clear();
+
+            OpenGL.GL.ClearColor(OpenTK.Graphics.Color4.White);
+        }
+
+        private void BindIndexed(IReadOnlyCollection<VertexData> verticeList, List<uint> indiceList, int elementType = 0)
+        {
+            var renderer = new Renderer
+            {
+                IndiceVBO = OpenGL.GL.GenBuffer(),
+                VertexVBO = OpenGL.GL.GenBuffer(),
+                VAO = OpenGL.GL.GenVertexArray(),
+                TriangleCount = verticeList.Count()
+            };
+
+            OpenGL.GL.BindVertexArray(renderer.VAO);
+
+            var vertices = new Vertex[verticeList.Count];
+            verticeList.Each((t, i) => vertices[i] = new Vertex
+            {
+                Color = t.Color,
+                Position = t.Position,
+                Normal = t.Normal,
+                Type = elementType
+            });
+            
+            var vertexSize = Marshal.SizeOf(typeof(Vertex));
+            var verticeSize = verticeList.Count * vertexSize;
+
+            OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ArrayBuffer, renderer.VertexVBO);
+            OpenGL.GL.BufferData(OpenGL.BufferTarget.ArrayBuffer, (IntPtr)(verticeSize),
+                vertices.ToArray(), OpenGL.BufferUsageHint.StaticDraw);
+
+            OpenGL.GL.VertexAttribPointer(_terrainShader.GetAttribLocation("vPosition"), 3,
+                OpenGL.VertexAttribPointerType.Float, false, vertexSize, sizeof(float) * 6);
+            OpenGL.GL.EnableVertexAttribArray(_terrainShader.GetAttribLocation("vPosition"));
+
+            OpenGL.GL.VertexAttribPointer(_terrainShader.GetAttribLocation("type"), 1,
+                OpenGL.VertexAttribPointerType.Int, false, vertexSize, sizeof(float) * 9);
+            OpenGL.GL.EnableVertexAttribArray(_terrainShader.GetAttribLocation("type"));
+
+            OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
+            OpenGL.GL.BufferData(OpenGL.BufferTarget.ElementArrayBuffer, (IntPtr)(indiceList.Count() * sizeof(uint)),
+                indiceList.ToArray(), OpenGL.BufferUsageHint.StaticDraw);
+
+            _renderers.Add(renderer);
         }
 
         private async void LoadOnlineCASC(object sender, EventArgs e)
@@ -322,26 +429,26 @@ void main()
 
         private void OnKeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
         {
-            Camera.Update();
-            _cameraPos.Text = string.Format("Camera [ {0} {1} {2} ] Facing [ {3} {4} ]", Camera.Position.X, Camera.Position.Y,
-                Camera.Position.Z, Camera.Pitch, Camera.Yaw);
+            _camera.Update();
+            _cameraPos.Text = string.Format("Camera [ {0} {1} {2} ] Facing [ {3} {4} ]", _camera.Position.X, _camera.Position.Y,
+                _camera.Position.Z, _camera.Pitch, _camera.Yaw);
         }
 
         private void OnRenderResize(object sender, EventArgs e)
         {
             OpenGL.GL.Viewport(0, 0, GL.Width, GL.Height);
-            if (Camera != null)
+            if (_camera != null)
             {
-                Camera.SetViewport(GL.Width, GL.Height);
+                _camera.SetViewport(GL.Width, GL.Height);
                 Render();
             }
         }
 
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
-            Camera.Update();
-            _cameraPos.Text = string.Format("Camera [ {0} {1} {2} ] Facing [ {3} {4} ]", Camera.Position.X, Camera.Position.Y,
-                Camera.Position.Z, Camera.Pitch, Camera.Yaw);
+            _camera.Update();
+            _cameraPos.Text = string.Format("Camera [ {0} {1} {2} ] Facing [ {3} {4} ]", _camera.Position.X, _camera.Position.Y,
+                _camera.Position.Z, _camera.Pitch, _camera.Yaw);
             Render();
         }
 
@@ -351,7 +458,7 @@ void main()
         }
     }
 
-    struct MapListBoxEntry
+    internal struct MapListBoxEntry
     {
         public string Name;
         public string Directory;
@@ -363,15 +470,24 @@ void main()
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct Vertex
+    internal struct VertexData
+    {
+        public Vector3 Normal;
+        public Vector3 Color;
+        public Vector3 Position;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct Vertex
     {
         public Vector3 Normal;
         public Vector3 Color;
         public Vector3 Position;
         // public Vector2 TextureCoordinates;
+        public int Type;
     }
 
-    struct ADTRenderer
+    internal struct Renderer
     {
         public int IndiceVBO;
         public int VertexVBO;

@@ -78,9 +78,9 @@ namespace WoWMap.Layers
             LiquidIndices = new List<Triangle<uint>>((int)((MLIQ.Height * MLIQ.Width) * 2));
 
             var relPos = MLIQ.Position;
-            for (int y = 0; y < MLIQ.Height; y++)
+            for (var y = 0; y < MLIQ.Height; y++)
             {
-                for (int x = 0; x < MLIQ.Width; x++)
+                for (var x = 0; x < MLIQ.Width; x++)
                 {
                     if (!MLIQ.ShouldRender(x, y))
                         continue;
