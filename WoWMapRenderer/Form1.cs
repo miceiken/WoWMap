@@ -27,6 +27,8 @@ namespace WoWMapRenderer
         private DBC<MapRecord> _mapRecords;
         private List<Renderer> _renderers = new List<Renderer>();
 
+        private string _localCascPath = string.Empty;
+
         private Camera _camera;
         private Shader _terrainShader;
 
@@ -39,11 +41,12 @@ flat in int vert_type;
 // Remember all code paths are always executed by GPU
 void main()
 {
-    outputColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    vec4 oColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
     if (vert_type == 1) // Doodad
-        outputColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+        oColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
     else if (vert_type == 2) // WMO
-        outputColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+        oColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+    outputColor = oColor;
 }";
 
         private const string TerrainVertexShader = @"#version 330
@@ -89,7 +92,17 @@ void main()
         private void OnLoad(object sender, EventArgs e)
         {
             _cascAction = new AsyncAction(() => {
-                CASC.InitializeOnline(_cascAction);
+                if (string.IsNullOrEmpty(_localCascPath))
+                    CASC.InitializeOnline(_cascAction);
+                else
+                {
+                    try {
+                        CASC.Initialize(_localCascPath);
+                    } catch (Exception ex) {
+                        MessageBox.Show("Path '" + _localCascPath + "/Data' was not found.", "Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    }
+                }
             }, args =>
             {
                 _feedbackText.Text = (string)args.UserData;
@@ -136,10 +149,7 @@ void main()
 
                     var tileCount = _wdt.TileCount;
                     var tileIndex = 0;
-                    var adt = new ADT(Path.GetFileNameWithoutExtension(_wdtPath), 28, 28);
-                    _adts.Add((28 << 8) | 28, adt);
-                    _adtAction.ReportProgress(100, "Loading ADTs ...");
-                    /*for (var i = 0; i < 64; ++i)
+                    for (var i = 0; i < 64; ++i)
                     {
                         for (var j = 0; j < 64; ++j)
                         {
@@ -150,7 +160,7 @@ void main()
                             }
                             _adtAction.ReportProgress(tileIndex * 100 / tileCount, "Loading ADTs ...");
                         }
-                    }*/
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -180,27 +190,24 @@ void main()
             _feedbackText.Text = string.Format("{0} ADTs loaded!", _adts.Count);
 
             LoadMap();
-            _camera = new Camera(new Vector3(1731.5f, 1651.6f, 130.0f), Vector3.UnitY);
-            _camera.SetViewport(GL.Width, GL.Height);
+            int centerX, centerY;
+            GetCenterADT(out centerX, out centerY);
+            var tileCenter = GetTileCenter(centerX, centerY);
+            _camera = new Camera(new Vector3(tileCenter.X, tileCenter.Y, 150.0f), -Vector3.UnitZ);
             Render();
-        }
-
-        private void Cleanup()
-        {
-            OpenGL.GL.Clear(OpenGL.ClearBufferMask.ColorBufferBit | OpenGL.ClearBufferMask.DepthBufferBit);
         }
 
         private void Render()
         {
-            Cleanup();
+            OpenGL.GL.Clear(OpenGL.ClearBufferMask.ColorBufferBit | OpenGL.ClearBufferMask.DepthBufferBit);
 
-            // Setup the camera - Hardcoded for now
+            _camera.SetViewport(GL.Width, GL.Height);
             var uniform = Matrix4.Mult(_camera.View, _camera.Projection);
 
             OpenGL.GL.UniformMatrix4(_terrainShader.GetUniformLocation("projection_modelview"), false, ref uniform);
 
             // Camera set - Clean again, to be safe
-            OpenGL.GL.Clear(OpenGL.ClearBufferMask.ColorBufferBit | OpenGL.ClearBufferMask.DepthBufferBit);
+            // OpenGL.GL.Clear(OpenGL.ClearBufferMask.ColorBufferBit | OpenGL.ClearBufferMask.DepthBufferBit);
 
             OpenGL.GL.PolygonMode(OpenGL.MaterialFace.FrontAndBack, OpenGL.PolygonMode.Line);
             OpenGL.GL.Enable(OpenGL.EnableCap.CullFace);
@@ -223,17 +230,46 @@ void main()
 
         private void LoadMap()
         {
-            /*var centerTile = new[] { 28, 28 };
-            for (var x = centerTile[0] - 1; x <= centerTile[0] + 1; ++x)
-            {
-                for (var y = centerTile[1] - 1; y <= centerTile[1] + 1; ++y)
-                {
-                    var currentADT = _adts[(x << 8) | y];
-                    _geometry.AddADT(currentADT);
-                }
-            }*/
+            int centerX, centerY;
+            GetCenterADT(out centerX, out centerY);
+            for (var x = centerX - 1; x <= centerX + 1; ++x)
+                for (var y = centerY - 1; y <= centerY + 1; ++y)
+                    LoadADT(_adts[(x << 8) | y]);
+        }
 
-            var currentADT = _adts[(28 << 8) | 28];
+        private Vector2 GetTileCenter(int x, int y)
+        {
+            var adt = _adts[(x << 8) | y];
+            var tilePosition = adt.TilePosition.Xy;
+            tilePosition.X += Constants.TileSize / 2;
+            tilePosition.Y += Constants.TileSize / 2;
+            return tilePosition;
+        }
+
+        private void GetCenterADT(out int x, out int y)
+        {
+            var topLeft = new [] { 64, 64 };
+            var bottomRight = new[] { 0, 0 };
+            for (var xx = 0; xx < 64; ++xx)
+            {
+                for (var yy = 0; yy < 64; ++yy)
+                {
+                    if (!_wdt.HasTile(xx, yy))
+                        continue;
+
+                    topLeft[0] = Math.Min(topLeft[0], xx);
+                    topLeft[1] = Math.Min(topLeft[1], yy);
+                    bottomRight[0] = Math.Max(bottomRight[0], xx);
+                    bottomRight[1] = Math.Max(bottomRight[1], yy);
+                }
+            }
+
+            x = (int)Math.Floor((topLeft[0] + bottomRight[0]) / 2.0f);
+            y = (int)Math.Floor((topLeft[1] + bottomRight[1]) / 2.0f);
+        }
+
+        private void LoadADT(ADT currentADT)
+        {
             currentADT.Read();
 
             var verticeList = new List<VertexData>();
@@ -372,9 +408,13 @@ void main()
                 OpenGL.VertexAttribPointerType.Float, false, vertexSize, sizeof(float) * 6);
             OpenGL.GL.EnableVertexAttribArray(_terrainShader.GetAttribLocation("vPosition"));
 
-            OpenGL.GL.VertexAttribPointer(_terrainShader.GetAttribLocation("type"), 1,
-                OpenGL.VertexAttribPointerType.Int, false, vertexSize, sizeof(float) * 9);
+            OpenGL.GL.VertexAttribIPointer(_terrainShader.GetAttribLocation("type"), 1,
+                OpenGL.VertexAttribIntegerType.Int, vertexSize, (IntPtr)(sizeof(float) * 9));
             OpenGL.GL.EnableVertexAttribArray(_terrainShader.GetAttribLocation("type"));
+
+            /*OpenGL.GL.VertexAttribIPointer(_terrainShader.GetAttribLocation("type"), 1,
+                OpenGL.VertexAttribIPointerType.Int, vertexSize, sizeof(float) * 9);
+            OpenGL.GL.EnableVertexAttribIPointer(_terrainShader.GetAttribLocation("type"));*/
 
             OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
             OpenGL.GL.BufferData(OpenGL.BufferTarget.ElementArrayBuffer, (IntPtr)(indiceList.Count() * sizeof(uint)),
@@ -385,14 +425,26 @@ void main()
 
         private async void LoadOnlineCASC(object sender, EventArgs e)
         {
+            _localCascPath = string.Empty;
             await _cascAction.DoAction();
-            await _mapAction.DoAction();
+            if (CASC.Initialized)
+                await _mapAction.DoAction();
         }
 
         private async void LoadLocalCASC(object sender, EventArgs e)
         {
+            var dialog = new FolderBrowserDialog
+            {
+                Description = "Indicate the path to your World of Warcraft installation.",
+                ShowNewFolderButton = false
+            };
+            if (dialog.ShowDialog() != DialogResult.OK)
+                return;
+
+            _localCascPath = dialog.SelectedPath;
             await _cascAction.DoAction();
-            await _mapAction.DoAction();
+            if (CASC.Initialized)
+                await _mapAction.DoAction();
         }
 
         private void OnKeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
