@@ -53,7 +53,7 @@
             this.GL.Name = "GL";
             this.GL.Size = new System.Drawing.Size(781, 437);
             this.GL.TabIndex = 0;
-            this.GL.VSync = true;
+            this.GL.VSync = false;
             this.GL.Load += new System.EventHandler(this.OnRenderLoaded);
             this.GL.Paint += new System.Windows.Forms.PaintEventHandler(this.OnPaint);
             this.GL.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.OnKeyPress);

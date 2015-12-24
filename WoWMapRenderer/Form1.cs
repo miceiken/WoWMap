@@ -179,7 +179,7 @@ void main()
             _feedbackText.Text = string.Format("{0} ADTs loaded!", _adts.Count);
 
             LoadMap();
-            Camera = new Camera(new Vector3(1731.5f, 1651.6f, 130.0f), -Vector3.UnitY);
+            Camera = new Camera(new Vector3(1731.5f, 1651.6f, 130.0f), Vector3.UnitY);
             Camera.SetViewport(GL.Width, GL.Height);
             Render();
         }
@@ -201,15 +201,17 @@ void main()
             // Camera set - Clean again, to be safe
             OpenGL.GL.Clear(OpenGL.ClearBufferMask.ColorBufferBit | OpenGL.ClearBufferMask.DepthBufferBit);
 
-            OpenGL.GL.PolygonMode(OpenGL.MaterialFace.FrontAndBack, OpenGL.PolygonMode.Line);
-            OpenGL.GL.Disable(OpenGL.EnableCap.CullFace);
+            // OpenGL.GL.PolygonMode(OpenGL.MaterialFace.FrontAndBack, OpenGL.PolygonMode.Line);
+            OpenGL.GL.Enable(OpenGL.EnableCap.CullFace);
+            OpenGL.GL.Enable(OpenGL.EnableCap.DepthTest);
+            OpenGL.GL.DepthFunc(OpenGL.DepthFunction.Less);
 
             foreach (var renderer in _renderers)
             {
                 OpenGL.GL.BindVertexArray(renderer.VAO);
                 OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
                 _shader.SetCurrent();
-                OpenGL.GL.DrawElements(OpenGL.PrimitiveType.Triangles, renderer.TriangleCount,
+                OpenGL.GL.DrawElements(OpenGL.PrimitiveType.Triangles, renderer.TriangleCount * 4,
                     OpenGL.DrawElementsType.UnsignedInt, IntPtr.Zero);
             }
 
@@ -235,18 +237,18 @@ void main()
             var verticeList = new List<Vertex>();
             var indiceList = new List<uint>();
 
-            var off = (uint)verticeList.Count();
-
             for (var mapChunkIndex = 0; mapChunkIndex < currentADT.MapChunks.Length; ++mapChunkIndex)
             {
                 var adtChunk = currentADT.MapChunks[mapChunkIndex];
                 if (adtChunk == null)
                     continue;
 
+                var off = (uint) verticeList.Count();
+
                 // Generate vertices
                 for (int i = 0, idx = 0; i < 17; ++i)
                 {
-                    var maxJ = ((i % 2) != 0) ? 8 : 9;
+                    var maxJ = ((i%2) != 0) ? 8 : 9;
                     for (var j = 0; j < maxJ; j++)
                     {
                         if (adtChunk.MCCV != null)
@@ -255,8 +257,8 @@ void main()
                             {
                                 Normal = adtChunk.MCNR.Entries[idx].Normal,
                                 Color =
-                                    new Vector3(adtChunk.MCCV.Entries[idx].Blue / 127.0f,
-                                        adtChunk.MCCV.Entries[idx].Green / 127.0f, adtChunk.MCCV.Entries[idx].Red / 127.0f),
+                                    new Vector3(adtChunk.MCCV.Entries[idx].Blue/127.0f,
+                                        adtChunk.MCCV.Entries[idx].Green/127.0f, adtChunk.MCCV.Entries[idx].Red/127.0f),
                                 Position = adtChunk.Vertices[idx],
                                 // TextureCoordinates = ...
                             });
@@ -277,33 +279,33 @@ void main()
 
                 // Generate indices
                 foreach (var triangle in adtChunk.Indices)
-                    indiceList.AddRange(new [] { triangle.V0 + off, triangle.V1 + off, triangle.V2 + off });
+                    indiceList.AddRange(new[] {triangle.V0 + off, triangle.V1 + off, triangle.V2 + off});
+
+                ADTRenderer renderer = new ADTRenderer
+                {
+                    IndiceVBO = OpenGL.GL.GenBuffer(),
+                    VertexVBO = OpenGL.GL.GenBuffer(),
+                    VAO = OpenGL.GL.GenVertexArray(),
+                    TriangleCount = verticeList.Count()
+                };
+
+                OpenGL.GL.BindVertexArray(renderer.VAO);
+
+                OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ArrayBuffer, renderer.VertexVBO);
+                OpenGL.GL.BufferData(OpenGL.BufferTarget.ArrayBuffer, (IntPtr) (verticeList.Count()*9*sizeof (float)),
+                    verticeList.ToArray(), OpenGL.BufferUsageHint.StaticDraw);
+                OpenGL.GL.VertexAttribPointer(_shader.GetAttribLocation("vPosition"), 3,
+                    OpenGL.VertexAttribPointerType.Float, false, 9*sizeof (float), sizeof (float)*6);
+                OpenGL.GL.EnableVertexAttribArray(_shader.GetAttribLocation("vPosition"));
+
+                OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
+                OpenGL.GL.BufferData(OpenGL.BufferTarget.ElementArrayBuffer, (IntPtr) (indiceList.Count()*sizeof (uint)),
+                    indiceList.ToArray(), OpenGL.BufferUsageHint.StaticDraw);
+
+                OpenGL.GL.ClearColor(OpenTK.Graphics.Color4.White);
+
+                _renderers.Add(renderer);
             }
-
-
-            ADTRenderer renderer = new ADTRenderer
-            {
-                IndiceVBO = OpenGL.GL.GenBuffer(),
-                VertexVBO = OpenGL.GL.GenBuffer(),
-                VAO = OpenGL.GL.GenVertexArray(),
-                TriangleCount = indiceList.Count()
-            };
-
-            OpenGL.GL.BindVertexArray(renderer.VAO);
-
-            OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ArrayBuffer, renderer.VertexVBO);
-            OpenGL.GL.BufferData(OpenGL.BufferTarget.ArrayBuffer, (IntPtr) (verticeList.Count() * 9 * sizeof(float)),
-                verticeList.ToArray(), OpenGL.BufferUsageHint.StaticDraw);
-            OpenGL.GL.VertexAttribPointer(_shader.GetAttribLocation("vPosition"), 3, OpenGL.VertexAttribPointerType.Float, false, 9 * sizeof(float), sizeof(float) * 6);
-            OpenGL.GL.EnableVertexAttribArray(_shader.GetAttribLocation("vPosition"));
-
-            OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
-            OpenGL.GL.BufferData(OpenGL.BufferTarget.ElementArrayBuffer, (IntPtr) (indiceList.Count() * sizeof(int)),
-                indiceList.ToArray(), OpenGL.BufferUsageHint.StaticDraw);
-
-            OpenGL.GL.ClearColor(OpenTK.Graphics.Color4.White);
-
-            _renderers.Add(renderer);
         }
 
         private async void LoadOnlineCASC(object sender, EventArgs e)
