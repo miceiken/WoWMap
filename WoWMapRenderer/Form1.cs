@@ -11,10 +11,19 @@ using WoWMap.Archive;
 using WoWMap.Layers;
 using OpenTK;
 using WoWMap;
+using WoWMap.Chunks;
+using WoWMap.Geometry;
 using OpenGL = OpenTK.Graphics.OpenGL;
 
 namespace WoWMapRenderer
 {
+    internal enum VerticeType : short
+    {
+        Terrain = 0,
+        WMO = 1,
+        Doodad = 2
+    }
+
     public partial class Form1 : Form
     {
         private AsyncAction _cascAction;
@@ -182,7 +191,7 @@ void main()
 
         private async void MapSelected(object sender, EventArgs e)
         {
-            var entry = (MapListBoxEntry)_mapListBox.Items[_mapListBox.SelectedIndex];
+            var entry = (MapListBoxEntry)_mapListBox.SelectedItem;
             _backgroundTaskProgress.Style = ProgressBarStyle.Marquee;
 
             _wdtPath = string.Format(@"World\Maps\{0}\{0}.wdt", entry.Directory);
@@ -193,7 +202,7 @@ void main()
             int centerX, centerY;
             GetCenterADT(out centerX, out centerY);
             var tileCenter = GetTileCenter(centerX, centerY);
-            _camera = new Camera(new Vector3(tileCenter.X, tileCenter.Y, 150.0f), -Vector3.UnitZ);
+            _camera = new Camera(new Vector3(tileCenter.X, tileCenter.Y, 500.0f), -Vector3.UnitZ);
             Render();
         }
 
@@ -240,9 +249,9 @@ void main()
         private Vector2 GetTileCenter(int x, int y)
         {
             var adt = _adts[(x << 8) | y];
-            var tilePosition = adt.TilePosition.Xy;
-            tilePosition.X += Constants.TileSize / 2;
-            tilePosition.Y += Constants.TileSize / 2;
+            var tilePosition = adt.TilePosition.Yx;
+            tilePosition.X -= Constants.TileSize / 2;
+            tilePosition.Y -= Constants.TileSize / 2;
             return tilePosition;
         }
 
@@ -272,76 +281,96 @@ void main()
         {
             currentADT.Read();
 
-            var verticeList = new List<VertexData>();
+            var verticeList = new List<Vertex>(145);
             var indiceList = new List<uint>();
 
+            #region Terrain
             foreach (var adtChunk in currentADT.MapChunks)
             {
                 if (adtChunk == null)
                     continue;
 
-                var off = (uint) verticeList.Count();
+                var offset = (uint)verticeList.Count;
 
-                // Generate vertices
+                #region Terrain vertices
                 for (int i = 0, idx = 0; i < 17; ++i)
                 {
-                    var maxJ = ((i%2) != 0) ? 8 : 9;
+                    var maxJ = ((i % 2) != 0) ? 8 : 9;
                     for (var j = 0; j < maxJ; j++)
                     {
+                        var color = new Vector3(1.0f, 1.0f, 1.0f);
                         if (adtChunk.MCCV != null)
                         {
-                            verticeList.Add(new VertexData
-                            {
-                                Normal = adtChunk.MCNR.Entries[idx].Normal,
-                                Color = new Vector3(adtChunk.MCCV.Entries[idx].Blue/127.0f,
-                                    adtChunk.MCCV.Entries[idx].Green/127.0f, adtChunk.MCCV.Entries[idx].Red/127.0f),
-                                Position = adtChunk.Vertices[idx],
-                                // TextureCoordinates = ...
-                            });
+                            color.X = adtChunk.MCCV.Entries[idx].Blue / 127.0f;
+                            color.Y = adtChunk.MCCV.Entries[idx].Green / 127.0f;
+                            color.Z = adtChunk.MCCV.Entries[idx].Red / 127.0f;
                         }
-                        else
+
+                        verticeList.Add(new Vertex
                         {
-                            verticeList.Add(new VertexData
+                            Color = color,
+                            Position = new Vector3
                             {
-                                Normal = adtChunk.MCNR.Entries[idx].Normal,
-                                Color = new Vector3(1.0f, 1.0f, 1.0f),
-                                Position = adtChunk.Vertices[idx],
-                                // TextureCoordinates = ...
-                            });
-                        }
+                                X = adtChunk.MCNK.Position.X - (i * Constants.UnitSize * 0.5f),
+                                Y = adtChunk.MCNK.Position.Y - ((j + (((i % 2) != 0) ? 0.5f : 0.0f)) * Constants.UnitSize),
+                                Z = adtChunk.MCVT.Heights[idx] + adtChunk.MCNK.Position.Z
+                            },
+                            Type = VerticeType.Terrain,
+                            // TextureCoordinates = ...
+                        });
+
                         ++idx;
                     }
                 }
+                #endregion
 
+                #region Terrain indices
                 // Generate indices
-                foreach (var triangle in adtChunk.Indices)
-                    indiceList.AddRange(new[] {triangle.V0 + off, triangle.V1 + off, triangle.V2 + off});
+                var unitidx = 0;
+                for (uint j = 9; j < 8 * 8 + 9 * 8; j++)
+                {
+                    if (!adtChunk.HasHole(unitidx % 8, unitidx++ / 8))
+                    {
+                        indiceList.AddRange(new[] { j + offset, j - 9 + offset, j + 8 + offset });
+                        indiceList.AddRange(new[] { j + offset, j - 8 + offset, j - 9 + offset });
+                        indiceList.AddRange(new[] { j + offset, j + 9 + offset, j - 8 + offset });
+                        indiceList.AddRange(new[] { j + offset, j + 8 + offset, j + 9 + offset });
+                    }
+                    if ((j + 1) % (9 + 8) == 0) j += 9;
+                }
+                #endregion
             }
-
             BindIndexed(verticeList, indiceList);
 
             verticeList.Clear();
             indiceList.Clear();
+            #endregion
 
             #region Doodads
-            foreach (var adtChunk in currentADT.Objects.MapChunks)
+            foreach (var mapChunk in currentADT.Objects.MapChunks)
             {
-                var off = (uint) verticeList.Count();
-
-                if (adtChunk.DoodadVertices == null)
+                if (mapChunk.MCRD == null)
                     continue;
 
-                verticeList.AddRange(adtChunk.DoodadVertices.Select((t, i) => new VertexData
+                // TODO Figure this one out. Super weird code.
+                var vertices = new List<Vector3>();
+                var normals = new List<Vector3>();
+                var indices = new List<Triangle<uint>>();
+                mapChunk.GenerateDoodads(vertices, normals, indices);
+
+                var offset = (uint)verticeList.Count;
+                verticeList.AddRange(vertices.Select((t, i) => new Vertex
                 {
                     Color = new Vector3(1.0f, 1.0f, 1.0f),
-                    Normal = adtChunk.DoodadNormals[i],
-                    Position = t
+                    Position = t,
+                    Type = VerticeType.Doodad
                 }));
 
-                foreach (var triangle in adtChunk.DoodadIndices)
-                    indiceList.AddRange(new[] { triangle.V0 + off, triangle.V1 + off, triangle.V2 + off });
+                foreach (var triangle in indices)
+                    indiceList.AddRange(new[] { triangle.V0 + offset, triangle.V1 + offset, triangle.V2 + offset });
             }
-            BindIndexed(verticeList, indiceList, 1);
+
+            BindIndexed(verticeList, indiceList);
             #endregion
 
             verticeList.Clear();
@@ -351,22 +380,27 @@ void main()
             foreach (var adtChunk in currentADT.Objects.MapChunks)
             {
                 var off = (uint)verticeList.Count();
-
-                if (adtChunk.WMONormals == null)
+                
+                if (adtChunk == null || adtChunk.MCRW == null)
                     continue;
 
-                verticeList.AddRange(adtChunk.WMOVertices.Select((t, i) => new VertexData
+                var vertices = new List<Vector3>();
+                var normals = new List<Vector3>();
+                var indices = new List<Triangle<uint>>();
+                adtChunk.GenerateWMOs(vertices, normals, indices);
+
+                verticeList.AddRange(vertices.Select((t, i) => new Vertex
                 {
                     Color = new Vector3(1.0f, 1.0f, 1.0f),
-                    Normal = adtChunk.WMONormals[i],
-                    Position = t
+                    Position = t,
+                    Type = VerticeType.WMO
                 }));
 
-                foreach (var triangle in adtChunk.WMOIndices)
+                foreach (var triangle in indices)
                     indiceList.AddRange(new[] { triangle.V0 + off, triangle.V1 + off, triangle.V2 + off });
             }
 
-            BindIndexed(verticeList, indiceList, 2);
+            BindIndexed(verticeList, indiceList);
 
             #endregion
 
@@ -376,7 +410,7 @@ void main()
             OpenGL.GL.ClearColor(OpenTK.Graphics.Color4.White);
         }
 
-        private void BindIndexed(IReadOnlyCollection<VertexData> verticeList, List<uint> indiceList, int elementType = 0)
+        private void BindIndexed(IReadOnlyCollection<Vertex> verticeList, List<uint> indiceList)
         {
             var renderer = new Renderer
             {
@@ -387,34 +421,21 @@ void main()
             };
 
             OpenGL.GL.BindVertexArray(renderer.VAO);
-
-            var vertices = new Vertex[verticeList.Count];
-            verticeList.Each((t, i) => vertices[i] = new Vertex
-            {
-                Color = t.Color,
-                Position = t.Position,
-                Normal = t.Normal,
-                Type = elementType
-            });
             
             var vertexSize = Marshal.SizeOf(typeof(Vertex));
             var verticeSize = verticeList.Count * vertexSize;
 
             OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ArrayBuffer, renderer.VertexVBO);
             OpenGL.GL.BufferData(OpenGL.BufferTarget.ArrayBuffer, (IntPtr)(verticeSize),
-                vertices, OpenGL.BufferUsageHint.StaticDraw);
+                verticeList.ToArray(), OpenGL.BufferUsageHint.StaticDraw);
 
             OpenGL.GL.VertexAttribPointer(_terrainShader.GetAttribLocation("vPosition"), 3,
-                OpenGL.VertexAttribPointerType.Float, false, vertexSize, sizeof(float) * 6);
+                OpenGL.VertexAttribPointerType.Float, false, vertexSize, sizeof(float) * 3);
             OpenGL.GL.EnableVertexAttribArray(_terrainShader.GetAttribLocation("vPosition"));
 
             OpenGL.GL.VertexAttribIPointer(_terrainShader.GetAttribLocation("type"), 1,
-                OpenGL.VertexAttribIntegerType.Int, vertexSize, (IntPtr)(sizeof(float) * 9));
+                OpenGL.VertexAttribIntegerType.Int, vertexSize, (IntPtr)(sizeof(float) * 6));
             OpenGL.GL.EnableVertexAttribArray(_terrainShader.GetAttribLocation("type"));
-
-            /*OpenGL.GL.VertexAttribIPointer(_terrainShader.GetAttribLocation("type"), 1,
-                OpenGL.VertexAttribIPointerType.Int, vertexSize, sizeof(float) * 9);
-            OpenGL.GL.EnableVertexAttribIPointer(_terrainShader.GetAttribLocation("type"));*/
 
             OpenGL.GL.BindBuffer(OpenGL.BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
             OpenGL.GL.BufferData(OpenGL.BufferTarget.ElementArrayBuffer, (IntPtr)(indiceList.Count() * sizeof(uint)),
@@ -450,8 +471,25 @@ void main()
         private void OnKeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
         {
             _camera.Update();
-            _cameraPos.Text = string.Format("Camera [ {0} {1} {2} ] Facing [ {3} {4} ]", _camera.Position.X, _camera.Position.Y,
-                _camera.Position.Z, _camera.Pitch, _camera.Yaw);
+            var currentADT = GetCurrentADT();
+            _cameraPos.Text = string.Format("Camera [ {0} {1} {2} ] Facing [ {3} {4} ] Tile [ {5} {6} ]", _camera.Position.X, _camera.Position.Y,
+                _camera.Position.Z, _camera.Pitch, _camera.Yaw, currentADT.X, currentADT.Y);
+            Render();
+        }
+
+        private Vector2 GetCurrentADT()
+        {
+            var cameraPosition = _camera.Position.Yx;
+            return (from adt in _adts
+                let tilePos = adt.Value.TilePosition.Yx
+                let maxX = tilePos.X
+                let minX = tilePos.X - Constants.TileSize
+                let maxY = tilePos.Y
+                let minY = tilePos.Y - Constants.TileSize
+                where
+                    cameraPosition.X > minX && cameraPosition.X < maxX && cameraPosition.Y > minY &&
+                    cameraPosition.Y < maxY
+                select new Vector2(adt.Value.X, adt.Value.Y)).First();
         }
 
         private void OnRenderResize(object sender, EventArgs e)
@@ -467,8 +505,6 @@ void main()
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
             _camera.Update();
-            _cameraPos.Text = string.Format("Camera [ {0} {1} {2} ] Facing [ {3} {4} ]", _camera.Position.X, _camera.Position.Y,
-                _camera.Position.Z, _camera.Pitch, _camera.Yaw);
             Render();
         }
 
@@ -500,11 +536,10 @@ void main()
     [StructLayout(LayoutKind.Sequential)]
     internal struct Vertex
     {
-        public Vector3 Normal;
         public Vector3 Color;
         public Vector3 Position;
         // public Vector2 TextureCoordinates;
-        public int Type;
+        public VerticeType Type;
     }
 
     internal struct Renderer

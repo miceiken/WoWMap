@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WoWMap.Archive;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
 using OpenTK;

@@ -26,19 +26,19 @@ namespace WoWMap.Chunks
 
         public class MCCVEntry
         {
-            public char Red;
-            public char Green;
-            public char Blue;
-            public char Alpha;
+            public byte Red;
+            public byte Green;
+            public byte Blue;
+            public byte Alpha;
 
             public static MCCVEntry Read(BinaryReader br)
             {
                 return new MCCVEntry
                 {
-                    Red = br.ReadChar(),
-                    Green = br.ReadChar(),
-                    Blue = br.ReadChar(),
-                    Alpha = br.ReadChar(),
+                    Red = br.ReadByte(),
+                    Green = br.ReadByte(),
+                    Blue = br.ReadByte(),
+                    Alpha = br.ReadByte(),
                 };
             }
         }

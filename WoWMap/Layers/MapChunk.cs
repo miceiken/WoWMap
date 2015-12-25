@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
 using OpenTK;
@@ -48,9 +47,9 @@ namespace WoWMap.Layers
         public Vector3[] Vertices { get; private set; }
         public List<Triangle<uint>> Indices { get; private set; }
 
-        public List<Vector3> DoodadVertices { get; private set; }
-        public List<Triangle<uint>> DoodadIndices { get; private set; }
-        public List<Vector3> DoodadNormals { get; private set; } 
+        public List<Vector3> DoodadVertices;
+        public List<Triangle<uint>> DoodadIndices;
+        public List<Vector3> DoodadNormals;
 
         public List<Vector3> WMOVertices { get; private set; }
         public List<Triangle<uint>> WMOIndices { get; private set; }
@@ -68,11 +67,11 @@ namespace WoWMap.Layers
         private static byte[] TransformToHighRes(ushort holes)
         {
             var ret = new byte[8];
-            for (int i = 0; i < 8; i++)
+            for (var i = 0; i < 8; i++)
             {
-                for (int j = 0; j < 8; j++)
+                for (var j = 0; j < 8; j++)
                 {
-                    int holeIdxL = (i / 2) * 4 + (j / 2);
+                    var holeIdxL = (i / 2) * 4 + (j / 2);
                     if (((holes >> holeIdxL) & 1) == 1)
                         ret[i] |= (byte)(1 << j);
                 }
@@ -102,31 +101,36 @@ namespace WoWMap.Layers
                 {
                     case "MCVT":
                         MCVT = new MCVT(subChunk);
-                        GenerateVertices();
-                        GenerateIndices();
                         break;
-
                     case "MCRD":
                         MCRD = new MCRD(subChunk);
-
-                        GenerateDoodads();
                         break;
-
                     case "MCRW":
                         MCRW = new MCRW(subChunk);
-
-                        GenerateWMOs();
                         break;
-
                     case "MCNR":
                         MCNR = new MCNR(subChunk);
                         break;
-
                     case "MCCV":
                         MCCV = new MCCV(subChunk);
                         break;
                 }
             }
+        }
+
+        public void Generate()
+        {
+            if (MCVT != null)
+            {
+                GenerateVertices();
+                GenerateIndices();
+            }
+
+            if (MCRW != null)
+                GenerateWMOs(WMOVertices, WMONormals, WMOIndices);
+
+            if (MCRD != null)
+                GenerateDoodads(DoodadVertices, DoodadNormals, DoodadIndices);
         }
 
         #region MCVT - HeightMap
@@ -146,7 +150,7 @@ namespace WoWMap.Layers
             }
         }
 
-        public void GenerateIndices()
+        private void GenerateIndices()
         {
             Indices = new List<Triangle<uint>>(64 * 4);
 
@@ -168,7 +172,7 @@ namespace WoWMap.Layers
 
         #region MCRW/MODF - WMOs
 
-        private void GenerateWMOs()
+        public void GenerateWMOs(List<Vector3> vertices, List<Vector3> normals, List<Triangle<uint>> indices)
         {
             if (ADT.Type != ADTType.Objects || ADT.MODF == null)
                 return;
@@ -187,14 +191,14 @@ namespace WoWMap.Layers
                 var path = ADT.ModelPaths[(int)wmo.MWIDEntryIndex];
                 var model = new WMORoot(path);
 
-                if (WMOVertices == null)
-                    WMOVertices = new List<Vector3>(1000);
-                if (WMOIndices == null)
-                    WMOIndices = new List<Triangle<uint>>(1000);
-                if (WMONormals == null)
-                    WMONormals = new List<Vector3>(1000);
+                if (vertices == null)
+                    vertices = new List<Vector3>(1000);
+                if (indices == null)
+                    indices = new List<Triangle<uint>>(1000);
+                if (normals == null)
+                    normals = new List<Vector3>(1000);
 
-                InsertWMOGeometry(wmo, model, WMOVertices, WMOIndices, WMONormals);
+                InsertWMOGeometry(wmo, model, vertices, indices, normals);
             }
         }
 
@@ -207,6 +211,8 @@ namespace WoWMap.Layers
                 vertices.AddRange(group.MOVT.Vertices.Select(v => Vector3.Transform(v, transform)));
                 normals.AddRange(group.MONR.Normals.Select(v => Vector3.Transform(v, transform)));
 
+                // No. Makes this thing unreadable.
+                // ReSharper disable once LoopCanBeConvertedToQuery
                 for (var i = 0; i < group.MOVI.Indices.Length; i++)
                 {
                     if (((byte)group.MOPY.Entries[i].Flags & 0x04) != 0 && group.MOPY.Entries[i].MaterialId != 0xFF)
@@ -221,7 +227,7 @@ namespace WoWMap.Layers
             {
                 var set = model.MODS.Entries[wmo.DoodadSet];
                 var instances = new List<MODD.MODDEntry>((int)set.nDoodads);
-                for (uint i = set.FirstInstanceIndex; i < (set.nDoodads + set.FirstInstanceIndex); i++)
+                for (var i = set.FirstInstanceIndex; i < (set.nDoodads + set.FirstInstanceIndex); i++)
                 {
                     if (i >= model.MODD.Entries.Length)
                         break;
@@ -241,12 +247,9 @@ namespace WoWMap.Layers
                     var doodadTransform = Transformation.GetDoodadTransform(instance, wmo);
                     var vo = (uint)vertices.Count;
 
-                    foreach (var vertex in doodad.Vertices)
-                        vertices.Add(Vector3.Transform(vertex, doodadTransform));
-                    foreach (var normal in doodad.Normals)
-                        normals.Add(Vector3.Transform(normal, doodadTransform));
-                    foreach (var t in doodad.Indices)
-                        indices.Add(new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo));
+                    vertices.AddRange(doodad.Vertices.Select(vertex => Vector3.Transform(vertex, doodadTransform)));
+                    normals.AddRange(doodad.Normals.Select(normal => Vector3.Transform(normal, doodadTransform)));
+                    indices.AddRange(doodad.Indices.Select(t => new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
                 }
             }
 
@@ -256,10 +259,8 @@ namespace WoWMap.Layers
                     continue;
 
                 var vo = (uint)vertices.Count;
-                foreach (var v in group.LiquidVertices)
-                    vertices.Add(Vector3.Transform(v, transform));
-                foreach (var t in group.LiquidIndices)
-                    indices.Add(new Triangle<uint>(t.Type, t.V1 + vo, t.V0 + vo, t.V2 + vo));
+                vertices.AddRange(@group.LiquidVertices.Select(v => Vector3.Transform(v, transform)));
+                indices.AddRange(@group.LiquidIndices.Select(t => new Triangle<uint>(t.Type, t.V1 + vo, t.V0 + vo, t.V2 + vo)));
             }
         }
 
@@ -267,13 +268,13 @@ namespace WoWMap.Layers
 
         #region MCRD/MDDF - Doodads
 
-        private void GenerateDoodads()
+        public void GenerateDoodads(List<Vector3> vertices, List<Vector3> normals, List<Triangle<uint>> indices)
         {
             if (ADT.Type != ADTType.Objects || ADT.MDDF == null)
                 return;
 
             var drawn = new HashSet<uint>();
-            for (int i = 0; i < MCRD.MDDFEntryIndex.Length; i++)
+            for (var i = 0; i < MCRD.MDDFEntryIndex.Length; i++)
             {
                 var doodad = ADT.MDDF.Entries[MCRD.MDDFEntryIndex[i]];
                 if (drawn.Contains(doodad.UniqueId))
@@ -289,22 +290,19 @@ namespace WoWMap.Layers
                 if (!model.IsCollidable)
                     continue;
 
-                if (DoodadVertices == null)
-                    DoodadVertices = new List<Vector3>((MCRD.MDDFEntryIndex.Length / 4) * model.Vertices.Length);
-                if (DoodadIndices == null)
-                    DoodadIndices = new List<Triangle<uint>>((MCRD.MDDFEntryIndex.Length / 4) * model.Indices.Length);
-                if (DoodadNormals == null)
-                    DoodadNormals = new List<Vector3>(MCRD.MDDFEntryIndex.Length / 4 * model.Normals.Length);
+                if (vertices == null)
+                    vertices = new List<Vector3>((MCRD.MDDFEntryIndex.Length / 4) * model.Vertices.Length);
+                if (indices == null)
+                    indices = new List<Triangle<uint>>((MCRD.MDDFEntryIndex.Length / 4) * model.Indices.Length);
+                if (normals == null)
+                    normals = new List<Vector3>(MCRD.MDDFEntryIndex.Length / 4 * model.Normals.Length);
 
                 // Doodads outside WMOs are treated like WMOs. Not a typo.
                 var transform = Transformation.GetWMOTransform(doodad.Position, doodad.Rotation, doodad.Scale / 1024.0f);
-                var vo = (uint)DoodadVertices.Count;
-                foreach (var v in model.Vertices)
-                    DoodadVertices.Add(Vector3.Transform(v, transform));
-                foreach (var v in model.Normals)
-                    DoodadNormals.Add(Vector3.Transform(v, transform));
-                foreach (var t in model.Indices)
-                    DoodadIndices.Add(new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo));
+                var vo = (uint)vertices.Count;
+                vertices.AddRange(model.Vertices.Select(v => Vector3.Transform(v, transform)));
+                normals.AddRange(model.Normals.Select(v => Vector3.Transform(v, transform)));
+                indices.AddRange(model.Indices.Select(t => new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
             }
         }
 

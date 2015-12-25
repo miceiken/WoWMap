@@ -1,12 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WoWMap.Chunks;
-using WoWMap.Geometry;
 using OpenTK;
 
 namespace WoWMap.Layers
@@ -80,12 +74,13 @@ namespace WoWMap.Layers
             Console.WriteLine("* Reading {0} Type ADT.", Type);
 
             MapChunks = new MapChunk[16 * 16];
-            int mcIdx = 0;
+            var mcIdx = 0;
 
             foreach (var subChunk in Data.Chunks)
             {
                 if (subChunk.Name != "MCNK")
-                    Console.WriteLine("Found chunk {0}", subChunk.Name);
+                    Console.WriteLine("Found {0} chunk", subChunk.Name);
+
                 switch (subChunk.Name)
                 {
                     case "MHDR":
@@ -96,14 +91,12 @@ namespace WoWMap.Layers
                         break;
                     case "MMID":
                         MMID = new MMID(subChunk);
-                        ReadDoodads();
                         break;
                     case "MWMO":
                         MWMO = new MWMO(subChunk);
                         break;
                     case "MWID":
                         MWID = new MWID(subChunk);
-                        ReadModels();
                         break;
                     case "MDDF":
                         MDDF = new MDDF(subChunk);
@@ -122,6 +115,20 @@ namespace WoWMap.Layers
                         break;
                 }
             }
+
+            ReadModels();
+            ReadDoodads();
+        }
+
+        public void Generate()
+        {
+            foreach (var mc in MapChunks)
+                mc.Generate();
+
+            if (Type != ADTType.Normal)
+                return;
+            Objects.Generate();
+            Textures.Generate();
         }
 
         private void ReadModels()
@@ -129,9 +136,9 @@ namespace WoWMap.Layers
             if (Type != ADTType.Objects || (MWID == null || MWMO == null))
                 return;
 
-            ModelPaths = new List<string>();
-            for (var i = 0; i < MWID.Offsets.Length; i++)
-                ModelPaths.Add(MWMO.Filenames[MWID.Offsets[i]]);
+            ModelPaths = new List<string>(MWMO.Filenames.Count);
+            foreach (var t in MWID.Offsets)
+                ModelPaths.Add(MWMO.Filenames[t]);
         }
 
         private void ReadDoodads()
@@ -139,9 +146,9 @@ namespace WoWMap.Layers
             if (Type != ADTType.Objects || (MMID == null || MMDX == null))
                 return;
 
-            DoodadPaths = new List<string>();
-            for (var i = 0; i < MMID.Offsets.Length; i++)
-                DoodadPaths.Add(MMDX.Filenames[MMID.Offsets[i]]);
+            DoodadPaths = new List<string>(MMDX.Filenames.Count);
+            foreach (var t in MMID.Offsets)
+                DoodadPaths.Add(MMDX.Filenames[t]);
         }
     }
 }

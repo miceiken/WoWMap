@@ -57,7 +57,7 @@ namespace WoWMap.Layers
             var br = Chunk.GetReader();
 
             Vertices = new Vector3[MD20.CountBoundingVertices];
-            for (int i = 0; i < Vertices.Length; i++)
+            for (var i = 0; i < Vertices.Length; i++)
                 Vertices[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
         }
 
@@ -68,7 +68,7 @@ namespace WoWMap.Layers
             var br = Chunk.GetReader();
 
             Indices = new Triangle<ushort>[MD20.CountBoundingTriangles / 3];
-            for (int i = 0; i < Indices.Length; i++)
+            for (var i = 0; i < Indices.Length; i++)
                 Indices[i] = new Triangle<ushort>(TriangleType.Doodad, br.ReadUInt16(), br.ReadUInt16(), br.ReadUInt16());
         }
 
@@ -79,7 +79,7 @@ namespace WoWMap.Layers
             var br = Chunk.GetReader();
 
             Normals = new Vector3[MD20.CountBoundingNormals];
-            for (int i = 0; i < Normals.Length; i++)
+            for (var i = 0; i < Normals.Length; i++)
                 Normals[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
         }
     }

@@ -40,7 +40,7 @@ namespace WoWMapParser
             Console.WriteLine("Initializing CASC - this may take a while...");
 
             var sw = Stopwatch.StartNew();
-            CASC.InitializeOnline();
+            CASC.Initialize(@"C:\Users\Vincent\Desktop\World of Warcraft.OLD");
             sw.Stop();
 
             Console.WriteLine("CASC initialized in {0}ms", sw.ElapsedMilliseconds);
@@ -72,8 +72,9 @@ namespace WoWMapParser
             geom.AddADT(adt);
             geom.SaveWavefrontObject(Path.GetFileNameWithoutExtension(adt.Filename) + ".obj");*/
 
-            var adt = new ADT("Azeroth", 29, 28);
+            var adt = new ADT("Azeroth", 31, 40);
             adt.Read();
+            adt.Generate();
             var geom = new Geometry();
             geom.AddADT(adt);
             geom.SaveWavefrontObject(Path.GetFileNameWithoutExtension(adt.Filename) + ".obj");

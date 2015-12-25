@@ -22,7 +22,7 @@ namespace WoWMap.Chunks
             var br = Chunk.GetReader();
 
             Entries = new MDDFEntry[Chunk.Size / 36];
-            for (int i = 0; i < Entries.Length; i++)
+            for (var i = 0; i < Entries.Length; i++)
                 Entries[i] = MDDFEntry.Read(br);
         }
 

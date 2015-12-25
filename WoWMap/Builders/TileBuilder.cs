@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WoWMap.Layers;
-using WoWMap.Chunks;
-using WoWMap.Geometry;
+﻿using WoWMap.Layers;
 
 namespace WoWMap.Builders
 {
