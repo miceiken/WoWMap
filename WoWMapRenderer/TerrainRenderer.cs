@@ -242,7 +242,6 @@ namespace WoWMapRenderer
                                 Z = adtChunk.MCVT.Heights[idx] + adtChunk.MCNK.Position.Z
                             },
                             TextureCoordinates = new Vector2(i / 8.0f + (((i & 2) == 0) ? 0.5f / 8.0f : 0.0f), j / 17.0f),
-                            TextureId = textureDict[0]
                         });
 
                         ++idx;
@@ -251,23 +250,27 @@ namespace WoWMapRenderer
                 #endregion
             }
 
-            BindIndexedVertex(tileToLoadKey, verticeList.ToArray(), indiceList.ToArray());
+            BindIndexedVertex(tileToLoadKey, verticeList.ToArray(), indiceList.ToArray(), textureDict[0]);
         }
 
-        private void BindIndexedVertex(int tileHash, Vertex[] vertices, uint[] indices)
+        private void BindIndexedVertex(int tileHash, Vertex[] vertices, uint[] indices, int textureId = 0)
         {
             var renderer = new Renderer
             {
                 IndiceVBO = GL.GenBuffer(),
                 VertexVBO = GL.GenBuffer(),
+                Sampler = GL.GenSampler(),
                 VAO = GL.GenVertexArray(),
-                TriangleCount = indices.Length
+                TriangleCount = indices.Length,
+                TextureId = textureId
             };
 
             GL.BindVertexArray(renderer.VAO);
 
             var vertexSize = Marshal.SizeOf(typeof(Vertex));
             var verticeSize = vertices.Length * vertexSize;
+
+            GL.BindSampler(renderer.Sampler, _shader.GetUniformLocation("sample"));
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, renderer.VertexVBO);
             GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(verticeSize),
@@ -380,8 +383,7 @@ namespace WoWMapRenderer
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, renderer.TextureId);
-                GL.BindSampler(renderer.TextureId, _shader.GetUniformLocation("sample"));
-                GL.Uniform1(_shader.GetUniformLocation("sample"), renderer.TextureId);
+                GL.Uniform1(_shader.GetUniformLocation("sample"), 0);
                 GL.DrawElements(PrimitiveType.Triangles, renderer.TriangleCount,
                     DrawElementsType.UnsignedInt, IntPtr.Zero);
             }

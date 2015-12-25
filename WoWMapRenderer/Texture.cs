@@ -27,6 +27,7 @@ namespace WoWMapRenderer
                 GL.DeleteTexture(ID);
 
             ID = GL.GenTexture();
+            GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, ID);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Width, Height, 0, PixelFormat.Bgra, PixelType.UnsignedByte, IntPtr.Zero);
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, new[] { (int)All.Linear });
@@ -40,6 +41,7 @@ namespace WoWMapRenderer
                 GL.DeleteTexture(ID);
 
             ID = GL.GenTexture();
+            GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, ID);
 
             using (var blp = new BlpFile(CASC.OpenFile(fileName)))
@@ -78,7 +80,7 @@ namespace WoWMapRenderer
                 ID = GL.GenTexture();
 
                 blp.GetByteBuffer(0, BGRA);
-
+                GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, ID);
                 GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Width, Height, 0, PixelFormat.Bgra, PixelType.UnsignedByte, BGRA);
                 GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, new[] { (int)All.Linear });

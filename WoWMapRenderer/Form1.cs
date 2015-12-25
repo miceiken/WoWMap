@@ -133,7 +133,6 @@ namespace WoWMapRenderer
         public Vector3 Color;
         public Vector3 Position;
         public Vector2 TextureCoordinates;
-        public int TextureId;
     }
 
     internal struct Renderer
@@ -142,6 +141,7 @@ namespace WoWMapRenderer
         public int IndiceVBO;
         public int VertexVBO;
         public int VAO;
+        public int Sampler;
         public int TriangleCount;
         public int TextureId;
     }
