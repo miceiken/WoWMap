@@ -163,7 +163,7 @@ namespace WoWMapRenderer
 
                     keysToKeep.Add((tileX << 8) | tileY);
 
-                    if (IsTileLoaded(tileX, tileY))
+                    if (IsTileLoaded(tileX, tileY) || !_wdt.HasTile(tileX, tileY))
                         continue;
 
                     LoadTile(tileX, tileY);
