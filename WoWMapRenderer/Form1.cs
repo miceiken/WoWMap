@@ -1,29 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-
-using System.Drawing;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using CASCExplorer;
 using WoWMap.Archive;
-using WoWMap.Layers;
 using OpenTK;
-using WoWMap;
-using WoWMap.Chunks;
-using WoWMap.Geometry;
-using OpenGL = OpenTK.Graphics.OpenGL;
 
 namespace WoWMapRenderer
 {
-    internal enum VerticeType : short
-    {
-        Terrain = 0,
-        WMO = 1,
-        Doodad = 2
-    }
-
     public partial class Form1 : Form
     {
         private AsyncAction _cascAction;
@@ -149,8 +132,8 @@ namespace WoWMapRenderer
     {
         public Vector3 Color;
         public Vector3 Position;
-        public VerticeType Type;
-        // public Vector2 TextureCoordinates;
+        public Vector2 TextureCoordinates;
+        public int TextureId;
     }
 
     internal struct Renderer
@@ -160,5 +143,6 @@ namespace WoWMapRenderer
         public int VertexVBO;
         public int VAO;
         public int TriangleCount;
+        public int TextureId;
     }
 }

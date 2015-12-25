@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using CASCExplorer;
 using OpenTK;
@@ -23,6 +21,7 @@ namespace WoWMapRenderer
         private Dictionary<int, ADT> _mapTiles = new Dictionary<int, ADT>();
         private Dictionary<int, Renderer> _batchRenderers = new Dictionary<int, Renderer>(9 * 3);
         private Dictionary<int, bool> _loadedTiles = new Dictionary<int, bool>();
+        private FrameBuffer _textureCache;
 
         private Camera _camera;
         private Shader _shader;
@@ -121,8 +120,9 @@ namespace WoWMapRenderer
                 UpdateRenderers();
                 Render();
             };
-
             _control.Paint += (sender, args) => { Render(); };
+
+            _textureCache = new FrameBuffer(_control.Width, _control.Height);
 
             // Find camera coordinates, set it, set viewport, load tiles, render.
             int x, y;
@@ -171,13 +171,25 @@ namespace WoWMapRenderer
             }
 
             while (_loadedTiles.Count != 9)
-                _loadedTiles.Remove(_loadedTiles.First(tile => !keysToKeep.Contains(tile.Key)).Key);
+            {
+                var key = _loadedTiles.First(tile => !keysToKeep.Contains(tile.Key)).Key;
+                GL.DeleteVertexArray(_batchRenderers[key].VAO);
+                GL.DeleteBuffer(_batchRenderers[key].IndiceVBO);
+                GL.DeleteBuffer(_batchRenderers[key].VertexVBO);
+                _batchRenderers.Remove(key);
+                _loadedTiles.Remove(key);
+            }
         }
 
         private void LoadTile(int tileX, int tileY)
         {
             var tileToLoadKey = (tileX << 8) | tileY;
             _mapTiles[tileToLoadKey].Read();
+
+            var textureDict = new Dictionary<int, int>();
+            foreach (var t in _mapTiles[tileToLoadKey].Textures.MTEX.Filenames)
+                textureDict[(int)t.Key] = _textureCache.AddTexture((int)t.Key, t.Value);
+
             _loadedTiles[tileToLoadKey] = true;
 
             var verticeList = new List<Vertex>(145);
@@ -189,6 +201,22 @@ namespace WoWMapRenderer
                     continue;
 
                 var offset = (uint)verticeList.Count;
+
+                #region Terrain indices
+                // Generate indices
+                var unitidx = 0;
+                for (uint j = 9; j < 8 * 8 + 9 * 8; j++)
+                {
+                    if (!adtChunk.HasHole(unitidx % 8, unitidx++ / 8))
+                    {
+                        indiceList.AddRange(new[] { j + offset, j - 9 + offset, j + 8 + offset });
+                        indiceList.AddRange(new[] { j + offset, j - 8 + offset, j - 9 + offset });
+                        indiceList.AddRange(new[] { j + offset, j + 9 + offset, j - 8 + offset });
+                        indiceList.AddRange(new[] { j + offset, j + 8 + offset, j + 9 + offset });
+                    }
+                    if ((j + 1) % (9 + 8) == 0) j += 9;
+                }
+                #endregion
 
                 #region Terrain vertices
                 for (int i = 0, idx = 0; i < 17; ++i)
@@ -213,28 +241,12 @@ namespace WoWMapRenderer
                                 Y = adtChunk.MCNK.Position.Y - ((j + (((i % 2) != 0) ? 0.5f : 0.0f)) * Constants.UnitSize),
                                 Z = adtChunk.MCVT.Heights[idx] + adtChunk.MCNK.Position.Z
                             },
-                            Type = VerticeType.Terrain,
-                            // TextureCoordinates = ...
+                            TextureCoordinates = new Vector2(i / 8.0f + (((i & 2) == 0) ? 0.5f / 8.0f : 0.0f), j / 17.0f),
+                            TextureId = textureDict[0]
                         });
 
                         ++idx;
                     }
-                }
-                #endregion
-
-                #region Terrain indices
-                // Generate indices
-                var unitidx = 0;
-                for (uint j = 9; j < 8 * 8 + 9 * 8; j++)
-                {
-                    if (!adtChunk.HasHole(unitidx % 8, unitidx++ / 8))
-                    {
-                        indiceList.AddRange(new[] { j + offset, j - 9 + offset, j + 8 + offset });
-                        indiceList.AddRange(new[] { j + offset, j - 8 + offset, j - 9 + offset });
-                        indiceList.AddRange(new[] { j + offset, j + 9 + offset, j - 8 + offset });
-                        indiceList.AddRange(new[] { j + offset, j + 8 + offset, j + 9 + offset });
-                    }
-                    if ((j + 1) % (9 + 8) == 0) j += 9;
                 }
                 #endregion
             }
@@ -265,9 +277,9 @@ namespace WoWMapRenderer
                 VertexAttribPointerType.Float, false, vertexSize, sizeof(float) * 3);
             GL.EnableVertexAttribArray(_shader.GetAttribLocation("vPosition"));
 
-            GL.VertexAttribIPointer(_shader.GetAttribLocation("type"), 1,
-                VertexAttribIntegerType.Int, vertexSize, (IntPtr)(sizeof(float) * 6));
-            GL.EnableVertexAttribArray(_shader.GetAttribLocation("type"));
+            GL.VertexAttribPointer(_shader.GetAttribLocation("in_TexCoord0"), 2,
+                VertexAttribPointerType.Float, false, vertexSize, (IntPtr)(sizeof(float) * 6));
+            GL.EnableVertexAttribArray(_shader.GetAttribLocation("in_TexCoord0"));
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
             GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(indices.Length * sizeof(uint)),
@@ -348,12 +360,16 @@ namespace WoWMapRenderer
 
         private void Render()
         {
+            // var buffer = new FrameBuffer(512, 512);
+            // buffer.Load();
+
+            // GL.BindFramebuffer(FramebufferTarget.Framebuffer, _framebuffer.FrameBufferID);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             var uniform = Matrix4.Mult(_camera.View, _camera.Projection);
             GL.UniformMatrix4(_shader.GetUniformLocation("projection_modelview"), false, ref uniform);
 
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            // GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Less);
@@ -362,6 +378,10 @@ namespace WoWMapRenderer
             {
                 GL.BindVertexArray(renderer.VAO);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
+                GL.ActiveTexture(TextureUnit.Texture0);
+                GL.BindTexture(TextureTarget.Texture2D, renderer.TextureId);
+                GL.BindSampler(renderer.TextureId, _shader.GetUniformLocation("sample"));
+                GL.Uniform1(_shader.GetUniformLocation("sample"), renderer.TextureId);
                 GL.DrawElements(PrimitiveType.Triangles, renderer.TriangleCount,
                     DrawElementsType.UnsignedInt, IntPtr.Zero);
             }
