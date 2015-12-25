@@ -65,13 +65,14 @@ namespace WoWMap.Archive
             Console.WriteLine("Downloading {0}", filename);
 
             var str = Handler.OpenFile(filename);
-
+            var pos = str.Position;
             if (!Directory.Exists(Path.GetDirectoryName("files/" + filename.ToLowerInvariant())))
                 Directory.CreateDirectory(Path.GetDirectoryName("files/" + filename.ToLowerInvariant()));
 
+            str.Position = 0;
             using (var fs = File.Create("files/" + filename.ToLowerInvariant()))
                 str.CopyTo(fs);
-            str.Position = 0;
+            str.Position = pos;
             return str;
         }
 

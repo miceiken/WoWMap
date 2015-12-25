@@ -11,36 +11,56 @@ namespace WoWMapRenderer
 {
     public class Camera
     {
-        protected Vector3 m_position = new Vector3(0, 100, 0);
-        protected Vector3 m_up = Vector3.UnitZ;
-        protected Vector3 m_direction;
+        protected Vector3 _position = new Vector3(0, 100, 0);
+        protected Vector3 _up = Vector3.UnitZ;
+        protected Vector3 _direction;
 
-        protected const float m_pitchLimit = 1.4f;
+        private float _viewportWidth;
+        private float _viewportHeight;
+        private float _farClip = 1000.0f;
+        private float _nearClip = 0.01f;
 
-        protected const float m_speed = 3.5f;
-        protected const float m_mouseSpeedX = 0.0045f;
-        protected const float m_mouseSpeedY = 0.0025f;
+        private const float _pitchLimit = 1.4f;
+
+        private const float _speed = 3.5f;
+        private const float _mouseSpeedX = 0.0045f;
+        private const float _mouseSpeedY = 0.0025f;
+
+        private const float _speedBoost = 5.0f;
 
         protected MouseState m_prevMouse;
 
+        public delegate void MovementHandler();
+
+        public event MovementHandler OnMovement;
 
         /// <summary>
         /// Creates the instance of the camera.
         /// </summary>
-        public Camera(float Width, float Height)
+        public Camera(float viewportWidth, float Height)
         {
+            _viewportWidth = viewportWidth;
+            _viewportHeight = Height;
             // Create the direction vector and normalize it since it will be used for movement
-            m_direction = Vector3.Zero - m_position;
-            m_direction.Normalize();
+            _direction = Vector3.Zero - _position;
+            _direction.Normalize();
 
             // Create default camera matrices
             View = CreateLookAt();
-            SetViewport(Width, Height);
+            SetViewport(_viewportWidth, _viewportHeight);
         }
 
-        public void SetViewport(float Width, float Height)
+        public void SetViewport(float width, float height)
         {
-            Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver2, Width / Height, 0.01f, 1000);
+            _viewportHeight = height;
+            _viewportWidth = width;
+            Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver2, width / height, _nearClip, _farClip);
+        }
+
+        public void SetFarClip(float farclip)
+        {
+            _farClip = farclip;
+            Projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver2, _viewportWidth / _viewportHeight, _nearClip, _farClip);
         }
 
         /// <summary>
@@ -50,9 +70,9 @@ namespace WoWMapRenderer
         /// <param name="target">The target towards which the camera is pointing.</param>
         public Camera(Vector3 position, Vector3 target)
         {
-            m_position = position;
-            m_direction = target - m_position;
-            m_direction.Normalize();
+            _position = position;
+            _direction = target - _position;
+            _direction.Normalize();
 
             View = CreateLookAt();
             SetViewport(800, 600);
@@ -69,40 +89,34 @@ namespace WoWMapRenderer
 
             // Move camera with WASD keys
             if (keyboard.IsKeyDown(Key.W))
-                // Move forward and backwards by adding m_position and m_direction vectors
-                m_position += m_direction*m_speed;
+                _position += _direction * _speed * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f);
 
             if (keyboard.IsKeyDown(Key.S))
-                m_position -= m_direction*m_speed;
+                _position -= _direction * _speed * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f); ;
 
             if (keyboard.IsKeyDown(Key.A))
-                // Strafe by adding a cross product of m_up and m_direction vectors
-                m_position += Vector3.Cross(m_up, m_direction)*m_speed;
+                _position += Vector3.Cross(_up, _direction) * _speed * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f); ;
 
             if (keyboard.IsKeyDown(Key.D))
-                m_position -= Vector3.Cross(m_up, m_direction)*m_speed;
+                _position -= Vector3.Cross(_up, _direction) * _speed * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f); ;
 
             if (keyboard.IsKeyDown(Key.Space))
-                m_position += m_up*m_speed;
+                _position += _up * _speed * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f); ;
 
-            if (keyboard.IsKeyDown(Key.ControlLeft) || keyboard.IsKeyDown(Key.X))
-                m_position -= m_up*m_speed;
+            if (keyboard.IsKeyDown(Key.X))
+                _position -= _up * _speed * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f); ;
 
 
             if (mouse.IsButtonDown(MouseButton.Left))
             {
-                // Calculate yaw to look around with a mouse
-                m_direction = Vector3.Transform(m_direction,
-                    Matrix4.CreateFromAxisAngle(m_up, -m_mouseSpeedX*(mouse.X - m_prevMouse.X))
-                    );
+                _direction = Vector3.Transform(_direction,
+                    Matrix4.CreateFromAxisAngle(_up,
+                        - _mouseSpeedX * (mouse.X - m_prevMouse.X) * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f)));
 
-                // Pitch is limited to m_pitchLimit
-                float angle = m_mouseSpeedY*(mouse.Y - m_prevMouse.Y);
-                if ((Pitch < m_pitchLimit || angle > 0) && (Pitch > -m_pitchLimit || angle < 0))
+                var angle = _mouseSpeedY * (mouse.Y - m_prevMouse.Y) * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f);
+                if ((Pitch < _pitchLimit || angle > 0) && (Pitch > -_pitchLimit || angle < 0))
                 {
-                    m_direction = Vector3.Transform(m_direction,
-                        Matrix4.CreateFromAxisAngle(Vector3.Cross(m_up, m_direction), angle)
-                        );
+                    _direction = Vector3.Transform(_direction, Matrix4.CreateFromAxisAngle(Vector3.Cross(_up, _direction), angle));
                 }
             }
 
@@ -119,6 +133,8 @@ namespace WoWMapRenderer
             ProcessInput();
 
             View = CreateLookAt();
+            if (OnMovement != null)
+                OnMovement();
         }
 
 
@@ -127,7 +143,7 @@ namespace WoWMapRenderer
         /// </summary>
         protected Matrix4 CreateLookAt()
         {
-            return Matrix4.LookAt(m_position, m_position + m_direction, m_up);
+            return Matrix4.LookAt(_position, _position + _direction, _up);
         }
 
 
@@ -136,7 +152,7 @@ namespace WoWMapRenderer
         /// </summary>
         public Vector3 Position
         {
-            get { return m_position; }
+            get { return _position; }
         }
 
         /// <summary>
@@ -144,7 +160,7 @@ namespace WoWMapRenderer
         /// </summary>
         public double Yaw
         {
-            get { return Math.PI - Math.Atan2(m_direction.X, m_direction.Z); }
+            get { return Math.PI - Math.Atan2(_direction.X, _direction.Z); }
         }
 
         /// <summary>
@@ -152,7 +168,7 @@ namespace WoWMapRenderer
         /// </summary>
         public double Pitch
         {
-            get { return Math.Asin(m_direction.Y); }
+            get { return Math.Asin(_direction.Y); }
         }
 
         /// <summary>

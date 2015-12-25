@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,7 +17,14 @@ namespace WoWMapRenderer
         public int ProgramID;
 
         private Dictionary<string, int> _attribLocations = new Dictionary<string, int>();
-        private Dictionary<string, int> _uniformLocations = new Dictionary<string, int>(); 
+        private Dictionary<string, int> _uniformLocations = new Dictionary<string, int>();
+
+        public void CreateFromFile(string vertexPath, string fragmentPath)
+        {
+            using (var v = new StreamReader(vertexPath))
+            using (var f = new StreamReader(fragmentPath))
+                CreateShader(v.ReadToEnd(), f.ReadToEnd());
+        }
 
         public void CreateShader(string vertex, string fragment)
         {
