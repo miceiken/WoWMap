@@ -288,7 +288,7 @@ namespace SereniaBLPLib
             return bmp;
         }
 
-        public void GetByteBuffer(int mipmapLevel, byte[] picture)
+        public void GetByteBuffer(int mipmapLevel, out byte[] picture)
         {
             if (mipmapLevel >= MipMapCount) mipmapLevel = MipMapCount - 1;
             if (mipmapLevel < 0) mipmapLevel = 0;

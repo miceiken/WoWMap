@@ -22,14 +22,14 @@ namespace WoWMapRenderer
             
         }
 
-        ~FrameBuffer()
+        /*~FrameBuffer()
         {
             if (GL.IsFramebuffer(_frameBufferID))
                 GL.DeleteFramebuffer(_frameBufferID);
             if (GL.IsRenderbuffer(_depthBufferID))
             GL.DeleteRenderbuffer(_depthBufferID);
             _textures.Clear();
-        }
+        }*/
 
         public FrameBuffer(int width, int height)
         {

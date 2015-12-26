@@ -381,9 +381,11 @@ namespace WoWMapRenderer
             {
                 GL.BindVertexArray(renderer.VAO);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
+
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, renderer.TextureId);
                 GL.Uniform1(_shader.GetUniformLocation("sample"), 0);
+
                 GL.DrawElements(PrimitiveType.Triangles, renderer.TriangleCount,
                     DrawElementsType.UnsignedInt, IntPtr.Zero);
             }

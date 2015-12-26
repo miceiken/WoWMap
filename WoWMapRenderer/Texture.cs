@@ -48,8 +48,9 @@ namespace WoWMapRenderer
             {
                 Width = blp.Width;
                 Height = blp.Height;
-                blp.GetByteBuffer(0, BGRA);
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Width, Height, 0, PixelFormat.Bgra, PixelType.UnsignedByte, BGRA);
+                byte[] bgra;
+                blp.GetByteBuffer(0, out bgra);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Width, Height, 0, PixelFormat.Bgra, PixelType.UnsignedByte, bgra);
                 GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, new[] { (int)All.Linear });
                 GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, new[] { (int)All.Nearest });
             }
@@ -65,8 +66,6 @@ namespace WoWMapRenderer
 
         public bool Empty { get; private set; }
 
-        public byte[] BGRA { get; private set; }
-
         public Texture(string filePath)
         {
             using (var blp = new BlpFile(CASC.OpenFile(filePath)))
@@ -79,7 +78,8 @@ namespace WoWMapRenderer
 
                 ID = GL.GenTexture();
 
-                blp.GetByteBuffer(0, BGRA);
+                byte[] BGRA;
+                blp.GetByteBuffer(0, out BGRA);
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, ID);
                 GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Width, Height, 0, PixelFormat.Bgra, PixelType.UnsignedByte, BGRA);
