@@ -24,6 +24,8 @@ namespace WoWMap.Layers
         public bool[,] TileTable { get; private set; }
         public MAIN MAIN { get; private set; }
 
+        public MPHD MPHD { get; private set; }
+
         public bool IsGlobalModel { get; private set; }
         public MWMO MWMO { get; private set; }
         public MODF MODF { get; private set; }
@@ -70,6 +72,9 @@ namespace WoWMap.Layers
 
                     case "MODF":
                         MODF = new MODF(subChunk);
+                        break;
+                    case "MPHD":
+                        MPHD = new MPHD(subChunk);
                         break;
                 }
             }
