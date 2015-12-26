@@ -5,6 +5,7 @@ using System.Linq;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
 using OpenTK;
+using System.Diagnostics;
 
 namespace WoWMap.Layers
 {
@@ -37,12 +38,18 @@ namespace WoWMap.Layers
         public MCNK MCNK { get; private set; }
         public MCVT MCVT { get; private set; }
 
+        public MCAL MCAL { get; private set; }
+
         public MCRD MCRD { get; private set; }
         public MCRW MCRW { get; private set; }
 
         public MCNR MCNR { get; private set; }
 
         public MCCV MCCV { get; private set; }
+
+        public MCSH MCSH { get; private set; }
+
+        public List<MCLY> MCLY = new List<MCLY>(4);
 
         public Vector3[] Vertices { get; private set; }
         public List<Triangle<uint>> Indices { get; private set; }
@@ -95,6 +102,7 @@ namespace WoWMap.Layers
 
         private void Read()
         {
+            var mclyIdx = 0;
             foreach (var subChunk in SubData.Chunks)
             {
                 switch (subChunk.Name)
@@ -113,6 +121,17 @@ namespace WoWMap.Layers
                         break;
                     case "MCCV":
                         MCCV = new MCCV(subChunk);
+                        break;
+                    case "MCSH":
+                        MCSH = new MCSH(subChunk);
+                        break;
+                    case "MCLY":
+                        if (mclyIdx >= 4)
+                            Debug.Assert(false, "More than 4 MCLY chunks found! WTFWTFWTFWTF");
+                        MCLY[mclyIdx++] = new MCLY(subChunk);
+                        break;
+                    case "MCAL":
+                        // MCAL = new MCAL(this, null, subChunk);
                         break;
                 }
             }

@@ -35,6 +35,11 @@ namespace WoWMap.Chunks
             SkyboxReflection = 0x400
         };
 
+        public bool HasFlag(MCLYFlags flags)
+        {
+            return (Flags & flags) != 0;
+        }
+
         public override void Read()
         {
             var br = Chunk.GetReader();

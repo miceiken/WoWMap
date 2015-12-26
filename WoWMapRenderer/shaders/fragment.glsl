@@ -1,13 +1,13 @@
 #version 330
 
-in vec3 vShading; /* color shader */
-in vec2 texCoord; /* texture coordinates */
+in vec3 vertexShading; /* color shader */
+in vec2 fragment_in_texcoord; /* texture coordinates */
 
-uniform sampler2D sampler; /* texture sampler */
+uniform sampler2D texture_sampler;
 
 out vec4 outputColor;
 
 void main()
 {
-    outputColor = texture(sampler, texCoord) * vec4(vShading, 1.0f);
+    outputColor = texture(texture_sampler, fragment_in_texcoord) * vec4(vertexShading, 1.0f);
 }

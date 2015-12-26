@@ -270,23 +270,23 @@ namespace WoWMapRenderer
             var vertexSize = Marshal.SizeOf(typeof(Vertex));
             var verticeSize = vertices.Length * vertexSize;
 
-            GL.BindSampler(renderer.Sampler, _shader.GetUniformLocation("sampler"));
-
             GL.BindBuffer(BufferTarget.ArrayBuffer, renderer.VertexVBO);
             GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(verticeSize),
                 vertices, BufferUsageHint.StaticDraw);
 
-            GL.VertexAttribPointer(_shader.GetAttribLocation("vPosition"), 3,
+            GL.VertexAttribPointer(_shader.GetAttribLocation("vertex_shading"), 3,
+                VertexAttribPointerType.Float, false, vertexSize, IntPtr.Zero);
+            GL.EnableVertexAttribArray(_shader.GetAttribLocation("vertex_shading"));
+
+            GL.BindSampler(renderer.Sampler, _shader.GetUniformLocation("texture_sampler"));
+
+            GL.VertexAttribPointer(_shader.GetAttribLocation("vertice_position"), 3,
                 VertexAttribPointerType.Float, false, vertexSize, sizeof(float) * 3);
-            GL.EnableVertexAttribArray(_shader.GetAttribLocation("vPosition"));
+            GL.EnableVertexAttribArray(_shader.GetAttribLocation("vertice_position"));
 
             GL.VertexAttribPointer(_shader.GetAttribLocation("in_TexCoord0"), 2,
                 VertexAttribPointerType.Float, false, vertexSize, (IntPtr)(sizeof(float) * 6));
             GL.EnableVertexAttribArray(_shader.GetAttribLocation("in_TexCoord0"));
-
-            GL.VertexAttribPointer(_shader.GetAttribLocation("vertexShading"), 3, VertexAttribPointerType.Float,
-                false, vertexSize, IntPtr.Zero);
-            GL.EnableVertexAttribArray(_shader.GetAttribLocation("vertexShading"));
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
             GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(indices.Length * sizeof(uint)),
@@ -388,7 +388,7 @@ namespace WoWMapRenderer
 
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, renderer.TextureId);
-                GL.Uniform1(_shader.GetUniformLocation("sampler"), 0);
+                GL.Uniform1(_shader.GetUniformLocation("texture_sampler"), 0);
 
                 GL.DrawElements(PrimitiveType.Triangles, renderer.TriangleCount,
                     DrawElementsType.UnsignedInt, IntPtr.Zero);

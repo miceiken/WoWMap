@@ -49,14 +49,22 @@ namespace WoWMap.Chunks
         [Flags]
         public enum MCNKFlags : uint
         {
-            MCSH,
-            Impass,
-            LiquidRiver,
-            LiquidOcean,
-            LiquidMagma,
-            MCCV,
+            MCSH                = 0x1,
+            Impass              = 0x2,
+            LiquidRiver         = 0x4,
+            LiquidOcean         = 0x8,
+            LiquidMagma         = 0x10,
+            LiquidSlime         = 0x20,
+            MCCV                = 0x40,
+            Unk                 = 0x80,
+            DoNotFixAlphaMap    = 0x8000,
             HighResolutionHoles = 0x10000
         };
+
+        public bool HasFlag(MCNKFlags flag)
+        {
+            return (flag & Flags) != 0;
+        }
 
         public override void Read()
         {
@@ -80,7 +88,7 @@ namespace WoWMap.Chunks
             Holes = br.ReadUInt16();
             HolesAlign = br.ReadUInt16();
             ReallyLowQualityTextureingMap = new ushort[8];
-            for (int i = 0; i < 8; i++)
+            for (var i = 0; i < 8; i++)
                 ReallyLowQualityTextureingMap[i] = br.ReadUInt16();
             predTex = br.ReadUInt32();
             nEffectDoodad = br.ReadUInt32();
