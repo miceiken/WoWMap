@@ -18,4 +18,8 @@ Feel free to contribute.
  - relaxok
  - Cromon
  - schlumpf
+ - Deamon87
+ - miceiken
+ - Warpten
+ - Subv
 
