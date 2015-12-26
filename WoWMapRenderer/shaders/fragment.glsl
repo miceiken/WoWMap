@@ -1,11 +1,13 @@
 #version 330
 
-out vec4 outputColor;
-in vec2 texCoord; // texture coordinates
-uniform sampler2D sample; // texture sampler
+in vec3 vShading; /* color shader */
+in vec2 texCoord; /* texture coordinates */
 
-// Remember all code paths are always executed by GPU
+uniform sampler2D sampler; /* texture sampler */
+
+out vec4 outputColor;
+
 void main()
 {
-    outputColor = texture(sample, texCoord);
+    outputColor = texture(sampler, texCoord) * vec4(vShading, 1.0f);
 }

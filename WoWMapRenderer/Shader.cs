@@ -35,12 +35,14 @@ namespace WoWMapRenderer
             GL.CompileShader(VertexID);
             GL.AttachShader(ProgramID, VertexID);
             var vertexErr = GL.GetShaderInfoLog(VertexID);
+            Debug.Assert(vertexErr == "No errors.\n", vertexErr);
 
             FragmentID = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(FragmentID, fragment);
             GL.CompileShader(FragmentID);
             GL.AttachShader(ProgramID, FragmentID);
             var fragmentErr = GL.GetShaderInfoLog(FragmentID);
+            Debug.Assert(fragmentErr == "No errors.\n", fragmentErr);
             
             GL.LinkProgram(ProgramID);
         }

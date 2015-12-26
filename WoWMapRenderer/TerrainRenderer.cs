@@ -270,7 +270,7 @@ namespace WoWMapRenderer
             var vertexSize = Marshal.SizeOf(typeof(Vertex));
             var verticeSize = vertices.Length * vertexSize;
 
-            GL.BindSampler(renderer.Sampler, _shader.GetUniformLocation("sample"));
+            GL.BindSampler(renderer.Sampler, _shader.GetUniformLocation("sampler"));
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, renderer.VertexVBO);
             GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(verticeSize),
@@ -283,6 +283,10 @@ namespace WoWMapRenderer
             GL.VertexAttribPointer(_shader.GetAttribLocation("in_TexCoord0"), 2,
                 VertexAttribPointerType.Float, false, vertexSize, (IntPtr)(sizeof(float) * 6));
             GL.EnableVertexAttribArray(_shader.GetAttribLocation("in_TexCoord0"));
+
+            GL.VertexAttribPointer(_shader.GetAttribLocation("vertexShading"), 3, VertexAttribPointerType.Float,
+                false, vertexSize, IntPtr.Zero);
+            GL.EnableVertexAttribArray(_shader.GetAttribLocation("vertexShading"));
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
             GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(indices.Length * sizeof(uint)),
@@ -384,7 +388,7 @@ namespace WoWMapRenderer
 
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, renderer.TextureId);
-                GL.Uniform1(_shader.GetUniformLocation("sample"), 0);
+                GL.Uniform1(_shader.GetUniformLocation("sampler"), 0);
 
                 GL.DrawElements(PrimitiveType.Triangles, renderer.TriangleCount,
                     DrawElementsType.UnsignedInt, IntPtr.Zero);
