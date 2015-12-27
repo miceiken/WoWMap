@@ -9,7 +9,7 @@ using WoWMap.Readers;
 
 namespace WoWMap.Chunks
 {
-    class MCAL: ChunkReader
+    public class MCAL : ChunkReader
     {
         public MCAL(MapChunk chunk, WDT wdt, Chunk c) : base(c)
         {

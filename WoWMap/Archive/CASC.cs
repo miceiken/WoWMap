@@ -11,7 +11,7 @@ namespace WoWMap.Archive
 {
     public static class CASC
     {
-        public static void Initialize(string path, LocaleFlags locale, AsyncAction worker = null)
+        public static void Initialize(string path, LocaleFlags locale, BackgroundWorkerEx worker = null)
         {
             Locale = locale;
             Handler = CASCHandler.OpenLocalStorage(path, worker);
@@ -20,21 +20,21 @@ namespace WoWMap.Archive
             Initialized = true;
         }
 
-        public static void InitializeOnline(LocaleFlags locale, AsyncAction worker = null)
+        public static void InitializeOnline(LocaleFlags locale, BackgroundWorkerEx worker = null)
         {
             Locale = locale;
-            Handler = CASCHandler.OpenOnlineStorage("wow", worker);
+            Handler = CASCHandler.OpenOnlineStorage("wow", worker: worker);
             Handler.Root.SetFlags(locale, ContentFlags.None, false);
 
             Initialized = true;
         }
 
-        public static void InitializeOnline(AsyncAction worker = null)
+        public static void InitializeOnline(BackgroundWorkerEx worker = null)
         {
             InitializeOnline(LocaleFlags.enUS, worker);
         }
 
-        public static void Initialize(string path, AsyncAction worker = null)
+        public static void Initialize(string path, BackgroundWorkerEx worker = null)
         {
             Initialize(path, LocaleFlags.enUS, worker);
         }

@@ -52,9 +52,11 @@
     <Compile Include="Builders\ContinentBuilder.cs" />
     <Compile Include="Builders\DungeonBuilder.cs" />
     <Compile Include="Builders\TileBuilder.cs" />
+    <Compile Include="Chunks\MCAL.cs" />
     <Compile Include="Chunks\MCCV.cs" />
     <Compile Include="Chunks\MCRD.cs" />
     <Compile Include="Chunks\MCRW.cs" />
+    <Compile Include="Chunks\MCSH.cs" />
     <Compile Include="Chunks\MD20.cs" />
     <Compile Include="Chunks\MLIQ.cs" />
     <Compile Include="Chunks\MODD.cs" />
