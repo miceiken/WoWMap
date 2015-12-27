@@ -1,21 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using WoWMap.Layers;
 using WoWMap.Readers;
 
 namespace WoWMap.Chunks
 {
-    public class MCAL : ChunkReader
+    public sealed class MCAL: ChunkReader
     {
-        public MCAL(MapChunk chunk, WDT wdt, Chunk c) : base(c)
+        public MCAL(MapChunk chunk, WDT wdt, Chunk c) : base(c, false)
         {
             Debug.Assert(wdt != null, "WDT Cannot be null in order to read MCAL!");
             _mapChunk = chunk;
             _wdt = wdt;
+
+            Read();
         }
 
         private MapChunk _mapChunk;
@@ -26,9 +23,9 @@ namespace WoWMap.Chunks
 
         private byte[][] alphaTextures;
 
-        public byte[] this[int layerIndex]
+        public byte[] GetAlpha(int alphaTextureIndex)
         {
-            get { return alphaTextures[Math.Min(_mapChunk.MCLY.Count, Math.Max(0, layerIndex))]; }
+            return alphaTextures[alphaTextureIndex];
         }
 
         public override void Read()
@@ -36,15 +33,17 @@ namespace WoWMap.Chunks
             var br = Chunk.GetReader();
             var chunkData = br.ReadBytes((int)Chunk.Size);
 
-            alphaTextures = new byte[_mapChunk.MCLY.Count][];
+            alphaTextures = new byte[_mapChunk.MCLY.Length][]; 
 
-            for (var i = 0; i < _mapChunk.MCLY.Count; ++i)
+            for (var i = 0; i < _mapChunk.MCLY.Length; ++i)
             {
-                alphaTextures[i] = new byte[64 * 64 * 4]; // TODO wat * 4
+                if (_mapChunk.MCLY[i] == null)
+                    continue;
+
                 var layerRead = 0;
                 var alphaOffset = _mapChunk.MCLY[i].ofsMCAL;
+                alphaTextures[i] = new byte[64 * 64];
                 var outputOffset = 64 * i;
-                var readCount = 0;
 
                 if (_mapChunk.MCLY[i].HasFlag(MCLY.MCLYFlags.CompressedAlphaMap))
                 {
@@ -60,15 +59,7 @@ namespace WoWMap.Chunks
                                 break;
 
                             alphaTextures[i][outputOffset++] = chunkData[alphaOffset];
-                            ++readCount;
                             ++layerRead;
-
-                            if (readCount >= 64)
-                            {
-                                outputOffset += 64 * 3;
-                                readCount = 0;
-                                ++layerRead;
-                            }
 
                             if (!doFill)
                                 ++alphaOffset;
@@ -85,12 +76,7 @@ namespace WoWMap.Chunks
                         {
                             alphaTextures[i][outputOffset] = chunkData[alphaOffset];
 
-                            ++outputOffset; ++readCount; ++layerRead; ++alphaOffset;
-                            if (readCount < 64)
-                                continue;
-
-                            outputOffset += 64 * 3;
-                            readCount = 0;
+                            ++outputOffset; ++layerRead; ++alphaOffset;
                         }
                     }
                 }
@@ -98,18 +84,12 @@ namespace WoWMap.Chunks
                 {
                     for (var x = 0; x < 64; ++x)
                     {
-                        for (var y = 0; y < 64; ++y)
+                        for (var y = 0; y < 32; ++y)
                         {
                             alphaTextures[i][outputOffset++] = (byte)(((chunkData[alphaOffset] & 0xf0) >> 4) * 17);
-                            alphaTextures[i][outputOffset++] = (byte)((chunkData[alphaOffset] & 0x0f) * 17);
+                            alphaTextures[i][outputOffset++] = (byte)((chunkData[alphaOffset++] & 0x0f) * 17);
 
-                            readCount += 2; layerRead += 2;
-                            ++alphaOffset;
-                            if (readCount != 64)
-                                continue;
-
-                            outputOffset += 63 * 3;
-                            readCount = 0;
+                            layerRead += 2;
                         }
                     }
                 }

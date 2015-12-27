@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ using WoWMap.Archive;
 
 namespace WoWMapRenderer
 {
-    class Texture
+    public class Texture
     {
         public Texture(int width, int height, PixelInternalFormat internalFormat, PixelFormat format, bool empty = true)
         {
@@ -35,7 +36,8 @@ namespace WoWMapRenderer
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
-        public bool Load(string fileName)
+        // WARNING UNUSED NOT WORKING
+        /* public bool Load(string fileName)
         {
             if (GL.IsTexture(ID))
                 GL.DeleteTexture(ID);
@@ -55,10 +57,10 @@ namespace WoWMapRenderer
                 GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, new[] { (int)All.Nearest });
             }
             return true;
-        }
+        }*/
 
         public int ID { get; private set; }
-
+        public string Filename { get; private set; }
         public PixelFormat Format { get; private set; }
         public PixelInternalFormat InternalFormat { get; private set; }
         public int Width { get; private set; }
@@ -66,8 +68,13 @@ namespace WoWMapRenderer
 
         public bool Empty { get; private set; }
 
+        public byte[] OriginalData { get; private set; }
+        public byte[] BGRA { get; private set; }
+
         public Texture(string filePath)
         {
+            Filename = filePath;
+
             using (var blp = new BlpFile(CASC.OpenFile(filePath)))
             {
                 if (GL.IsTexture(ID))
@@ -77,16 +84,56 @@ namespace WoWMapRenderer
                 Height = blp.Height;
 
                 ID = GL.GenTexture();
+                byte[] bgra;
+                blp.GetByteBuffer(0, out bgra);
+                OriginalData = bgra;
+                Empty = false;
 
-                byte[] BGRA;
-                blp.GetByteBuffer(0, out BGRA);
-                GL.ActiveTexture(TextureUnit.Texture0);
-                GL.BindTexture(TextureTarget.Texture2D, ID);
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Width, Height, 0, PixelFormat.Bgra, PixelType.UnsignedByte, BGRA);
-                GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, new[] { (int)All.Linear });
-                GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, new[] { (int)All.Nearest });
-                GL.BindTexture(TextureTarget.Texture2D, 0);
+                Format = PixelFormat.Bgra;
+                InternalFormat = PixelInternalFormat.Rgba;
             }
+        }
+
+        public void MergeAlphaMap(byte[] alphaMap)
+        {
+            // TODO: According to Wiki, alpha textures upscale via cubic interpolation. This is just expanding pixels size by 4.
+            Debug.Assert(alphaMap.Length == 64 * 64, "Invalid alpha map length!");
+            var pos = 4u;
+            BGRA = OriginalData;
+            for (var i = 0; i < 64 * 64; ++i)
+            {
+                BGRA[pos] = alphaMap[i];
+                BGRA[pos + 4] = alphaMap[i];
+                BGRA[pos + 8] = alphaMap[i];
+                BGRA[pos + 12] = alphaMap[i];
+                pos += 16;
+            }
+        }
+
+        public void Delete()
+        {
+            if (GL.IsTexture(ID))
+                GL.DeleteTexture(ID);
+        }
+
+        public void BindToUnit(TextureUnit unit)
+        {
+            GL.ActiveTexture(unit);
+            GL.BindTexture(TextureTarget.Texture2D, ID);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, Width, Height, 0, Format, PixelType.UnsignedByte, BGRA);
+            GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, new[] { (int)All.Linear });
+            GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, new[] { (int)All.Nearest });
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
+        public Texture(byte[] data, int width, int height)
+        {
+            OriginalData = data;
+            Format = PixelFormat.Alpha;
+            InternalFormat = PixelInternalFormat.Alpha;
+            Width = width;
+            Height = height;
+            Empty = false;
         }
     }
 }

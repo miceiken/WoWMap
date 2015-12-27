@@ -32,7 +32,7 @@ namespace WoWMap.Chunks
         public uint nMapObjRefs;                                    // 0x038
         public ushort Holes;                                        // 0x03C
         public ushort HolesAlign;                                   // 0x03E
-        public ushort[] ReallyLowQualityTextureingMap;              // 0x040 -- all hail Schlumpf, jk, who the hell even knows what a uint2 is
+        public ushort[] ReallyLowQualityTextureingMap;              // 0x040 -- all hail Schlumpf, jk, who the hell even knows what a uint2 is -- i do
         public uint predTex;                                        // 0x050
         public uint nEffectDoodad;                                  // 0x054
         public uint ofsMCSE;                                        // 0x058

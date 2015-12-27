@@ -9,16 +9,17 @@ namespace WoWMap.Readers
 {
     public abstract class ChunkReader
     {        
-        public ChunkReader(Chunk chunk, uint headerSize)
+        public ChunkReader(Chunk chunk, uint headerSize, bool read = true)
         {
             Chunk = chunk;
             HeaderSize = headerSize;
 
-            Read();
+            if (read)
+                Read();
         }
 
-        public ChunkReader(Chunk chunk)
-            : this(chunk, chunk.Size)
+        public ChunkReader(Chunk chunk, bool read = true)
+            : this(chunk, chunk.Size, read)
         { }
 
         public Chunk Chunk { get; private set; }

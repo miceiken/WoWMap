@@ -12,13 +12,14 @@ namespace WoWMap.Layers
 
         public ADTType Type { get; private set; }
 
+        public WDT WDT { get; private set; }
         public string World { get; private set; }
         public int X { get; private set; }
         public int Y { get; private set; }
 
         public Vector3 TilePosition { get { return new Vector3((32 - X) * Constants.TileSize, (32 - Y) * Constants.TileSize, 0); } }
 
-        private ADT(string filename, ADTType type)
+        private ADT(string filename, ADTType type, WDT wdt = null)
         {
             switch (type)
             {
@@ -27,14 +28,17 @@ namespace WoWMap.Layers
                 case ADTType.Textures: filename += "_tex0.adt"; break;
             }
 
+            WDT = wdt;
+
             Filename = filename;
             Data = new ChunkData(filename);
             Type = type;
         }
 
-        public ADT(string world, int x, int y, ADTType type = ADTType.Normal)
+        public ADT(string world, int x, int y, ADTType type = ADTType.Normal, WDT wdt = null)
             : this(string.Format(@"World\Maps\{0}\{0}_{1}_{2}", world, x, y), type)
         {
+            WDT = wdt;
             World = world;
             X = x;
             Y = y;
@@ -64,10 +68,13 @@ namespace WoWMap.Layers
         {
             if (Type == ADTType.Normal)
             {
-                Objects = new ADT(World, X, Y, ADTType.Objects);
+                if (WDT == null)
+                    WDT = new WDT(string.Format(@"World\Maps\{0}\{0}.wdt", World));
+
+                Objects = new ADT(World, X, Y, ADTType.Objects, WDT);
                 Objects.Read();
 
-                Textures = new ADT(World, X, Y, ADTType.Textures);
+                Textures = new ADT(World, X, Y, ADTType.Textures, WDT);
                 Textures.Read();
             }
 

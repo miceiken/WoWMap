@@ -14,6 +14,7 @@ namespace WoWMap.Layers
         public MapChunk(ADT adt, Chunk chunk, bool isObj0 = false)
         {
             ADT = adt;
+            WDT = adt.WDT;
             Chunk = chunk;
 
             var stream = chunk.GetStream();
@@ -30,6 +31,8 @@ namespace WoWMap.Layers
 
             Read();
         }
+
+        public WDT WDT { get; private set; }
 
         public ADT ADT { get; private set; }
         public Chunk Chunk { get; private set; }
@@ -49,7 +52,7 @@ namespace WoWMap.Layers
 
         public MCSH MCSH { get; private set; }
 
-        public List<MCLY> MCLY = new List<MCLY>(4);
+        public MCLY[] MCLY { get; private set; }
 
         public Vector3[] Vertices { get; private set; }
         public List<Triangle<uint>> Indices { get; private set; }
@@ -103,6 +106,7 @@ namespace WoWMap.Layers
         private void Read()
         {
             var mclyIdx = 0;
+            MCLY = new MCLY[4];
             foreach (var subChunk in SubData.Chunks)
             {
                 switch (subChunk.Name)
@@ -131,7 +135,8 @@ namespace WoWMap.Layers
                         MCLY[mclyIdx++] = new MCLY(subChunk);
                         break;
                     case "MCAL":
-                        // MCAL = new MCAL(this, null, subChunk);
+                        if (WDT != null)
+                            MCAL = new MCAL(this, WDT, subChunk);
                         break;
                 }
             }

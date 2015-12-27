@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using OpenTK.Graphics.OpenGL;
 
 namespace WoWMapRenderer
@@ -8,6 +9,11 @@ namespace WoWMapRenderer
     class FrameBuffer
     {
         private Dictionary<int, Texture>  _textures = new Dictionary<int, Texture>();
+
+        public Dictionary<int, Texture> Store
+        {
+            get { return _textures; }
+        }
 
         private int _depthBufferID = 0;
         private int _frameBufferID = 0;
@@ -90,6 +96,11 @@ namespace WoWMapRenderer
         public Texture this[int key]
         {
             get { return _textures[key]; }
+        }
+
+        public Texture this[string filename]
+        {
+            get { return _textures.FirstOrDefault(kv => kv.Value.Filename == filename).Value; }
         }
     }
 }

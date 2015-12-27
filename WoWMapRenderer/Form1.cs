@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using CASCExplorer;
 using WoWMap.Archive;
-using OpenTK;
+using WoWMapRenderer.Renderers;
 
 namespace WoWMapRenderer
 {
@@ -127,22 +128,18 @@ namespace WoWMapRenderer
         }
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct Vertex
+    /*internal struct MapChunkRenderer
     {
-        public Vector3 Color;
-        public Vector3 Position;
-        public Vector2 TextureCoordinates;
-    }
-
-    internal struct Renderer
-    {
-        public int TileHash;
         public int IndiceVBO;
         public int VertexVBO;
         public int VAO;
-        public int Sampler;
+        public int TextureSampler0;
+        public int TextureSampler1;
+        public int TextureSampler2;
+        public int TextureSampler3;
+        public int AlphaSampler;
+        public int[] TextureIDs;
         public int TriangleCount;
-        public int TextureId;
-    }
+        public Texture AlphaTexture;
+    }*/
 }

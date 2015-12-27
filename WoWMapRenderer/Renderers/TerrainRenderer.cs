@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -8,10 +9,12 @@ using CASCExplorer;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using WoWMap;
+using WoWMap.Chunks;
 using WoWMap.Layers;
 
-namespace WoWMapRenderer
+namespace WoWMapRenderer.Renderers
 {
+    [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Local")]
     class TerrainRenderer
     {
         private GLControl _control;
@@ -19,7 +22,7 @@ namespace WoWMapRenderer
         private WDT _wdt;
 
         private Dictionary<int, ADT> _mapTiles = new Dictionary<int, ADT>();
-        private Dictionary<int, Renderer> _batchRenderers = new Dictionary<int, Renderer>(9 * 3);
+        private Dictionary<int, TileRenderer> _batchRenderers = new Dictionary<int, TileRenderer>(9 * 3);
         private Dictionary<int, bool> _loadedTiles = new Dictionary<int, bool>();
         private FrameBuffer _textureCache;
 
@@ -63,12 +66,15 @@ namespace WoWMapRenderer
         /// <returns></returns>
         private Vector3 ProjectCoordinates(float x, float y)
         {
+            // Translate click coord to 3D.
+            // Fire a ray from there and detect hits
+            // Not sure OpenTK has an easy way to do this ...
             return Vector3.One;
         }
 
         private void OnRightClick(Vector3 terrainCoordinates)
         {
-            
+            // 3D space coordinates passed as parameter
         }
 
         public void LoadMap(string mapName)
@@ -154,9 +160,9 @@ namespace WoWMapRenderer
 
             var keysToKeep = new List<int>(9);
 
-            for (var i = 0; i < 3; ++i)
+            for (var i = 0; i < 1; ++i)
             {
-                for (var j = 0; j < 3; ++j)
+                for (var j = 0; j < 1; ++j)
                 {
                     var tileX = (int)(_currentCenteredTile.X - 1 + i);
                     var tileY = (int)(_currentCenteredTile.Y - 1 + j);
@@ -170,12 +176,10 @@ namespace WoWMapRenderer
                 }
             }
 
-            while (_loadedTiles.Count != 9)
+            while (_loadedTiles.Count != 1)
             {
                 var key = _loadedTiles.First(tile => !keysToKeep.Contains(tile.Key)).Key;
-                GL.DeleteVertexArray(_batchRenderers[key].VAO);
-                GL.DeleteBuffer(_batchRenderers[key].IndiceVBO);
-                GL.DeleteBuffer(_batchRenderers[key].VertexVBO);
+                _batchRenderers[key].Delete();
                 _batchRenderers.Remove(key);
                 _loadedTiles.Remove(key);
             }
@@ -186,14 +190,15 @@ namespace WoWMapRenderer
             var tileToLoadKey = (tileX << 8) | tileY;
             _mapTiles[tileToLoadKey].Read();
 
-            var textureDict = new Dictionary<int, int>();
             foreach (var t in _mapTiles[tileToLoadKey].Textures.MTEX.Filenames)
-                textureDict[(int)t.Key] = _textureCache.AddTexture((int)t.Key, t.Value);
+                _textureCache.AddTexture((int)t.Key, t.Value);
 
             _loadedTiles[tileToLoadKey] = true;
 
             var verticeList = new List<Vertex>(145);
             var indiceList = new List<uint>();
+
+            var tileRenderer = new TileRenderer();
 
             foreach (var adtChunk in _mapTiles[tileToLoadKey].MapChunks)
             {
@@ -248,51 +253,69 @@ namespace WoWMapRenderer
                     }
                 }
                 #endregion
-            }
 
-            BindIndexedVertex(tileToLoadKey, verticeList.ToArray(), indiceList.ToArray(), textureDict[0]);
+                tileRenderer.AddMapChunk(BindIndexedVertex(adtChunk, _mapTiles[tileToLoadKey].Textures.MTEX, 
+                    verticeList.ToArray(), indiceList.ToArray()));
+            }
+            _batchRenderers[tileToLoadKey] = tileRenderer;
+
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
         }
 
-        private void BindIndexedVertex(int tileHash, Vertex[] vertices, uint[] indices, int textureId = 0)
+        private MapChunkRenderer BindIndexedVertex(MapChunk adtChunk, MTEX mtex, Vertex[] vertices, uint[] indices)
         {
-            var renderer = new Renderer
+            var renderer = new MapChunkRenderer { TriangleCount = indices.Length / 3 };
+
+            for (var i = 0; i < adtChunk.MCLY.Length; ++i)
             {
-                IndiceVBO = GL.GenBuffer(),
-                VertexVBO = GL.GenBuffer(),
-                Sampler = GL.GenSampler(),
-                VAO = GL.GenVertexArray(),
-                TriangleCount = indices.Length,
-                TextureId = textureId
-            };
+                if (adtChunk.MCLY[i] == null || adtChunk.MCAL == null)
+                    continue;
+
+                var texture = _textureCache[mtex.Filenames[adtChunk.MCLY[i].TextureId]];
+                texture.MergeAlphaMap(adtChunk.MCAL.GetAlpha(i));
+                renderer.AddTexture(texture);
+            }
 
             GL.BindVertexArray(renderer.VAO);
 
             var vertexSize = Marshal.SizeOf(typeof(Vertex));
             var verticeSize = vertices.Length * vertexSize;
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, renderer.VertexVBO);
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(verticeSize),
-                vertices, BufferUsageHint.StaticDraw);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, renderer.VerticeVBO);
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(verticeSize), vertices, BufferUsageHint.StaticDraw);
+            
+            VertexAttribPointer(_shader.GetAttribLocation("vertex_shading"), 3,
+                VertexAttribPointerType.Float, vertexSize, IntPtr.Zero);
 
-            GL.VertexAttribPointer(_shader.GetAttribLocation("vertex_shading"), 3,
-                VertexAttribPointerType.Float, false, vertexSize, IntPtr.Zero);
-            GL.EnableVertexAttribArray(_shader.GetAttribLocation("vertex_shading"));
+            // GL.BindSampler(renderer.TextureSampler0, _shader.GetUniformLocation("texture_sampler0"));
+            // GL.BindSampler(renderer.TextureSampler1, _shader.GetUniformLocation("texture_sampler1"));
+            // GL.BindSampler(renderer.TextureSampler2, _shader.GetUniformLocation("texture_sampler2"));
+            // GL.BindSampler(renderer.TextureSampler3, _shader.GetUniformLocation("texture_sampler3"));
 
-            GL.BindSampler(renderer.Sampler, _shader.GetUniformLocation("texture_sampler"));
+            VertexAttribPointer(_shader.GetAttribLocation("vertice_position"), 3,
+                VertexAttribPointerType.Float, vertexSize, sizeof(float) * 3);
 
-            GL.VertexAttribPointer(_shader.GetAttribLocation("vertice_position"), 3,
-                VertexAttribPointerType.Float, false, vertexSize, sizeof(float) * 3);
-            GL.EnableVertexAttribArray(_shader.GetAttribLocation("vertice_position"));
-
-            GL.VertexAttribPointer(_shader.GetAttribLocation("in_TexCoord0"), 2,
-                VertexAttribPointerType.Float, false, vertexSize, (IntPtr)(sizeof(float) * 6));
-            GL.EnableVertexAttribArray(_shader.GetAttribLocation("in_TexCoord0"));
+            VertexAttribPointer(_shader.GetAttribLocation("in_TexCoord0"), 2,
+                VertexAttribPointerType.Float, vertexSize, (IntPtr)(sizeof(float) * 6));
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
             GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(indices.Length * sizeof(uint)),
                 indices, BufferUsageHint.StaticDraw);
 
-            _batchRenderers.Add(tileHash, renderer);
+            return renderer;
+        }
+
+        private void VertexAttribPointer(int location, int size, VertexAttribPointerType type, int stride, IntPtr offset)
+        {
+            GL.VertexAttribPointer(location, size, type, false, stride, offset);
+            GL.EnableVertexAttribArray(location);
+        }
+
+        private void VertexAttribPointer(int location, int size, VertexAttribPointerType type, int stride, int offset)
+        {
+            GL.VertexAttribPointer(location, size, type, false, stride, offset);
+            GL.EnableVertexAttribArray(location);
         }
 
         /// <summary>
@@ -383,17 +406,55 @@ namespace WoWMapRenderer
 
             foreach (var renderer in _batchRenderers.Values)
             {
-                GL.BindVertexArray(renderer.VAO);
+                renderer.Render();
+                /*GL.BindVertexArray(renderer.VAO);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
 
-                GL.ActiveTexture(TextureUnit.Texture0);
-                GL.BindTexture(TextureTarget.Texture2D, renderer.TextureId);
-                GL.Uniform1(_shader.GetUniformLocation("texture_sampler"), 0);
+                if (renderer.TextureIDs[0] != -1)
+                {
+                    _textureCache[renderer.TextureIDs[0]].BindToUnit(TextureUnit.Texture0);
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                    GL.BindTexture(TextureTarget.Texture2D, renderer.TextureSampler0);
+                    GL.Uniform1(_shader.GetUniformLocation("texture_sampler0"), 0);
+                }
+
+                if (renderer.TextureIDs[1] != -1)
+                {
+                    _textureCache[renderer.TextureIDs[1]].BindToUnit(TextureUnit.Texture1);
+                    GL.ActiveTexture(TextureUnit.Texture1);
+                    GL.BindTexture(TextureTarget.Texture2D, renderer.TextureSampler1);
+                    GL.Uniform1(_shader.GetUniformLocation("texture_sampler1"), 1);
+                }
+
+                if (renderer.TextureIDs[2] != -1)
+                {
+                    _textureCache[renderer.TextureIDs[2]].BindToUnit(TextureUnit.Texture2);
+                    GL.ActiveTexture(TextureUnit.Texture2);
+                    GL.BindTexture(TextureTarget.Texture2D, renderer.TextureSampler2);
+                    GL.Uniform1(_shader.GetUniformLocation("texture_sampler2"), 2);
+                }
+
+                if (renderer.TextureIDs[3] != -1)
+                {
+                    _textureCache[renderer.TextureIDs[4]].BindToUnit(TextureUnit.Texture3);
+                    GL.ActiveTexture(TextureUnit.Texture3);
+                    GL.BindTexture(TextureTarget.Texture2D, renderer.TextureSampler3);
+                    GL.Uniform1(_shader.GetUniformLocation("texture_sampler2"), 3);
+                }
+
+                if (renderer.AlphaTexture != null)
+                {
+                    renderer.AlphaTexture.BindToUnit(TextureUnit.Texture4);
+                    GL.ActiveTexture(TextureUnit.Texture4);
+                    GL.BindTexture(TextureTarget.Texture2D, renderer.AlphaSampler);
+                    GL.Uniform1(_shader.GetUniformLocation("alpha_sampler"), 4);
+                }
 
                 GL.DrawElements(PrimitiveType.Triangles, renderer.TriangleCount,
-                    DrawElementsType.UnsignedInt, IntPtr.Zero);
+                    DrawElementsType.UnsignedInt, IntPtr.Zero);*/
             }
 
+            GL.BindTexture(TextureTarget.Texture2D, 0);
             GL.BindVertexArray(0);
 
             _control.SwapBuffers();
