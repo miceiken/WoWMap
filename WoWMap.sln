@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WoWMapBuilder", "WoWMapBuil
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WoWMapRenderer", "WoWMapRenderer\WoWMapRenderer.csproj", "{3D3B0623-A8E6-4041-98AC-EF655D553B6B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CascLib", "CASCExplorer\CascLib\CascLib.csproj", "{E08E1E48-6585-4137-8405-661C62C10713}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,22 @@ Global
 		{3D3B0623-A8E6-4041-98AC-EF655D553B6B}.Unity3D|Any CPU.Build.0 = Release|Any CPU
 		{3D3B0623-A8E6-4041-98AC-EF655D553B6B}.XNA|Any CPU.ActiveCfg = Release|Any CPU
 		{3D3B0623-A8E6-4041-98AC-EF655D553B6B}.XNA|Any CPU.Build.0 = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.MonoGame|Any CPU.ActiveCfg = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.MonoGame|Any CPU.Build.0 = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.OpenTK|Any CPU.ActiveCfg = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.OpenTK|Any CPU.Build.0 = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.SharpDX|Any CPU.ActiveCfg = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.SharpDX|Any CPU.Build.0 = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.Standalone|Any CPU.ActiveCfg = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.Standalone|Any CPU.Build.0 = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.Unity3D|Any CPU.ActiveCfg = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.Unity3D|Any CPU.Build.0 = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.XNA|Any CPU.ActiveCfg = Release|Any CPU
+		{E08E1E48-6585-4137-8405-661C62C10713}.XNA|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
