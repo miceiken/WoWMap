@@ -59,10 +59,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CASCExplorer\CascLib\CascLib.csproj">
-      <Project>{e08e1e48-6585-4137-8405-661c62c10713}</Project>
-      <Name>CascLib</Name>
-    </ProjectReference>
     <ProjectReference Include="..\WoWMap\WoWMap.csproj">
       <Project>{13e48410-4d2d-4196-b013-0e84a5652e83}</Project>
       <Name>WoWMap</Name>
