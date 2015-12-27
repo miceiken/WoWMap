@@ -29,7 +29,7 @@ namespace WoWMapRenderer.Renderers
         private Camera _camera;
         private Shader _shader;
 
-        private BackgroundWorkerEx _loader;
+        private AsyncAction _loader;
 
         private Vector2 _currentCenteredTile = Vector2.Zero;
 
