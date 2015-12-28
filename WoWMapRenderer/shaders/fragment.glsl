@@ -61,13 +61,13 @@ out vec4 outputColor;
 
 void main()
 {
-	/*vec4 tex0 = texture(texture_sampler0, texcoord);
+	vec4 tex0 = texture(texture_sampler0, texcoord);
 	vec4 tex1 = texture(texture_sampler1, texcoord);
 	vec4 tex2 = texture(texture_sampler2, texcoord);
 	vec4 tex3 = texture(texture_sampler3, texcoord);
 
-	if (tex0 == vec4(0.0, 0.0, 0.0, 0.0))*/
+	if (tex0 == vec4(0.0, 0.0, 0.0, 0.0))
 		outputColor = vec4(1.0, 0.0, 0.0, 1.0);
-	/*else
-		outputColor = tex0 * tex1 * tex2 * tex3 * vec4(vshading, 1.0f);*/
+	else
+		outputColor = tex0 * tex1 * tex2 * tex3 * vec4(vshading, 1.0f);
 }

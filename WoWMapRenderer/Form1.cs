@@ -10,8 +10,8 @@ namespace WoWMapRenderer
 {
     public partial class Form1 : Form
     {
-        private AsyncAction _cascAction;
-        private AsyncAction _mapAction;
+        private BackgroundWorkerEx _cascAction;
+        private BackgroundWorkerEx _mapAction;
 
         private DBC<MapRecord> _mapRecords;
 
@@ -30,55 +30,59 @@ namespace WoWMapRenderer
             };
         }
 
-        private void OnLoad(object sender, EventArgs e)
+        private void OnLoad(object obj, EventArgs ea)
         {
-            _cascAction = new AsyncAction(() => {
+            _cascAction = new BackgroundWorkerEx();
+            _cascAction.DoWork += (sender, e) => {
                 if (string.IsNullOrEmpty(_localCascPath))
                     CASC.InitializeOnline(_cascAction);
-                else
-                {
+                else {
                     try {
                         CASC.Initialize(_localCascPath);
-                    } catch (Exception ex) {
+                    } catch (Exception /* ex */) {
                         MessageBox.Show("Path '" + _localCascPath + "/Data' was not found.", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     }
                 }
-            }, args =>
-            {
-                _feedbackText.Text = (string)args.UserData;
+            };
+            _cascAction.ProgressChanged += (sender, e) => {
+                _feedbackText.Text = (string)e.UserState;
                 _backgroundTaskProgress.Style = ProgressBarStyle.Continuous;
                 _backgroundTaskProgress.Maximum = 100;
-                _backgroundTaskProgress.Value = args.Progress;
-            });
+                _backgroundTaskProgress.Value = e.ProgressPercentage;
+            };
+            _cascAction.RunWorkerCompleted += (sender, e) => {
+                if (CASC.Initialized)
+                    _mapAction.RunWorkerAsync();
+            };
 
-            _mapAction = new AsyncAction(() => {
+            _mapAction = new BackgroundWorkerEx();
+            _mapAction.DoWork += (sender, e) => {
                 _cascAction.ReportProgress(0, "Loading maps ...");
 
                 _mapRecords = new DBC<MapRecord>(@"DBFilesClient\Map.dbc");
 
-                _mapListBox.Invoke(new Action(() =>
+                var rowIndex = 0;
+                foreach (var mapEntry in _mapRecords.Rows)
                 {
-                    var rowIndex = 0;
-                    foreach (var mapEntry in _mapRecords.Rows)
-                    {
-                        ++rowIndex;
-                        _mapAction.ReportProgress(rowIndex * 100 / _mapRecords.Rows.Length);
-
-                        _mapListBox.Items.Add(new MapListBoxEntry
-                        {
-                            Name = mapEntry.MapNameLang,
-                            Directory = mapEntry.Directory
-                        });
-                    }
-                }));
-            }, args =>
+                    _mapAction.ReportProgress(++rowIndex * 100 / _mapRecords.Rows.Length, new [] {
+                        mapEntry.MapNameLang, mapEntry.Directory
+                    });
+                }
+            };
+            _mapAction.ProgressChanged += (sender, e) => 
             {
-                _feedbackText.Text = (string)args.UserData;
+                _feedbackText.Text = "Loading maps ...";
                 _backgroundTaskProgress.Style = ProgressBarStyle.Continuous;
                 _backgroundTaskProgress.Maximum = 100;
-                _backgroundTaskProgress.Value = args.Progress;
-            });
+                _backgroundTaskProgress.Value = e.ProgressPercentage;
+
+                _mapListBox.Items.Add(new MapListBoxEntry
+                {
+                    Name = ((string[])e.UserState)[0],
+                    Directory = ((string[])e.UserState)[1],
+                });
+            };
         }
 
         private void FilterChanged(object sender, EventArgs e)
@@ -86,21 +90,19 @@ namespace WoWMapRenderer
             // NYI
         }
 
-        private async void MapSelected(object sender, EventArgs e)
+        private void MapSelected(object sender, EventArgs e)
         {
             var entry = (MapListBoxEntry)_mapListBox.SelectedItem;
             _renderer.LoadMap(entry.Directory);
         }
 
-        private async void LoadOnlineCASC(object sender, EventArgs e)
+        private void LoadOnlineCASC(object sender, EventArgs e)
         {
             _localCascPath = string.Empty;
-            await _cascAction.DoAction();
-            if (CASC.Initialized)
-                await _mapAction.DoAction();
+            _cascAction.RunWorkerAsync();
         }
 
-        private async void LoadLocalCASC(object sender, EventArgs e)
+        private void LoadLocalCASC(object sender, EventArgs e)
         {
             var dialog = new FolderBrowserDialog
             {
@@ -111,9 +113,7 @@ namespace WoWMapRenderer
                 return;
 
             _localCascPath = dialog.SelectedPath;
-            await _cascAction.DoAction();
-            if (CASC.Initialized)
-                await _mapAction.DoAction();
+            _cascAction.RunWorkerAsync();
         }
     }
 

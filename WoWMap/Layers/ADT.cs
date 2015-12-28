@@ -52,6 +52,8 @@ namespace WoWMap.Layers
         public MapChunk[] MapChunks { get; private set; }
         public LiquidChunk Liquid { get; private set; }
 
+        public MAMP MAMP { get; private set; }
+        public MVER MVER { get; private set; }      // Version
         public MHDR MHDR { get; private set; }      // Header
         public MMDX MMDX { get; private set; }      // Filenames for doodads
         public MMID MMID { get; private set; }      // Offsets for doodad filenames
@@ -90,6 +92,12 @@ namespace WoWMap.Layers
 
                 switch (subChunk.Name)
                 {
+                    case "MVER":
+                        MVER = new MVER(subChunk);
+                        break;
+                    case "MAMP":
+                        MAMP = new MAMP(subChunk);
+                        break;
                     case "MHDR":
                         MHDR = new MHDR(subChunk);
                         break;

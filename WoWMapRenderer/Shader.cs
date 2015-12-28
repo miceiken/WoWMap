@@ -10,7 +10,7 @@ using OpenTK.Graphics.OpenGL;
 
 namespace WoWMapRenderer
 {
-    class Shader
+    public class Shader
     {
         private int VertexID;
         private int FragmentID;

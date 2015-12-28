@@ -90,7 +90,7 @@ namespace WoWMapRenderer
                 Empty = false;
 
                 Format = PixelFormat.Bgra;
-                InternalFormat = PixelInternalFormat.Rgba;
+                InternalFormat = PixelInternalFormat.Rgba8;
             }
         }
 
@@ -98,8 +98,9 @@ namespace WoWMapRenderer
         {
             // TODO: According to Wiki, alpha textures upscale via cubic interpolation. This is just expanding pixels size by 4.
             Debug.Assert(alphaMap.Length == 64 * 64, "Invalid alpha map length!");
-            var pos = 4u;
-            BGRA = OriginalData;
+            var pos = 3u;
+            BGRA = new byte[OriginalData.Length];
+            Buffer.BlockCopy(OriginalData, 0, BGRA, 0, OriginalData.Length);
             for (var i = 0; i < 64 * 64; ++i)
             {
                 BGRA[pos] = alphaMap[i];
@@ -116,13 +117,18 @@ namespace WoWMapRenderer
                 GL.DeleteTexture(ID);
         }
 
-        public void BindToUnit(TextureUnit unit)
+        public void BindTexture()
         {
-            GL.ActiveTexture(unit);
             GL.BindTexture(TextureTarget.Texture2D, ID);
+            int level = 0;
+            var fn = (int)All.Nearest;
+            Debug.Assert(BGRA != null, "Did not merge alpha map !");
+            GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, ref fn);
+            GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, ref fn);
+            GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, ref level);
+            GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, ref level);
+            // Does not get called ?!
             GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, Width, Height, 0, Format, PixelType.UnsignedByte, BGRA);
-            GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, new[] { (int)All.Linear });
-            GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, new[] { (int)All.Nearest });
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 

@@ -130,9 +130,14 @@ namespace WoWMap.Layers
                         MCSH = new MCSH(subChunk);
                         break;
                     case "MCLY":
-                        if (mclyIdx >= 4)
-                            Debug.Assert(false, "More than 4 MCLY chunks found! WTFWTFWTFWTF");
-                        MCLY[mclyIdx++] = new MCLY(subChunk);
+                        if (subChunk.Size == 0)
+                            ++mclyIdx;
+                        else
+                        {
+                            if (mclyIdx >= 4)
+                                Debug.Assert(false, "More than 4 MCLY chunks found! WTFWTFWTFWTF");
+                            MCLY[mclyIdx++] = new MCLY(subChunk);
+                        }
                         break;
                     case "MCAL":
                         if (WDT != null)

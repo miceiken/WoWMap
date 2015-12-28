@@ -36,10 +36,10 @@ namespace WoWMapRenderer.Renderers
             Renderers.Clear();
         }
 
-        public void Render()
+        public void Render(Shader shader)
         {
             foreach (var renderer in Renderers)
-                renderer.Render();
+                renderer.Render(shader);
         }
     }
 }

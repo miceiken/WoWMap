@@ -80,7 +80,9 @@ namespace WoWMapRenderer.Renderers
         public void LoadMap(string mapName)
         {
             if (_loader == null)
-                _loader = new AsyncAction(() =>
+            {
+                _loader = new BackgroundWorkerEx();
+                _loader.DoWork += (sender, e) =>
                 {
                     _loader.ReportProgress(1, "Loading WDT...");
                     _wdt = new WDT(string.Format(@"World\Maps\{0}\{0}.wdt", mapName));
@@ -98,20 +100,21 @@ namespace WoWMapRenderer.Renderers
                             {
                                 ++tileIdx;
                                 _mapTiles[(i << 8) | j] = new ADT(mapName, i, j);
-                                _loader.ReportProgress(tileIdx * 100 / tileCount, "Loading ADTs (" + tileIdx + " / " + tileCount +") ...");
+                                _loader.ReportProgress(tileIdx * 100 / tileCount, "Loading ADTs (" + tileIdx + " / " + tileCount + ") ...");
                             }
-                }, args =>
+                };
+                _loader.ProgressChanged += (sender, args) =>
                 {
                     if (OnProgress != null)
-                        OnProgress(args.Progress, (string)args.UserData);
-
-                    if (_wdt == null || _wdt.TileCount != _mapTiles.Count)
-                        return;
-
+                        OnProgress(args.ProgressPercentage, (string)args.UserState);
+                };
+                _loader.RunWorkerCompleted += (sender, e) =>
+                {
                     InitializeView();
-                });
+                };
+            }
 
-            _loader.DoAction(); // Not awaited, not blocking
+            _loader.RunWorkerAsync();
         }
 
         private void InitializeView()
@@ -200,6 +203,7 @@ namespace WoWMapRenderer.Renderers
 
             var tileRenderer = new TileRenderer();
 
+            var mapChunkIndex = 0;
             foreach (var adtChunk in _mapTiles[tileToLoadKey].MapChunks)
             {
                 if (adtChunk == null)
@@ -254,8 +258,11 @@ namespace WoWMapRenderer.Renderers
                 }
                 #endregion
 
-                tileRenderer.AddMapChunk(BindIndexedVertex(adtChunk, _mapTiles[tileToLoadKey].Textures.MTEX, 
+                tileRenderer.AddMapChunk(BindIndexedVertex(mapChunkIndex, _mapTiles[tileToLoadKey], 
                     verticeList.ToArray(), indiceList.ToArray()));
+
+                ++mapChunkIndex;
+                verticeList.Clear();
             }
             _batchRenderers[tileToLoadKey] = tileRenderer;
 
@@ -263,17 +270,21 @@ namespace WoWMapRenderer.Renderers
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
         }
 
-        private MapChunkRenderer BindIndexedVertex(MapChunk adtChunk, MTEX mtex, Vertex[] vertices, uint[] indices)
+        private MapChunkRenderer BindIndexedVertex(int mapChunkIndex, ADT terrainTile, Vertex[] vertices, uint[] indices)
         {
-            var renderer = new MapChunkRenderer { TriangleCount = indices.Length / 3 };
+            var renderer = new MapChunkRenderer { TriangleCount = indices.Length };
 
-            for (var i = 0; i < adtChunk.MCLY.Length; ++i)
+            // Schlumpf guarantees the chunks are "always in the exactly same order".
+            var mapChunk = terrainTile.MapChunks[mapChunkIndex];
+            var texMapChunk = terrainTile.Textures.MapChunks[mapChunkIndex];
+
+            for (var i = 0; i < texMapChunk.MCLY.Length; ++i)
             {
-                if (adtChunk.MCLY[i] == null || adtChunk.MCAL == null)
+                if (texMapChunk.MCLY[i] == null || texMapChunk.MCAL == null)
                     continue;
 
-                var texture = _textureCache[mtex.Filenames[adtChunk.MCLY[i].TextureId]];
-                texture.MergeAlphaMap(adtChunk.MCAL.GetAlpha(i));
+                var texture = _textureCache[terrainTile.Textures.MTEX.Filenames.ElementAt((int)texMapChunk.MCLY[i].TextureId).Value];
+                texture.MergeAlphaMap(texMapChunk.MCAL.GetAlpha(i));
                 renderer.AddTexture(texture);
             }
 
@@ -287,11 +298,6 @@ namespace WoWMapRenderer.Renderers
             
             VertexAttribPointer(_shader.GetAttribLocation("vertex_shading"), 3,
                 VertexAttribPointerType.Float, vertexSize, IntPtr.Zero);
-
-            // GL.BindSampler(renderer.TextureSampler0, _shader.GetUniformLocation("texture_sampler0"));
-            // GL.BindSampler(renderer.TextureSampler1, _shader.GetUniformLocation("texture_sampler1"));
-            // GL.BindSampler(renderer.TextureSampler2, _shader.GetUniformLocation("texture_sampler2"));
-            // GL.BindSampler(renderer.TextureSampler3, _shader.GetUniformLocation("texture_sampler3"));
 
             VertexAttribPointer(_shader.GetAttribLocation("vertice_position"), 3,
                 VertexAttribPointerType.Float, vertexSize, sizeof(float) * 3);
@@ -405,54 +411,7 @@ namespace WoWMapRenderer.Renderers
             GL.DepthFunc(DepthFunction.Less);
 
             foreach (var renderer in _batchRenderers.Values)
-            {
-                renderer.Render();
-                /*GL.BindVertexArray(renderer.VAO);
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
-
-                if (renderer.TextureIDs[0] != -1)
-                {
-                    _textureCache[renderer.TextureIDs[0]].BindToUnit(TextureUnit.Texture0);
-                    GL.ActiveTexture(TextureUnit.Texture0);
-                    GL.BindTexture(TextureTarget.Texture2D, renderer.TextureSampler0);
-                    GL.Uniform1(_shader.GetUniformLocation("texture_sampler0"), 0);
-                }
-
-                if (renderer.TextureIDs[1] != -1)
-                {
-                    _textureCache[renderer.TextureIDs[1]].BindToUnit(TextureUnit.Texture1);
-                    GL.ActiveTexture(TextureUnit.Texture1);
-                    GL.BindTexture(TextureTarget.Texture2D, renderer.TextureSampler1);
-                    GL.Uniform1(_shader.GetUniformLocation("texture_sampler1"), 1);
-                }
-
-                if (renderer.TextureIDs[2] != -1)
-                {
-                    _textureCache[renderer.TextureIDs[2]].BindToUnit(TextureUnit.Texture2);
-                    GL.ActiveTexture(TextureUnit.Texture2);
-                    GL.BindTexture(TextureTarget.Texture2D, renderer.TextureSampler2);
-                    GL.Uniform1(_shader.GetUniformLocation("texture_sampler2"), 2);
-                }
-
-                if (renderer.TextureIDs[3] != -1)
-                {
-                    _textureCache[renderer.TextureIDs[4]].BindToUnit(TextureUnit.Texture3);
-                    GL.ActiveTexture(TextureUnit.Texture3);
-                    GL.BindTexture(TextureTarget.Texture2D, renderer.TextureSampler3);
-                    GL.Uniform1(_shader.GetUniformLocation("texture_sampler2"), 3);
-                }
-
-                if (renderer.AlphaTexture != null)
-                {
-                    renderer.AlphaTexture.BindToUnit(TextureUnit.Texture4);
-                    GL.ActiveTexture(TextureUnit.Texture4);
-                    GL.BindTexture(TextureTarget.Texture2D, renderer.AlphaSampler);
-                    GL.Uniform1(_shader.GetUniformLocation("alpha_sampler"), 4);
-                }
-
-                GL.DrawElements(PrimitiveType.Triangles, renderer.TriangleCount,
-                    DrawElementsType.UnsignedInt, IntPtr.Zero);*/
-            }
+                renderer.Render(_shader);
 
             GL.BindTexture(TextureTarget.Texture2D, 0);
             GL.BindVertexArray(0);

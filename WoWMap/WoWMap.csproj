@@ -9,9 +9,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>WoWMap</RootNamespace>
     <AssemblyName>WoWMap</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>5f33d180</NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -52,6 +53,7 @@
     <Compile Include="Builders\ContinentBuilder.cs" />
     <Compile Include="Builders\DungeonBuilder.cs" />
     <Compile Include="Builders\TileBuilder.cs" />
+    <Compile Include="Chunks\MAMP.cs" />
     <Compile Include="Chunks\MCAL.cs" />
     <Compile Include="Chunks\MCCV.cs" />
     <Compile Include="Chunks\MCRD.cs" />

@@ -43,6 +43,8 @@ namespace WoWMap.Chunks
         public override void Read()
         {
             var br = Chunk.GetReader();
+            if (Chunk.Size == 0)
+                return;
 
             TextureId = br.ReadUInt32();
             Flags = (MCLYFlags)br.ReadUInt32();
