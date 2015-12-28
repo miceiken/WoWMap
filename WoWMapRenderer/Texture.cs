@@ -29,10 +29,15 @@ namespace WoWMapRenderer
 
             ID = GL.GenTexture();
             GL.ActiveTexture(TextureUnit.Texture0);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.BindTexture(TextureTarget.Texture2D, ID);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Width, Height, 0, PixelFormat.Bgra, PixelType.UnsignedByte, IntPtr.Zero);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, new[] { (int)All.Linear });
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, new[] { (int)All.Nearest });
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
@@ -90,7 +95,7 @@ namespace WoWMapRenderer
                 Empty = false;
 
                 Format = PixelFormat.Bgra;
-                InternalFormat = PixelInternalFormat.Rgba8;
+                InternalFormat = PixelInternalFormat.Rgba;
             }
         }
 
@@ -120,16 +125,22 @@ namespace WoWMapRenderer
         public void BindTexture()
         {
             GL.BindTexture(TextureTarget.Texture2D, ID);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             int level = 0;
             var fn = (int)All.Nearest;
             Debug.Assert(BGRA != null, "Did not merge alpha map !");
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, ref fn);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, ref fn);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, ref level);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, ref level);
-            // Does not get called ?!
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, Width, Height, 0, Format, PixelType.UnsignedByte, BGRA);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.BindTexture(TextureTarget.Texture2D, 0);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
         }
 
         public Texture(byte[] data, int width, int height)

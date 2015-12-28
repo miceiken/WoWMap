@@ -18,9 +18,9 @@ namespace WoWMapRenderer.Renderers
 
         public MapChunkRenderer()
         {
+            VAO = GL.GenVertexArray();
             VerticeVBO = GL.GenBuffer();
             IndiceVBO = GL.GenBuffer();
-            VAO = GL.GenVertexArray();
             _textureSamplers = new List<int>();
         }
 
@@ -47,30 +47,37 @@ namespace WoWMapRenderer.Renderers
         public void Render(Shader shader)
         {
             GL.BindVertexArray(VAO);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndiceVBO);
-            GL.Enable(EnableCap.Texture2D);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             for (var i = 0; i < _textures.Count; ++i)
             {
                 GL.ActiveTexture(TextureUnit.Texture0 + i);
+                System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
                 if (_textures[i] != null)
                 {
                     var uniform = shader.GetUniformLocation("texture_sampler" + i);
-                    // TODO: Move this call to preparations, not rendering
                     _textures[i].BindTexture();
+                    // TODO: Move this call to preparations, not rendering
                     GL.BindTexture(TextureTarget.Texture2D, _textures[i].ID);
-                    GL.BindSampler(i, _textureSamplers[i]);
+                    System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
                     GL.Uniform1(uniform, i);
+                    System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
                 }
                 else
                     GL.BindTexture(TextureTarget.Texture2D, 0);
             }
 
             GL.DrawElements(PrimitiveType.Triangles, TriangleCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.BindTexture(TextureTarget.Texture2D, 0);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.BindVertexArray(0);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
         }
     }
 }

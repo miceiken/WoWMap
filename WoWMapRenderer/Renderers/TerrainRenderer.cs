@@ -289,25 +289,32 @@ namespace WoWMapRenderer.Renderers
             }
 
             GL.BindVertexArray(renderer.VAO);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             var vertexSize = Marshal.SizeOf(typeof(Vertex));
             var verticeSize = vertices.Length * vertexSize;
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, renderer.VerticeVBO);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(verticeSize), vertices, BufferUsageHint.StaticDraw);
-            
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
+
             VertexAttribPointer(_shader.GetAttribLocation("vertex_shading"), 3,
                 VertexAttribPointerType.Float, vertexSize, IntPtr.Zero);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             VertexAttribPointer(_shader.GetAttribLocation("vertice_position"), 3,
                 VertexAttribPointerType.Float, vertexSize, sizeof(float) * 3);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             VertexAttribPointer(_shader.GetAttribLocation("in_TexCoord0"), 2,
                 VertexAttribPointerType.Float, vertexSize, (IntPtr)(sizeof(float) * 6));
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
             GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(indices.Length * sizeof(uint)),
                 indices, BufferUsageHint.StaticDraw);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             return renderer;
         }
@@ -315,12 +322,14 @@ namespace WoWMapRenderer.Renderers
         private void VertexAttribPointer(int location, int size, VertexAttribPointerType type, int stride, IntPtr offset)
         {
             GL.VertexAttribPointer(location, size, type, false, stride, offset);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.EnableVertexAttribArray(location);
         }
 
         private void VertexAttribPointer(int location, int size, VertexAttribPointerType type, int stride, int offset)
         {
             GL.VertexAttribPointer(location, size, type, false, stride, offset);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.EnableVertexAttribArray(location);
         }
 
@@ -400,21 +409,38 @@ namespace WoWMapRenderer.Renderers
             // buffer.Load();
 
             // GL.BindFramebuffer(FramebufferTarget.Framebuffer, _framebuffer.FrameBufferID);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             var uniform = Matrix4.Mult(_camera.View, _camera.Projection);
             GL.UniformMatrix4(_shader.GetUniformLocation("projection_modelview"), false, ref uniform);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             // GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+
+            GL.Enable(EnableCap.Texture2D);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
+            GL.EnableClientState(ArrayCap.IndexArray);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
+            GL.EnableClientState(ArrayCap.VertexArray);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
+
             GL.Enable(EnableCap.CullFace);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
+            GL.CullFace(CullFaceMode.Back);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.Enable(EnableCap.DepthTest);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.DepthFunc(DepthFunction.Less);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             foreach (var renderer in _batchRenderers.Values)
                 renderer.Render(_shader);
 
             GL.BindTexture(TextureTarget.Texture2D, 0);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.BindVertexArray(0);
+            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             _control.SwapBuffers();
         }
