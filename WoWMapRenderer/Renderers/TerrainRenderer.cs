@@ -200,78 +200,18 @@ namespace WoWMapRenderer.Renderers
             _loadedTiles[tileToLoadKey] = true;
 
             var verticeList = new List<Vertex>(145);
-            var indiceList = new List<uint>();
+            var indiceList = new List<uint>(8 * 8 * 4 * 3);
 
             var tileRenderer = new TileRenderer();
+            tileRenderer.Generate(_mapTiles[tileToLoadKey]);
+            tileRenderer.Bind(_shader);
 
-            var mapChunkIndex = 0;
-            foreach (var adtChunk in _mapTiles[tileToLoadKey].MapChunks)
-            {
-                if (adtChunk == null)
-                    continue;
+            // Add textures per MapChunkRenderer here
 
-                var offset = (uint)verticeList.Count;
-
-                #region Terrain indices
-                // Generate indices
-                var unitidx = 0;
-                for (uint j = 9; j < 8 * 8 + 9 * 8; j++)
-                {
-                    if (!adtChunk.HasHole(unitidx % 8, unitidx++ / 8))
-                    {
-                        indiceList.AddRange(new[] { j + offset, j - 9 + offset, j + 8 + offset });
-                        indiceList.AddRange(new[] { j + offset, j - 8 + offset, j - 9 + offset });
-                        indiceList.AddRange(new[] { j + offset, j + 9 + offset, j - 8 + offset });
-                        indiceList.AddRange(new[] { j + offset, j + 8 + offset, j + 9 + offset });
-                    }
-                    if ((j + 1) % (9 + 8) == 0) j += 9;
-                }
-                #endregion
-
-                #region Terrain vertices
-                for (int i = 0, idx = 0; i < 17; ++i)
-                {
-                    var maxJ = ((i % 2) != 0) ? 8 : 9;
-                    for (var j = 0; j < maxJ; j++)
-                    {
-                        var color = new Vector3(1.0f, 1.0f, 1.0f);
-                        if (adtChunk.MCCV != null)
-                        {
-                            color.X = adtChunk.MCCV.Entries[idx].Red / 127.0f;
-                            color.Y = adtChunk.MCCV.Entries[idx].Green / 127.0f;
-                            color.Z = adtChunk.MCCV.Entries[idx].Blue / 127.0f;
-                        }
-
-                        verticeList.Add(new Vertex
-                        {
-                            Color = color,
-                            Position = new Vector3
-                            {
-                                X = adtChunk.MCNK.Position.X - (i * Constants.UnitSize * 0.5f),
-                                Y = adtChunk.MCNK.Position.Y - ((j + (((i % 2) != 0) ? 0.5f : 0.0f)) * Constants.UnitSize),
-                                Z = adtChunk.MCVT.Heights[idx] + adtChunk.MCNK.Position.Z
-                            },
-                            TextureCoordinates = new Vector2(i / 8.0f + (((i & 2) == 0) ? 0.5f / 8.0f : 0.0f), j / 17.0f),
-                        });
-
-                        ++idx;
-                    }
-                }
-                #endregion
-
-                tileRenderer.AddMapChunk(BindIndexedVertex(mapChunkIndex, _mapTiles[tileToLoadKey], 
-                    verticeList.ToArray(), indiceList.ToArray()));
-
-                ++mapChunkIndex;
-                verticeList.Clear();
-            }
             _batchRenderers[tileToLoadKey] = tileRenderer;
-
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
         }
 
-        private MapChunkRenderer BindIndexedVertex(int mapChunkIndex, ADT terrainTile, Vertex[] vertices, uint[] indices)
+        /*private MapChunkRenderer BindIndexedVertex(int mapChunkIndex, ADT terrainTile, Vertex[] vertices, uint[] indices)
         {
             var renderer = new MapChunkRenderer { TriangleCount = indices.Length };
 
@@ -314,9 +254,7 @@ namespace WoWMapRenderer.Renderers
             VertexAttribPointer(_shader.GetAttribLocation("in_TexCoord0"), 2,
                 VertexAttribPointerType.Float, vertexSize, (IntPtr)(sizeof(float) * 6));
 
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(indices.Length * sizeof(uint)),
-                indices, BufferUsageHint.StaticDraw);
+            
 
             return renderer;
         }
@@ -331,7 +269,7 @@ namespace WoWMapRenderer.Renderers
         {
             GL.VertexAttribPointer(location, size, type, false, stride, offset);
             GL.EnableVertexAttribArray(location);
-        }
+        }*/
 
         /// <summary>
         /// Returns true if a map tile (ADT) has already been pre-generated; false otherwise.
@@ -410,8 +348,7 @@ namespace WoWMapRenderer.Renderers
 
             GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
 
-            if (ForceWireframe)
-                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            GL.PolygonMode(MaterialFace.FrontAndBack, ForceWireframe ? PolygonMode.Line : PolygonMode.Fill);
 
             var uniform = Matrix4.Mult(_camera.View, _camera.Projection);
             GL.UniformMatrix4(_shader.GetUniformLocation("projection_modelview"), false, ref uniform);
@@ -425,7 +362,6 @@ namespace WoWMapRenderer.Renderers
                 renderer.Render(_shader);
 
             GL.BindTexture(TextureTarget.Texture2D, 0);
-            GL.BindVertexArray(0);
 
             _control.SwapBuffers();
         }

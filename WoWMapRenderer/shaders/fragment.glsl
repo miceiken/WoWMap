@@ -59,7 +59,8 @@ void main()
 	vec4 tex2 = texture(texture_sampler2, texcoord);
 	vec4 tex3 = texture(texture_sampler3, texcoord);
 
-	vec4 oColor = tex0; // * vec4(1.0f, 0.0f, 0.0f, 1.0f); // mix(mix(mix(tex0, tex1, 0.5f), tex2, 0.5f), tex3, 0.5f) *  vec4(vshading, 1.0f);
+	// vec4 oColor = tex0; // * vec4(1.0f, 0.0f, 0.0f, 1.0f); // mix(mix(mix(tex0, tex1, 0.5f), tex2, 0.5f), tex3, 0.5f) *  vec4(vshading, 1.0f);
+	vec4 oColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 	oColor.a = 1.0f; // Force alpha back to 1
 	outputColor = oColor;
 }
