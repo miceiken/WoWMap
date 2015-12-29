@@ -12,10 +12,9 @@ namespace WoWMapRenderer.Renderers
         public int VAO { get; private set; }
 
         private List<int> _textureSamplers = new List<int>();
+        private List<Texture> _textures = new List<Texture>();
 
         public int TriangleCount;
-
-        private List<string> _textures = new List<string>();
 
         public MapChunkRenderer()
         {
@@ -24,19 +23,16 @@ namespace WoWMapRenderer.Renderers
             IndiceVBO = GL.GenBuffer();
         }
 
-        public void AddTexture(Texture texture, Shader shader)
+        public void AddTexture(Texture texture)
         {
-            Debug.Assert(_textures.Count <= 4, "MapChunkRenderer: Trying to load too many textures !");
             Debug.Assert(_textureSamplers.Count <= 4, "MapChunkRenderer: Trying to load too many samplers !");
 
-            if (!_textures.Contains(texture.Filename))
-                _textures.Add(texture.Filename);
+            _textures.Add(texture);
+            texture.BindTexture(TextureUnit.Texture0 + TextureCache.Unit);
 
-            // Add a sampler anyway
             var sampler = GL.GenSampler();
-            _textureSamplers.Add(sampler);
-            // Bind to texture right now
             GL.BindSampler(texture.Unit, sampler);
+            _textureSamplers.Add(sampler);
         }
 
         public void Delete()
@@ -51,8 +47,6 @@ namespace WoWMapRenderer.Renderers
             foreach (var sampler in _textureSamplers)
                 GL.DeleteSampler(sampler);
             _textureSamplers.Clear();
-
-            _textures.Clear();
         }
 
         public void Render(Shader shader)

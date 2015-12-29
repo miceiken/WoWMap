@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using CASCExplorer;
 using WoWMap.Archive;
 using WoWMapRenderer.Renderers;
+using OpenGL = OpenTK.Graphics.OpenGL;
 
 namespace WoWMapRenderer
 {
@@ -30,6 +31,14 @@ namespace WoWMapRenderer
                 _backgroundTaskProgress.Value = progress;
                 _feedbackText.Text = state;
             };
+
+            /*int maxCombinedTextureImageUnits;
+            OpenGL.GL.GetInteger(OpenGL.GetPName.MaxCombinedTextureImageUnits, out maxCombinedTextureImageUnits);
+            int maxTextureImageUnits;
+            OpenGL.GL.GetInteger(OpenGL.GetPName.MaxTextureImageUnits, out maxTextureImageUnits);
+
+            openGLInformationsToolStripMenuItem.DropDownItems.Add($"GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS = {maxCombinedTextureImageUnits}");
+            openGLInformationsToolStripMenuItem.DropDownItems.Add($"GL_MAX_TEXTURE_IMAGE_UNITS = {maxTextureImageUnits}");*/
         }
 
         private void OnLoad(object obj, EventArgs ea)

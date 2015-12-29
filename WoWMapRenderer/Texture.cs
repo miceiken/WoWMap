@@ -14,6 +14,7 @@ namespace WoWMapRenderer
     {
         public Texture(int width, int height, PixelInternalFormat internalFormat, PixelFormat format, bool empty = true)
         {
+            CanBeBound = false;
             ID = 0;
             Width = width;
             Height = height;
@@ -41,6 +42,7 @@ namespace WoWMapRenderer
         public int Width { get; private set; }
         public int Height { get; private set; }
 
+        public bool CanBeBound { get; private set; }
         public bool Empty { get; private set; }
 
         public byte[] OriginalData { get; private set; }
@@ -49,6 +51,7 @@ namespace WoWMapRenderer
         public Texture(string filePath)
         {
             Filename = filePath;
+            CanBeBound = false;
 
             using (var blp = new BlpFile(CASC.OpenFile(filePath)))
             {
@@ -58,7 +61,6 @@ namespace WoWMapRenderer
                 Width = blp.Width;
                 Height = blp.Height;
 
-                ID = GL.GenTexture();
                 byte[] bgra;
                 blp.GetByteBuffer(0, out bgra);
                 OriginalData = bgra;
@@ -70,24 +72,26 @@ namespace WoWMapRenderer
             }
         }
 
-        public void ApplyAlphaAndBind(byte[] alphaMap, TextureUnit unit)
+        public Texture ApplyAlpha(byte[] alphaMap)
         {
+            Debug.Assert(!CanBeBound, "You should not apply an alpha map to an already mapped texture!");
+
             // TODO: According to Wiki, alpha textures upscale via cubic interpolation. This is just expanding pixels size by 4.
-            BGRA = new byte[OriginalData.Length];
-            Buffer.BlockCopy(OriginalData, 0, BGRA, 0, OriginalData.Length);
+            var buffer = new byte[OriginalData.Length];
+            Buffer.BlockCopy(OriginalData, 0, buffer, 0, OriginalData.Length);
             if (alphaMap.Length == 64 * 64)
             {
                 var pos = 3u;
                 for (var i = 0; i < 64 * 64; ++i)
                 {
-                    BGRA[pos] = alphaMap[i];
-                    BGRA[pos + 4] = alphaMap[i];
-                    BGRA[pos + 8] = alphaMap[i];
-                    BGRA[pos + 12] = alphaMap[i];
+                    buffer[pos] = alphaMap[i];
+                    buffer[pos + 4] = alphaMap[i];
+                    buffer[pos + 8] = alphaMap[i];
+                    buffer[pos + 12] = alphaMap[i];
                     pos += 16;
                 }
             }
-            BindTexture(unit);
+            return new Texture(buffer, Width, Height);
         }
 
         public void Delete()
@@ -100,6 +104,8 @@ namespace WoWMapRenderer
         {
             Unit = unit - TextureUnit.Texture0;
 
+            Debug.Assert(CanBeBound, "Texture cannot be bound to GPU!");
+
             GL.ActiveTexture(unit);
             GL.BindTexture(TextureTarget.Texture2D, ID); // Lock
             int level = 0;
@@ -108,18 +114,21 @@ namespace WoWMapRenderer
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, ref fn);
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, ref level);
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, ref level);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, Width, Height, 0, Format, PixelType.UnsignedByte, BGRA);
-            // No release, save some calls
+            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, Width, Height, 0, Format, PixelType.UnsignedByte, OriginalData);
+            GL.BindTexture(TextureTarget.Texture2D, 0); // Release
         }
 
         public Texture(byte[] data, int width, int height)
         {
-            OriginalData = data;
-            Format = PixelFormat.Alpha;
-            InternalFormat = PixelInternalFormat.Alpha;
+            OriginalData = new byte[data.Length];
+            Buffer.BlockCopy(data, 0, OriginalData, 0, data.Length);
+
+            Format = PixelFormat.Rgba;
+            InternalFormat = PixelInternalFormat.Rgba;
             Width = width;
             Height = height;
             Empty = false;
+            CanBeBound = true;
         }
     }
 }

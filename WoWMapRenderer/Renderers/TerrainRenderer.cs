@@ -195,7 +195,7 @@ namespace WoWMapRenderer.Renderers
             _mapTiles[tileToLoadKey].Read();
 
             foreach (var t in _mapTiles[tileToLoadKey].Textures.MTEX.Filenames)
-                TextureCache.AddTexture(t.Value);
+                TextureCache.AddRawTexture(t.Value);
 
             _loadedTiles[tileToLoadKey] = true;
 
@@ -285,13 +285,14 @@ namespace WoWMapRenderer.Renderers
                 if (texMapChunk.MCLY[i] == null || texMapChunk.MCAL == null)
                     continue;
 
-                if (TextureCache.Unit > 15)
-                    break; // Weird.
+                if (TextureCache.Unit > 10)
+                    break;
 
-                var texture = TextureCache.GetTexture(terrainTile.Textures.MTEX.Filenames.ElementAt((int)texMapChunk.MCLY[i].TextureId).Value);
-                texture.ApplyAlphaAndBind(texMapChunk.MCAL.GetAlpha(i), TextureUnit.Texture0 + TextureCache.Unit);
-                ++TextureCache.Unit;
-                renderer.AddTexture(texture, _shader);
+                var rawTexture = TextureCache.GetRawTexture(terrainTile.Textures.MTEX.Filenames.ElementAt((int)texMapChunk.MCLY[i].TextureId).Value);
+                var newTexture = rawTexture.ApplyAlpha(texMapChunk.MCAL.GetAlpha(i));
+
+                if (TextureCache.AddBoundTexture(newTexture))
+                    renderer.AddTexture(newTexture);
             }
 
             GL.BindTexture(TextureTarget.Texture2D, 0); // Release textures

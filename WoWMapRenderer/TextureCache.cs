@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OpenTK.Graphics.OpenGL;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,50 +9,64 @@ namespace WoWMapRenderer
 {
     public class TextureCache
     {
-        public static Dictionary<string, Texture> Storage { get; private set; }
+        public static Dictionary<string /* fileName */, Texture> RawTextures { get; private set; }
+        public static Dictionary<int /* textureUnit */, Texture> BoundTextures { get; private set; }
 
-        private static int _unit = 0;
+        private static List<int> _freeUnits = new List<int>();
         public static int Unit
         {
-            get { return _unit; }
-            set { _unit = value; }
+            get {
+                return _freeUnits.FirstOrDefault();
+            }
+        }
+
+        public static void UnbindTexture(int unit)
+        {
+            BoundTextures.Remove(unit);
+            _freeUnits.Add(unit);
         }
 
         public static void Initialize()
         {
-            Storage = new Dictionary<string, Texture>(10);
+            RawTextures = new Dictionary<string, Texture>(10);
+            BoundTextures = new Dictionary<int, Texture>();
+            _freeUnits.AddRange(new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
         }
 
-        public static void AddTexture(string textureName)
+        public static bool AddBoundTexture(Texture tex)
         {
-            if (Storage.ContainsKey(textureName))
+            if (BoundTextures.ContainsKey(tex.Unit))
+                return false;
+
+            tex.BindTexture(TextureUnit.Texture0 + Unit);
+            BoundTextures[tex.Unit] = tex;
+            _freeUnits.Remove(tex.Unit);
+            return true;
+        }
+
+        public static void AddRawTexture(string textureName)
+        {
+            if (RawTextures.ContainsKey(textureName))
                 return;
 
-            Storage[textureName] = new Texture(textureName);
+            RawTextures[textureName] = new Texture(textureName);
         }
 
-        public static void RemoveTexture(string textureName)
+        public static void RemoveRawTexture(string textureName)
         {
-            if (!Storage.ContainsKey(textureName))
+            if (!RawTextures.ContainsKey(textureName))
                 return;
-            Storage.Remove(textureName);
+            RawTextures.Remove(textureName);
         }
 
-        public static bool ContainsKey(string textureName)
+        public static bool ContainsRawTexture(string textureName)
         {
-            return Storage.ContainsKey(textureName);
+            return RawTextures.ContainsKey(textureName);
         }
 
-        public static int GetTextureID(string textureName)
+        public static Texture GetRawTexture(string textureName)
         {
-            if (!ContainsKey(textureName))
-                return -1;
-            return Storage[textureName].ID;
-        }
-
-        public static Texture GetTexture(string textureName)
-        {
-            return Storage.ContainsKey(textureName) ? Storage[textureName] : null;
+            return RawTextures.ContainsKey(textureName) ? RawTextures[textureName] : null;
         }
     }
 }

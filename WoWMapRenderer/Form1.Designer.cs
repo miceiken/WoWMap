@@ -41,6 +41,7 @@
             this._mapListBox = new System.Windows.Forms.ListBox();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.forceWireframeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openGLInformationsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -142,7 +143,8 @@
             // optionsToolStripMenuItem
             // 
             this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.forceWireframeToolStripMenuItem});
+            this.forceWireframeToolStripMenuItem,
+            this.openGLInformationsToolStripMenuItem});
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
             this.optionsToolStripMenuItem.Text = "Options";
@@ -153,6 +155,12 @@
             this.forceWireframeToolStripMenuItem.Size = new System.Drawing.Size(161, 22);
             this.forceWireframeToolStripMenuItem.Text = "Force Wireframe";
             this.forceWireframeToolStripMenuItem.Click += new System.EventHandler(this.OnForceWireframeToggle);
+            // 
+            // openGLInformationsToolStripMenuItem
+            // 
+            this.openGLInformationsToolStripMenuItem.Name = "openGLInformationsToolStripMenuItem";
+            this.openGLInformationsToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.openGLInformationsToolStripMenuItem.Text = "OpenGL Informations";
             // 
             // Form1
             // 
@@ -191,6 +199,7 @@
         private System.Windows.Forms.ToolStripMenuItem connectToDatabaseToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem forceWireframeToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem openGLInformationsToolStripMenuItem;
     }
 }
 
