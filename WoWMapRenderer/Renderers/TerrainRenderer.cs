@@ -164,9 +164,9 @@ namespace WoWMapRenderer.Renderers
 
             var keysToKeep = new List<int>(9);
 
-            for (var i = 0; i < 1; ++i)
+            for (var i = 0; i < 3; ++i)
             {
-                for (var j = 0; j < 1; ++j)
+                for (var j = 0; j < 3; ++j)
                 {
                     var tileX = (int)(_currentCenteredTile.X - 1 + i);
                     var tileY = (int)(_currentCenteredTile.Y - 1 + j);
@@ -180,7 +180,7 @@ namespace WoWMapRenderer.Renderers
                 }
             }
 
-            while (_loadedTiles.Count != 1)
+            while (_loadedTiles.Count != 9)
             {
                 var key = _loadedTiles.First(tile => !keysToKeep.Contains(tile.Key)).Key;
                 _batchRenderers[key].Delete();

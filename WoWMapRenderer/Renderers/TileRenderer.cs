@@ -71,11 +71,14 @@ namespace WoWMapRenderer.Renderers
                         Position = new Vector3
                         {
                             X = mapChunk.MCNK.Position.X - (i * Constants.UnitSize * 0.5f),
-                            Y = mapChunk.MCNK.Position.Y - ((j + (((i & 2) == 0) ? 0.5f : 0.0f)) * Constants.UnitSize),
+                            Y = mapChunk.MCNK.Position.Y - (j * Constants.UnitSize) - (((i % 2) != 0) ? (0.5f * Constants.UnitSize) : 0.0f),
                             Z = mapChunk.MCVT.Heights[idx] + mapChunk.MCNK.Position.Z
                         },
-                        // (n + 0.5) / 8 = (2 n + 1) / 16 - See above (Position) as to why this weird math
-                        TextureCoordinates = new Vector2(2 * i, (2 * j + (((i & 2) == 0) ? 1.0f : 0.0f))) / 16.0f
+                        TextureCoordinates = new Vector2
+                        {
+                            X = i * 0.5f / 8.0f,
+                            Y = (j + (((i % 2) != 0) ? 0.5f : 0.0f)) / 8.0f
+                        }
                     });
 
                     ++idx;
