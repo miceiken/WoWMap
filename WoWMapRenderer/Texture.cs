@@ -24,47 +24,17 @@ namespace WoWMapRenderer
 
         public void LoadEmptyTexture()
         {
-            if (GL.IsTexture(ID))
-                GL.DeleteTexture(ID);
-
             ID = GL.GenTexture();
             GL.ActiveTexture(TextureUnit.Texture0);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.BindTexture(TextureTarget.Texture2D, ID);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Width, Height, 0, PixelFormat.Bgra, PixelType.UnsignedByte, IntPtr.Zero);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, new[] { (int)All.Linear });
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, new[] { (int)All.Nearest });
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
-        // WARNING UNUSED NOT WORKING
-        /* public bool Load(string fileName)
-        {
-            if (GL.IsTexture(ID))
-                GL.DeleteTexture(ID);
-
-            ID = GL.GenTexture();
-            GL.ActiveTexture(TextureUnit.Texture0);
-            GL.BindTexture(TextureTarget.Texture2D, ID);
-
-            using (var blp = new BlpFile(CASC.OpenFile(fileName)))
-            {
-                Width = blp.Width;
-                Height = blp.Height;
-                byte[] bgra;
-                blp.GetByteBuffer(0, out bgra);
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Width, Height, 0, PixelFormat.Bgra, PixelType.UnsignedByte, bgra);
-                GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, new[] { (int)All.Linear });
-                GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, new[] { (int)All.Nearest });
-            }
-            return true;
-        }*/
-
         public int ID { get; private set; }
+        public int Unit { get; private set; }
         public string Filename { get; private set; }
         public PixelFormat Format { get; private set; }
         public PixelInternalFormat InternalFormat { get; private set; }
@@ -94,26 +64,30 @@ namespace WoWMapRenderer
                 OriginalData = bgra;
                 Empty = false;
 
-                Format = PixelFormat.Bgra;
+                Format = PixelFormat.Rgba;
+                Unit = -1;
                 InternalFormat = PixelInternalFormat.Rgba;
             }
         }
 
-        public void MergeAlphaMap(byte[] alphaMap)
+        public void ApplyAlphaAndBind(byte[] alphaMap, TextureUnit unit)
         {
             // TODO: According to Wiki, alpha textures upscale via cubic interpolation. This is just expanding pixels size by 4.
-            Debug.Assert(alphaMap.Length == 64 * 64, "Invalid alpha map length!");
-            var pos = 3u;
             BGRA = new byte[OriginalData.Length];
             Buffer.BlockCopy(OriginalData, 0, BGRA, 0, OriginalData.Length);
-            for (var i = 0; i < 64 * 64; ++i)
+            if (alphaMap.Length == 64 * 64)
             {
-                BGRA[pos] = alphaMap[i];
-                BGRA[pos + 4] = alphaMap[i];
-                BGRA[pos + 8] = alphaMap[i];
-                BGRA[pos + 12] = alphaMap[i];
-                pos += 16;
+                var pos = 3u;
+                for (var i = 0; i < 64 * 64; ++i)
+                {
+                    BGRA[pos] = alphaMap[i];
+                    BGRA[pos + 4] = alphaMap[i];
+                    BGRA[pos + 8] = alphaMap[i];
+                    BGRA[pos + 12] = alphaMap[i];
+                    pos += 16;
+                }
             }
+            BindTexture(unit);
         }
 
         public void Delete()
@@ -122,25 +96,20 @@ namespace WoWMapRenderer
                 GL.DeleteTexture(ID);
         }
 
-        public void BindTexture()
+        public void BindTexture(TextureUnit unit)
         {
-            GL.BindTexture(TextureTarget.Texture2D, ID);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
+            Unit = unit - TextureUnit.Texture0;
+
+            GL.ActiveTexture(unit);
+            GL.BindTexture(TextureTarget.Texture2D, ID); // Lock
             int level = 0;
             var fn = (int)All.Nearest;
-            Debug.Assert(BGRA != null, "Did not merge alpha map !");
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, ref fn);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, ref fn);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, ref level);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, ref level);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, Width, Height, 0, Format, PixelType.UnsignedByte, BGRA);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
+            // No release, save some calls
         }
 
         public Texture(byte[] data, int width, int height)

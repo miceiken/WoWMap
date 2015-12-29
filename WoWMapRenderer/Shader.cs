@@ -19,6 +19,16 @@ namespace WoWMapRenderer
         private Dictionary<string, int> _attribLocations = new Dictionary<string, int>();
         private Dictionary<string, int> _uniformLocations = new Dictionary<string, int>();
 
+        ~Shader()
+        {
+            if (GL.IsProgram(ProgramID))
+                GL.DeleteProgram(ProgramID);
+            if (GL.IsShader(VertexID))
+                GL.DeleteShader(VertexID);
+            if (GL.IsShader(FragmentID))
+                GL.DeleteShader(FragmentID);
+        }
+
         public void CreateFromFile(string vertexPath, string fragmentPath)
         {
             using (var v = new StreamReader(vertexPath))
@@ -28,25 +38,25 @@ namespace WoWMapRenderer
 
         public void CreateShader(string vertex, string fragment)
         {
-            ProgramID = GL.CreateProgram();
+            ProgramID = GL.CreateProgram(); 
 
             VertexID = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(VertexID, vertex);
             GL.CompileShader(VertexID);
             GL.AttachShader(ProgramID, VertexID);
             var vertexErr = GL.GetShaderInfoLog(VertexID);
-            Debug.Assert(vertexErr == "No errors.\n", "Vertex error: \n" + vertexErr);
+            Debug.Assert(vertexErr == "No errors.\n" || string.IsNullOrEmpty(vertexErr), "Vertex error: \n" + vertexErr);
 
             FragmentID = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(FragmentID, fragment);
             GL.CompileShader(FragmentID);
             GL.AttachShader(ProgramID, FragmentID);
             var fragmentErr = GL.GetShaderInfoLog(FragmentID);
-            Debug.Assert(fragmentErr == "No errors.\n", "Fragment error: \n" + fragmentErr);
-            
+            Debug.Assert(fragmentErr == "No errors.\n" || string.IsNullOrEmpty(fragmentErr), "Fragment error: \n" + fragmentErr);
+
             GL.LinkProgram(ProgramID);
             var progErr = GL.GetProgramInfoLog(ProgramID);
-            Debug.Assert(progErr == "No errors.\n", "Program error: \n" + progErr);
+            Debug.Assert(progErr == "No errors.\n" || string.IsNullOrEmpty(progErr), "Program error: \n" + progErr);
         }
 
         public void SetCurrent()

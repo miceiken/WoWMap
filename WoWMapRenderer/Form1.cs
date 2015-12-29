@@ -22,6 +22,8 @@ namespace WoWMapRenderer
         public Form1()
         {
             InitializeComponent();
+            TextureCache.Initialize();
+
             _renderer = new TerrainRenderer(GL);
             _renderer.OnProgress += (progress, state) =>
             {
@@ -114,6 +116,15 @@ namespace WoWMapRenderer
 
             _localCascPath = dialog.SelectedPath;
             _cascAction.RunWorkerAsync();
+        }
+
+        private void OnForceWireframeToggle(object sender, EventArgs e)
+        {
+            if (_renderer != null)
+            {
+                forceWireframeToolStripMenuItem.Checked = !forceWireframeToolStripMenuItem.Checked;
+                _renderer.OnForceWireframeToggle(forceWireframeToolStripMenuItem.Checked);
+            }
         }
     }
 

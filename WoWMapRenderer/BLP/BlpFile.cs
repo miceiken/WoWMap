@@ -301,7 +301,7 @@ namespace SereniaBLPLib
 
             picture = GetImageBytes(w, h, GetPictureData(mipmapLevel));
 
-            ARGBColor8.ConvertToBgra(ref picture);
+            // ARGBColor8.ConvertToBgra(ref picture);
         }
 
         /// <summary>

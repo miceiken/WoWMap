@@ -39,6 +39,8 @@
             this._feedbackText = new System.Windows.Forms.ToolStripStatusLabel();
             this._cameraPos = new System.Windows.Forms.ToolStripStatusLabel();
             this._mapListBox = new System.Windows.Forms.ListBox();
+            this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.forceWireframeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -60,7 +62,8 @@
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.loadCASCToolStripMenuItem,
-            this.connectToDatabaseToolStripMenuItem});
+            this.connectToDatabaseToolStripMenuItem,
+            this.optionsToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(1020, 24);
@@ -136,6 +139,21 @@
             this._mapListBox.TabIndex = 3;
             this._mapListBox.SelectedIndexChanged += new System.EventHandler(this.MapSelected);
             // 
+            // optionsToolStripMenuItem
+            // 
+            this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.forceWireframeToolStripMenuItem});
+            this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
+            this.optionsToolStripMenuItem.Text = "Options";
+            // 
+            // forceWireframeToolStripMenuItem
+            // 
+            this.forceWireframeToolStripMenuItem.Name = "forceWireframeToolStripMenuItem";
+            this.forceWireframeToolStripMenuItem.Size = new System.Drawing.Size(161, 22);
+            this.forceWireframeToolStripMenuItem.Text = "Force Wireframe";
+            this.forceWireframeToolStripMenuItem.Click += new System.EventHandler(this.OnForceWireframeToggle);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -171,6 +189,8 @@
         private System.Windows.Forms.ToolStripProgressBar _backgroundTaskProgress;
         private System.Windows.Forms.ToolStripStatusLabel _cameraPos;
         private System.Windows.Forms.ToolStripMenuItem connectToDatabaseToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem forceWireframeToolStripMenuItem;
     }
 }
 

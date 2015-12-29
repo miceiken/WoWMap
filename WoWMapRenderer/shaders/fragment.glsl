@@ -14,9 +14,7 @@ float Triangular(float f)
 	f = f / 2.0f;
 	if (f < 0.0f)
 		return f + 1.0f;
-	else
-		return 1.0f - f;
-	return 0.0f;
+	return 1.0f - f;
 }
 
 vec4 BiCubic(sampler2D textureSampler, vec2 TexCoord, float widthMinClamp, float widthMaxClamp)
@@ -24,12 +22,12 @@ vec4 BiCubic(sampler2D textureSampler, vec2 TexCoord, float widthMinClamp, float
     float fWidth = 256.0;
     float fHeight = 64.0;
 
-    float texelSizeX = 1.0 / fWidth; //size of one texel
-    float texelSizeY = 1.0 / fHeight; //size of one texel
+    float texelSizeX = 1.0 / fWidth;
+    float texelSizeY = 1.0 / fHeight;
     vec4 nSum = vec4(0.0f, 0.0f, 0.0f, 0.0f);
     vec4 nDenom = vec4(0.0f, 0.0f, 0.0f, 0.0f);
-    float a = fract(TexCoord.x * fWidth); // get the decimal part
-    float b = fract(TexCoord.y * fHeight); // get the decimal part
+    float a = fract(TexCoord.x * fWidth);
+    float b = fract(TexCoord.y * fHeight);
     for(int m = -1; m <= 2; m++)
     {
         for(int n = -1; n <= 2; n++)
@@ -52,11 +50,6 @@ vec4 BiCubic(sampler2D textureSampler, vec2 TexCoord, float widthMinClamp, float
     return nSum / nDenom;
 }
 
-vec3 mixTextures(vec3 tex0, vec3 tex1, float alpha)
-{
-    return alpha * (tex1.rgb - tex0.rgb) + tex0.rgb;
-}
-
 out vec4 outputColor;
 
 void main()
@@ -66,8 +59,7 @@ void main()
 	vec4 tex2 = texture(texture_sampler2, texcoord);
 	vec4 tex3 = texture(texture_sampler3, texcoord);
 
-	if (tex0 == vec4(0.0, 0.0, 0.0, 0.0))
-		outputColor = vec4(1.0, 0.0, 0.0, 1.0);
-	else
-		outputColor = tex0 * tex1 * tex2 * tex3 * vec4(vshading, 1.0f);
+	vec4 oColor = tex0 * vec4(1.0f, 0.0f, 0.0f, 1.0f); // mix(mix(mix(tex0, tex1, 0.5f), tex2, 0.5f), tex3, 0.5f) *  vec4(vshading, 1.0f);
+	oColor.a = 1.0f; // Force alpha back to 1
+	outputColor = oColor;
 }

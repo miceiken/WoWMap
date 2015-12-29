@@ -70,6 +70,7 @@
     <Compile Include="Texture.cs" />
     <Compile Include="FrameBuffer.cs" />
     <Compile Include="Renderers\TileRenderer.cs" />
+    <Compile Include="TextureCache.cs" />
     <Compile Include="Vertex.cs" />
     <Compile Include="WMO.cs" />
     <EmbeddedResource Include="Form1.resx">

@@ -24,7 +24,6 @@ namespace WoWMapRenderer.Renderers
         private Dictionary<int, ADT> _mapTiles = new Dictionary<int, ADT>();
         private Dictionary<int, TileRenderer> _batchRenderers = new Dictionary<int, TileRenderer>(9 * 3);
         private Dictionary<int, bool> _loadedTiles = new Dictionary<int, bool>();
-        private FrameBuffer _textureCache;
 
         private Camera _camera;
         private Shader _shader;
@@ -34,10 +33,9 @@ namespace WoWMapRenderer.Renderers
         private Vector2 _currentCenteredTile = Vector2.Zero;
 
         public delegate void ProgressHandler(int progress, string state);
-
         public event ProgressHandler OnProgress;
 
-        private int[] _terrainBuffer = new int[9];
+        public bool ForceWireframe { get; private set; }
 
         public TerrainRenderer(GLControl control)
         {
@@ -56,6 +54,11 @@ namespace WoWMapRenderer.Renderers
                 if (_camera != null)
                     _camera.Update();
             };
+        }
+
+        public void OnForceWireframeToggle(bool forceWireframe)
+        {
+            ForceWireframe = forceWireframe;
         }
 
         /// <summary>
@@ -131,8 +134,6 @@ namespace WoWMapRenderer.Renderers
             };
             _control.Paint += (sender, args) => { Render(); };
 
-            _textureCache = new FrameBuffer(_control.Width, _control.Height);
-
             // Find camera coordinates, set it, set viewport, load tiles, render.
             int x, y;
             GetCenterTile(out x, out y);
@@ -170,10 +171,10 @@ namespace WoWMapRenderer.Renderers
                     var tileX = (int)(_currentCenteredTile.X - 1 + i);
                     var tileY = (int)(_currentCenteredTile.Y - 1 + j);
 
-                    keysToKeep.Add((tileX << 8) | tileY);
-
                     if (IsTileLoaded(tileX, tileY) || !_wdt.HasTile(tileX, tileY))
                         continue;
+
+                    keysToKeep.Add((tileX << 8) | tileY);
 
                     LoadTile(tileX, tileY);
                 }
@@ -194,7 +195,7 @@ namespace WoWMapRenderer.Renderers
             _mapTiles[tileToLoadKey].Read();
 
             foreach (var t in _mapTiles[tileToLoadKey].Textures.MTEX.Filenames)
-                _textureCache.AddTexture((int)t.Key, t.Value);
+                TextureCache.AddTexture(t.Value);
 
             _loadedTiles[tileToLoadKey] = true;
 
@@ -236,9 +237,9 @@ namespace WoWMapRenderer.Renderers
                         var color = new Vector3(1.0f, 1.0f, 1.0f);
                         if (adtChunk.MCCV != null)
                         {
-                            color.X = adtChunk.MCCV.Entries[idx].Blue / 127.0f;
+                            color.X = adtChunk.MCCV.Entries[idx].Red / 127.0f;
                             color.Y = adtChunk.MCCV.Entries[idx].Green / 127.0f;
-                            color.Z = adtChunk.MCCV.Entries[idx].Red / 127.0f;
+                            color.Z = adtChunk.MCCV.Entries[idx].Blue / 127.0f;
                         }
 
                         verticeList.Add(new Vertex
@@ -274,62 +275,60 @@ namespace WoWMapRenderer.Renderers
         {
             var renderer = new MapChunkRenderer { TriangleCount = indices.Length };
 
-            // Schlumpf guarantees the chunks are "always in the exactly same order".
+            // Schlumpf guarantees the chunks are "always in the exactly same order". You know who to blame.
             var mapChunk = terrainTile.MapChunks[mapChunkIndex];
             var texMapChunk = terrainTile.Textures.MapChunks[mapChunkIndex];
 
             for (var i = 0; i < texMapChunk.MCLY.Length; ++i)
             {
+                // TODO: This still doesnt work for a LOT of tiles
                 if (texMapChunk.MCLY[i] == null || texMapChunk.MCAL == null)
                     continue;
 
-                var texture = _textureCache[terrainTile.Textures.MTEX.Filenames.ElementAt((int)texMapChunk.MCLY[i].TextureId).Value];
-                texture.MergeAlphaMap(texMapChunk.MCAL.GetAlpha(i));
-                renderer.AddTexture(texture);
+                if (TextureCache.Unit > 15)
+                    break; // Weird.
+
+                var texture = TextureCache.GetTexture(terrainTile.Textures.MTEX.Filenames.ElementAt((int)texMapChunk.MCLY[i].TextureId).Value);
+                texture.ApplyAlphaAndBind(texMapChunk.MCAL.GetAlpha(i), TextureUnit.Texture0 + TextureCache.Unit);
+                ++TextureCache.Unit;
+                renderer.AddTexture(texture, _shader);
             }
 
+            GL.BindTexture(TextureTarget.Texture2D, 0); // Release textures
+
             GL.BindVertexArray(renderer.VAO);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             var vertexSize = Marshal.SizeOf(typeof(Vertex));
             var verticeSize = vertices.Length * vertexSize;
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, renderer.VerticeVBO);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(verticeSize), vertices, BufferUsageHint.StaticDraw);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             VertexAttribPointer(_shader.GetAttribLocation("vertex_shading"), 3,
-                VertexAttribPointerType.Float, vertexSize, IntPtr.Zero);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
+                VertexAttribPointerType.Float, vertexSize, IntPtr.Zero, true);
 
             VertexAttribPointer(_shader.GetAttribLocation("vertice_position"), 3,
                 VertexAttribPointerType.Float, vertexSize, sizeof(float) * 3);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             VertexAttribPointer(_shader.GetAttribLocation("in_TexCoord0"), 2,
                 VertexAttribPointerType.Float, vertexSize, (IntPtr)(sizeof(float) * 6));
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
             GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(indices.Length * sizeof(uint)),
                 indices, BufferUsageHint.StaticDraw);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             return renderer;
         }
 
-        private void VertexAttribPointer(int location, int size, VertexAttribPointerType type, int stride, IntPtr offset)
+        private void VertexAttribPointer(int location, int size, VertexAttribPointerType type, int stride, IntPtr offset, bool normalized = false)
         {
-            GL.VertexAttribPointer(location, size, type, false, stride, offset);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
+            GL.VertexAttribPointer(location, size, type, normalized, stride, offset);
             GL.EnableVertexAttribArray(location);
         }
 
         private void VertexAttribPointer(int location, int size, VertexAttribPointerType type, int stride, int offset)
         {
             GL.VertexAttribPointer(location, size, type, false, stride, offset);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.EnableVertexAttribArray(location);
         }
 
@@ -408,39 +407,24 @@ namespace WoWMapRenderer.Renderers
             // var buffer = new FrameBuffer(512, 512);
             // buffer.Load();
 
-            // GL.BindFramebuffer(FramebufferTarget.Framebuffer, _framebuffer.FrameBufferID);
             GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
+
+            if (ForceWireframe)
+                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
 
             var uniform = Matrix4.Mult(_camera.View, _camera.Projection);
             GL.UniformMatrix4(_shader.GetUniformLocation("projection_modelview"), false, ref uniform);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
-
-            // GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
 
             GL.Enable(EnableCap.Texture2D);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
-            GL.EnableClientState(ArrayCap.IndexArray);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
-            GL.EnableClientState(ArrayCap.VertexArray);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
-            GL.Enable(EnableCap.CullFace);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
-            GL.CullFace(CullFaceMode.Back);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.Enable(EnableCap.DepthTest);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.DepthFunc(DepthFunction.Less);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             foreach (var renderer in _batchRenderers.Values)
                 renderer.Render(_shader);
 
             GL.BindTexture(TextureTarget.Texture2D, 0);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
             GL.BindVertexArray(0);
-            System.Diagnostics.Debug.Assert(GL.GetError() == ErrorCode.NoError, "An error code was thrown, debug me");
 
             _control.SwapBuffers();
         }
