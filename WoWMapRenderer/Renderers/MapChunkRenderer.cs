@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL;
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 
 namespace WoWMapRenderer.Renderers
 {
@@ -12,7 +13,7 @@ namespace WoWMapRenderer.Renderers
         public int VAO { get; private set; }
 
         private List<int> _textureSamplers = new List<int>();
-        private List<Texture> _textures = new List<Texture>();
+        private Dictionary<int /* unit */, Texture> _textures = new Dictionary<int, Texture>();
 
         public int TriangleCount;
 
@@ -27,11 +28,10 @@ namespace WoWMapRenderer.Renderers
         {
             Debug.Assert(_textureSamplers.Count <= 4, "MapChunkRenderer: Trying to load too many samplers !");
 
-            _textures.Add(texture);
-            texture.BindTexture(TextureUnit.Texture0 + TextureCache.Unit);
-
+            // Unit has already been incremented for the next call - we need current value
+            _textures.Add(TextureCache.Unit - 1, texture);
             var sampler = GL.GenSampler();
-            GL.BindSampler(texture.Unit, sampler);
+            GL.BindSampler(TextureCache.Unit - 1, sampler);
             _textureSamplers.Add(sampler);
         }
 
@@ -46,22 +46,35 @@ namespace WoWMapRenderer.Renderers
 
             foreach (var sampler in _textureSamplers)
                 GL.DeleteSampler(sampler);
+
             _textureSamplers.Clear();
+            _textures.Clear();
         }
 
-        public void Render(Shader shader)
+        public bool Render(Shader shader)
         {
-            GL.BindVertexArray(VAO);
+            try {
+                GL.BindVertexArray(VAO);
 
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndiceVBO);
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndiceVBO);
 
-            for (var i = 0; i < _textureSamplers.Count; ++i)
-            {
-                // GL.ActiveTexture(TextureUnit.Texture0 + i);
-                GL.Uniform1(shader.GetUniformLocation("texture_sampler" + i), _textureSamplers[i]); 
+                foreach (var kv in _textures)
+                    kv.Value.BindTexture(TextureUnit.Texture0 + kv.Key);
+
+                for (var i = 0; i < _textureSamplers.Count; ++i)
+                    GL.Uniform1(shader.GetUniformLocation("texture_sampler" + i), _textureSamplers[i]);
+
+                GL.DrawElements(PrimitiveType.Triangles, TriangleCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
+
+                foreach (var kv in _textures)
+                    kv.Value.Unbind();
+
+                return true;
             }
-
-            GL.DrawElements(PrimitiveType.Triangles, TriangleCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
+            catch
+            {
+                return false;
+            }
         }
     }
 }

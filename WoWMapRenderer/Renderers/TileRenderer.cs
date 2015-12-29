@@ -39,7 +39,8 @@ namespace WoWMapRenderer.Renderers
         public void Render(Shader shader)
         {
             foreach (var renderer in Renderers)
-                renderer.Render(shader);
+                if (!renderer.Render(shader))
+                    return;
         }
     }
 }

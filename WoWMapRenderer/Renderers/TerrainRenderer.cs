@@ -251,6 +251,7 @@ namespace WoWMapRenderer.Renderers
                                 Y = adtChunk.MCNK.Position.Y - ((j + (((i % 2) != 0) ? 0.5f : 0.0f)) * Constants.UnitSize),
                                 Z = adtChunk.MCVT.Heights[idx] + adtChunk.MCNK.Position.Z
                             },
+                            // TODO Unfuck these up
                             TextureCoordinates = new Vector2(i / 8.0f + (((i & 2) == 0) ? 0.5f / 8.0f : 0.0f), j / 17.0f),
                         });
 
@@ -279,23 +280,22 @@ namespace WoWMapRenderer.Renderers
             var mapChunk = terrainTile.MapChunks[mapChunkIndex];
             var texMapChunk = terrainTile.Textures.MapChunks[mapChunkIndex];
 
+            TextureCache.ResetFreeForMapChunk();
+
             for (var i = 0; i < texMapChunk.MCLY.Length; ++i)
             {
                 // TODO: This still doesnt work for a LOT of tiles
                 if (texMapChunk.MCLY[i] == null || texMapChunk.MCAL == null)
                     continue;
 
-                if (TextureCache.Unit > 10)
-                    break;
-
                 var rawTexture = TextureCache.GetRawTexture(terrainTile.Textures.MTEX.Filenames.ElementAt((int)texMapChunk.MCLY[i].TextureId).Value);
                 var newTexture = rawTexture.ApplyAlpha(texMapChunk.MCAL.GetAlpha(i));
 
-                if (TextureCache.AddBoundTexture(newTexture))
-                    renderer.AddTexture(newTexture);
+                TextureCache.AddBoundTexture(newTexture);
+                renderer.AddTexture(newTexture);
             }
 
-            GL.BindTexture(TextureTarget.Texture2D, 0); // Release textures
+            GL.BindTexture(TextureTarget.Texture2D, 0);
 
             GL.BindVertexArray(renderer.VAO);
 

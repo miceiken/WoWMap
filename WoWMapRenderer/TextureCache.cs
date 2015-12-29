@@ -10,37 +10,37 @@ namespace WoWMapRenderer
     public class TextureCache
     {
         public static Dictionary<string /* fileName */, Texture> RawTextures { get; private set; }
-        public static Dictionary<int /* textureUnit */, Texture> BoundTextures { get; private set; }
+        public static Dictionary<int /* textureUnit */, List<Texture>> BoundTextures { get; private set; }
 
+        /// This makes sure that textures for a map chunk do not get pushed to the same unit.
         private static List<int> _freeUnits = new List<int>();
-        public static int Unit
-        {
-            get {
-                return _freeUnits.FirstOrDefault();
-            }
-        }
-
-        public static void UnbindTexture(int unit)
-        {
-            BoundTextures.Remove(unit);
-            _freeUnits.Add(unit);
+        public static int Unit {
+            get { return _freeUnits.First(); }
         }
 
         public static void Initialize()
         {
-            RawTextures = new Dictionary<string, Texture>(10);
-            BoundTextures = new Dictionary<int, Texture>();
+            RawTextures = new Dictionary<string, Texture>(100);
+            BoundTextures = new Dictionary<int, List<Texture>>();
+            ResetFreeForMapChunk();
+        }
+
+        public static void ResetFreeForMapChunk()
+        {
+            _freeUnits.Clear();
             _freeUnits.AddRange(new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
         }
 
         public static bool AddBoundTexture(Texture tex)
         {
-            if (BoundTextures.ContainsKey(tex.Unit))
-                return false;
+            if (!BoundTextures.ContainsKey(Unit))
+                BoundTextures[Unit] = new List<Texture>();
 
             tex.BindTexture(TextureUnit.Texture0 + Unit);
-            BoundTextures[tex.Unit] = tex;
-            _freeUnits.Remove(tex.Unit);
+
+            BoundTextures[Unit].Add(tex);
+
+            _freeUnits.Remove(Unit);
             return true;
         }
 

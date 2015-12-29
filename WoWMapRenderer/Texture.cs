@@ -46,7 +46,6 @@ namespace WoWMapRenderer
         public bool Empty { get; private set; }
 
         public byte[] OriginalData { get; private set; }
-        public byte[] BGRA { get; private set; }
 
         public Texture(string filePath)
         {
@@ -91,7 +90,7 @@ namespace WoWMapRenderer
                     pos += 16;
                 }
             }
-            return new Texture(buffer, Width, Height);
+            return new Texture(buffer, Width, Height, Filename);
         }
 
         public void Delete()
@@ -100,11 +99,19 @@ namespace WoWMapRenderer
                 GL.DeleteTexture(ID);
         }
 
+        public void Unbind()
+        {
+            CanBeBound = true;
+        }
+
         public void BindTexture(TextureUnit unit)
         {
+            if (!CanBeBound)
+                return;
+
             Unit = unit - TextureUnit.Texture0;
 
-            Debug.Assert(CanBeBound, "Texture cannot be bound to GPU!");
+            CanBeBound = false;
 
             GL.ActiveTexture(unit);
             GL.BindTexture(TextureTarget.Texture2D, ID); // Lock
@@ -118,7 +125,7 @@ namespace WoWMapRenderer
             GL.BindTexture(TextureTarget.Texture2D, 0); // Release
         }
 
-        public Texture(byte[] data, int width, int height)
+        public Texture(byte[] data, int width, int height, string fileName)
         {
             OriginalData = new byte[data.Length];
             Buffer.BlockCopy(data, 0, OriginalData, 0, data.Length);
@@ -129,6 +136,7 @@ namespace WoWMapRenderer
             Height = height;
             Empty = false;
             CanBeBound = true;
+            Filename = fileName;
         }
     }
 }
