@@ -97,14 +97,19 @@ namespace WoWMapRenderer.Renderers
 
                     _mapTiles.Clear();
                     int tileIdx = 0, tileCount = _wdt.TileCount;
-                    for (var i = 0; i < 64; ++i)
-                        for (var j = 0; j < 64; ++j)
+                    /*for (var i = 20; i < 30; ++i)
+                        for (var j = 20; j < 30; ++j)
                             if (_wdt.HasTile(i, j))
                             {
                                 ++tileIdx;
-                                _mapTiles[(i << 8) | j] = new ADT(mapName, i, j);
+                                _mapTiles[(i << 8) | j] = new ADT(mapName, i, j, _wdt);
                                 _loader.ReportProgress(tileIdx * 100 / tileCount, "Loading ADTs (" + tileIdx + " / " + tileCount + ") ...");
-                            }
+                            }*/
+
+                    if (!_wdt.HasTile(28, 28))
+                        Console.WriteLine("fuck me");
+
+                    _mapTiles[(28 << 8) | 28] = new ADT(mapName, 28, 28, _wdt);
                 };
                 _loader.ProgressChanged += (sender, args) =>
                 {
@@ -145,7 +150,6 @@ namespace WoWMapRenderer.Renderers
 
             _camera.OnMovement += () =>
             {
-                // Camera already updated
                 UpdateRenderers();
                 Render();
             };
@@ -164,9 +168,9 @@ namespace WoWMapRenderer.Renderers
 
             var keysToKeep = new List<int>(9);
 
-            for (var i = 0; i < 3; ++i)
+            /*for (var i = 1; i < 2; ++i)
             {
-                for (var j = 0; j < 3; ++j)
+                for (var j = 1; j < 2; ++j)
                 {
                     var tileX = (int)(_currentCenteredTile.X - 1 + i);
                     var tileY = (int)(_currentCenteredTile.Y - 1 + j);
@@ -178,9 +182,14 @@ namespace WoWMapRenderer.Renderers
 
                     LoadTile(tileX, tileY);
                 }
-            }
+            }*/
 
-            while (_loadedTiles.Count != 9)
+            var tileX = 28;
+            var tileY = 28;
+            keysToKeep.Add((tileX << 8) | tileY);
+            LoadTile(28, 28);
+
+            while (_loadedTiles.Count != 1)
             {
                 var key = _loadedTiles.First(tile => !keysToKeep.Contains(tile.Key)).Key;
                 _batchRenderers[key].Delete();
@@ -189,87 +198,20 @@ namespace WoWMapRenderer.Renderers
             }
         }
 
-        private void LoadTile(int tileX, int tileY)
+        private bool LoadTile(int tileX, int tileY)
         {
             var tileToLoadKey = (tileX << 8) | tileY;
             _mapTiles[tileToLoadKey].Read();
 
-            foreach (var t in _mapTiles[tileToLoadKey].Textures.MTEX.Filenames)
-                TextureCache.AddRawTexture(t.Value);
-
             _loadedTiles[tileToLoadKey] = true;
-
-            var verticeList = new List<Vertex>(145);
-            var indiceList = new List<uint>(8 * 8 * 4 * 3);
 
             var tileRenderer = new TileRenderer();
             tileRenderer.Generate(_mapTiles[tileToLoadKey]);
             tileRenderer.Bind(_shader);
 
-            // Add textures per MapChunkRenderer here
-
             _batchRenderers[tileToLoadKey] = tileRenderer;
+            return true;
         }
-
-        /*private MapChunkRenderer BindIndexedVertex(int mapChunkIndex, ADT terrainTile, Vertex[] vertices, uint[] indices)
-        {
-            var renderer = new MapChunkRenderer { TriangleCount = indices.Length };
-
-            // Schlumpf guarantees the chunks are "always in the exactly same order". You know who to blame.
-            var mapChunk = terrainTile.MapChunks[mapChunkIndex];
-            var texMapChunk = terrainTile.Textures.MapChunks[mapChunkIndex];
-
-            for (var i = 0; i < texMapChunk.MCLY.Length; ++i)
-            {
-                // TODO: This still doesnt work for a LOT of tiles
-                if (texMapChunk.MCLY[i] == null || texMapChunk.MCAL == null)
-                    continue;
-
-                if (TextureCache.Unit > 10)
-                    break;
-
-                var rawTexture = TextureCache.GetRawTexture(terrainTile.Textures.MTEX.Filenames.ElementAt((int)texMapChunk.MCLY[i].TextureId).Value);
-                var newTexture = rawTexture.ApplyAlpha(texMapChunk.MCAL.GetAlpha(i));
-
-                if (TextureCache.AddBoundTexture(newTexture))
-                    renderer.AddTexture(newTexture);
-            }
-
-            GL.BindTexture(TextureTarget.Texture2D, 0); // Release textures
-
-            GL.BindVertexArray(renderer.VAO);
-
-            var vertexSize = Marshal.SizeOf(typeof(Vertex));
-            var verticeSize = vertices.Length * vertexSize;
-
-            GL.BindBuffer(BufferTarget.ArrayBuffer, renderer.VerticeVBO);
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(verticeSize), vertices, BufferUsageHint.StaticDraw);
-
-            VertexAttribPointer(_shader.GetAttribLocation("vertex_shading"), 3,
-                VertexAttribPointerType.Float, vertexSize, IntPtr.Zero, true);
-
-            VertexAttribPointer(_shader.GetAttribLocation("vertice_position"), 3,
-                VertexAttribPointerType.Float, vertexSize, sizeof(float) * 3);
-
-            VertexAttribPointer(_shader.GetAttribLocation("in_TexCoord0"), 2,
-                VertexAttribPointerType.Float, vertexSize, (IntPtr)(sizeof(float) * 6));
-
-            
-
-            return renderer;
-        }
-
-        private void VertexAttribPointer(int location, int size, VertexAttribPointerType type, int stride, IntPtr offset, bool normalized = false)
-        {
-            GL.VertexAttribPointer(location, size, type, normalized, stride, offset);
-            GL.EnableVertexAttribArray(location);
-        }
-
-        private void VertexAttribPointer(int location, int size, VertexAttribPointerType type, int stride, int offset)
-        {
-            GL.VertexAttribPointer(location, size, type, false, stride, offset);
-            GL.EnableVertexAttribArray(location);
-        }*/
 
         /// <summary>
         /// Returns true if a map tile (ADT) has already been pre-generated; false otherwise.
@@ -321,6 +263,9 @@ namespace WoWMapRenderer.Renderers
         /// </summary>
         private void GetCenterTile(out int x, out int y)
         {
+            x = 28;
+            y = 28;
+            return; // HACK HACK HACK REMOVE ME LATER
             var topLeft = new[] { 64, 64 };
             var bottomRight = new[] { 0, 0 };
             for (var xx = 0; xx < 64; ++xx)
@@ -359,7 +304,7 @@ namespace WoWMapRenderer.Renderers
             GL.DepthFunc(DepthFunction.Less);
 
             foreach (var renderer in _batchRenderers.Values)
-                renderer.Render(_shader);
+                renderer.Render(_shader, ForceWireframe);
 
             GL.BindTexture(TextureTarget.Texture2D, 0);
 

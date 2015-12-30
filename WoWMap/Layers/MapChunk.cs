@@ -14,45 +14,38 @@ namespace WoWMap.Layers
         public MapChunk(ADT adt, Chunk chunk, bool isObj0 = false)
         {
             ADT = adt;
-            WDT = adt.WDT;
             Chunk = chunk;
 
+            MCNK = new MCNK(chunk);
+            Holes = MCNK.Flags.HasFlag(MCNK.MCNKFlags.HighResolutionHoles) ? HighResHoles : TransformToHighRes(MCNK.Holes);
+
             var stream = chunk.GetStream();
-            if (adt.Type == ADTType.Normal)
-            {
-                MCNK = new MCNK(chunk);
-                Holes = MCNK.Flags.HasFlag(MCNK.MCNKFlags.HighResolutionHoles) ? HighResHoles : TransformToHighRes(MCNK.Holes);
+            stream.Seek(chunk.Offset + MCNK.ChunkHeaderSize, SeekOrigin.Begin);
 
-                stream.Seek(chunk.Offset + MCNK.ChunkHeaderSize, SeekOrigin.Begin);
-                SubData = new ChunkData(stream, chunk.Size - MCNK.ChunkHeaderSize);
-            }
-            else
-                SubData = new ChunkData(stream, chunk.Size);
+            MCLY = new List<MCLY>();
 
-            Read();
+            Read(new ChunkData(stream, chunk.Size - MCNK.ChunkHeaderSize));
         }
 
-        public WDT WDT { get; private set; }
+        public void Merge(Chunk chunk)
+        {
+            Read(new ChunkData(chunk.GetStream(), chunk.Size));
+        }
+
+        public WDT WDT { get { return ADT.WDT; } }
 
         public ADT ADT { get; private set; }
         public Chunk Chunk { get; private set; }
-        public ChunkData SubData { get; private set; }
 
         public MCNK MCNK { get; private set; }
         public MCVT MCVT { get; private set; }
-
         public MCAL MCAL { get; private set; }
-
         public MCRD MCRD { get; private set; }
         public MCRW MCRW { get; private set; }
-
         public MCNR MCNR { get; private set; }
-
         public MCCV MCCV { get; private set; }
-
         public MCSH MCSH { get; private set; }
-
-        public MCLY[] MCLY { get; private set; }
+        public List<MCLY> MCLY { get; private set; }
 
         public Vector3[] Vertices { get; private set; }
         public List<Triangle<uint>> Indices { get; private set; }
@@ -61,9 +54,9 @@ namespace WoWMap.Layers
         public List<Triangle<uint>> DoodadIndices;
         public List<Vector3> DoodadNormals;
 
-        public List<Vector3> WMOVertices { get; private set; }
-        public List<Triangle<uint>> WMOIndices { get; private set; }
-        public List<Vector3> WMONormals { get; private set; }
+        public List<Vector3> WMOVertices;
+        public List<Triangle<uint>> WMOIndices;
+        public List<Vector3> WMONormals;
 
         public int Index
         {
@@ -103,14 +96,14 @@ namespace WoWMap.Layers
 
         #endregion
 
-        private void Read()
+        private void Read(ChunkData subData)
         {
-            var mclyIdx = 0;
-            MCLY = new MCLY[4];
-            foreach (var subChunk in SubData.Chunks)
+            foreach (var subChunk in subData.Chunks)
             {
                 switch (subChunk.Name)
                 {
+                    case "MCNK":
+                        break; // Ignore
                     case "MCVT":
                         MCVT = new MCVT(subChunk);
                         break;
@@ -130,18 +123,17 @@ namespace WoWMap.Layers
                         MCSH = new MCSH(subChunk);
                         break;
                     case "MCLY":
-                        if (subChunk.Size == 0)
-                            ++mclyIdx;
-                        else
-                        {
-                            if (mclyIdx >= 4)
-                                Debug.Assert(false, "More than 4 MCLY chunks found! WTFWTFWTFWTF");
-                            MCLY[mclyIdx++] = new MCLY(subChunk);
-                        }
+                        Debug.Assert(MCLY.Count <= 4, "More than 4 MCLY chunks found! WTF");
+                        MCLY.Add(new MCLY(subChunk));
                         break;
                     case "MCAL":
-                        if (WDT != null)
+                        if (WDT == null)
+                            Console.WriteLine($"Skipping MCAL Chunk in MCNK #{Index} because no WDT was provided!");
+                        else
                             MCAL = new MCAL(this, WDT, subChunk);
+                        break;
+                    default:
+                        // Console.WriteLine($"Skipped {subChunk.Name} MCNK subchunk.");
                         break;
                 }
             }
@@ -156,10 +148,10 @@ namespace WoWMap.Layers
             }
 
             if (MCRW != null)
-                GenerateWMOs(WMOVertices, WMONormals, WMOIndices);
+                GenerateWMOs(ref WMOVertices, ref WMONormals, ref WMOIndices);
 
             if (MCRD != null)
-                GenerateDoodads(DoodadVertices, DoodadNormals, DoodadIndices);
+                GenerateDoodads(ref DoodadVertices, ref DoodadNormals, ref DoodadIndices);
         }
 
         #region MCVT - HeightMap
@@ -201,9 +193,9 @@ namespace WoWMap.Layers
 
         #region MCRW/MODF - WMOs
 
-        public void GenerateWMOs(List<Vector3> vertices, List<Vector3> normals, List<Triangle<uint>> indices)
+        public void GenerateWMOs(ref List<Vector3> vertices, ref List<Vector3> normals, ref List<Triangle<uint>> indices)
         {
-            if (ADT.Type != ADTType.Objects || ADT.MODF == null)
+            if (ADT.MODF == null)
                 return;
 
             var drawn = new HashSet<uint>();
@@ -227,11 +219,11 @@ namespace WoWMap.Layers
                 if (normals == null)
                     normals = new List<Vector3>(1000);
 
-                InsertWMOGeometry(wmo, model, vertices, indices, normals);
+                InsertWMOGeometry(wmo, model, ref vertices, ref indices, ref normals);
             }
         }
 
-        public static void InsertWMOGeometry(MODF.MODFEntry wmo, WMORoot model, List<Vector3> vertices, List<Triangle<uint>> indices, List<Vector3> normals)
+        public static void InsertWMOGeometry(MODF.MODFEntry wmo, WMORoot model, ref List<Vector3> vertices, ref List<Triangle<uint>> indices, ref List<Vector3> normals)
         {
             var transform = Transformation.GetWMOTransform(wmo.Position, wmo.Rotation);
             foreach (var group in model.Groups)
@@ -297,9 +289,9 @@ namespace WoWMap.Layers
 
         #region MCRD/MDDF - Doodads
 
-        public void GenerateDoodads(List<Vector3> vertices, List<Vector3> normals, List<Triangle<uint>> indices)
+        public void GenerateDoodads(ref List<Vector3> vertices, ref List<Vector3> normals, ref List<Triangle<uint>> indices)
         {
-            if (ADT.Type != ADTType.Objects || ADT.MDDF == null)
+            if (ADT.MDDF == null)
                 return;
 
             var drawn = new HashSet<uint>();

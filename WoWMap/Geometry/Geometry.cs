@@ -61,22 +61,19 @@ namespace WoWMap.Geometry
                 Indices.Add(new Triangle<uint>(i.Type, i.V0 + vo, i.V1 + vo, i.V2 + vo));
         }
 
-        public void AddADT(ADT source)
+        public void AddADT(ADT s)
         {
-            foreach (var s in new [] { source, source.Objects, /* source.ADTTextures */ })
+            foreach (var mc in s.MapChunks)
             {
-                foreach (var mc in s.MapChunks)
-                {
-                    if (mc.Vertices != null && mc.Vertices.Count() > 0 && mc.Indices != null && mc.Indices.Count > 0)
-                        AddGeometry(mc.Vertices, mc.Indices);
-                    if (mc.WMOVertices != null && mc.WMOVertices.Count > 0 && mc.WMOIndices != null && mc.WMOIndices.Count > 0)
-                        AddGeometry(mc.WMOVertices, mc.WMOIndices);
-                    if (mc.DoodadVertices != null && mc.DoodadVertices.Count > 0 && mc.DoodadIndices != null && mc.DoodadIndices.Count > 0)
-                        AddGeometry(mc.DoodadVertices, mc.DoodadIndices);
-                }
-                if (s.Liquid != null && s.Liquid.Vertices != null && s.Liquid.Indices != null)
-                    AddGeometry(source.Liquid.Vertices, source.Liquid.Indices);
+                if (mc.Vertices != null && mc.Vertices.Count() > 0 && mc.Indices != null && mc.Indices.Count > 0)
+                    AddGeometry(mc.Vertices, mc.Indices);
+                if (mc.WMOVertices != null && mc.WMOVertices.Count > 0 && mc.WMOIndices != null && mc.WMOIndices.Count > 0)
+                    AddGeometry(mc.WMOVertices, mc.WMOIndices);
+                if (mc.DoodadVertices != null && mc.DoodadVertices.Count > 0 && mc.DoodadIndices != null && mc.DoodadIndices.Count > 0)
+                    AddGeometry(mc.DoodadVertices, mc.DoodadIndices);
             }
+            if (s.Liquid != null && s.Liquid.Vertices != null && s.Liquid.Indices != null)
+                AddGeometry(s.Liquid.Vertices, s.Liquid.Indices);
         }
 
         public void AddWDT(WDT source)
@@ -87,7 +84,7 @@ namespace WoWMap.Geometry
             var verts = new List<Vector3>();
             var norms = new List<Vector3>();
             var inds = new List<Triangle<uint>>();
-            MapChunk.InsertWMOGeometry(def, model, verts, inds, norms);
+            MapChunk.InsertWMOGeometry(def, model, ref verts, ref inds, ref norms);
             AddGeometry(verts, inds);
         }
 

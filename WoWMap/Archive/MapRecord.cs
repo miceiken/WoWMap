@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.InteropServices;
 
 namespace WoWMap.Archive
 {
+    [StructLayout(LayoutKind.Sequential)]
     public class MapRecord
     {
         public int ID { get; set; }

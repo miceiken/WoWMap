@@ -75,6 +75,11 @@ namespace WoWMapRenderer
         public Texture ApplyAlpha(byte[] alphaMap)
         {
             Debug.Assert(!CanBeBound, "You should not apply an alpha map to an already mapped texture!");
+            if (alphaMap == null)
+            {
+                //! TODO : This is more than likely a temporary hack. 'cause, WTH.
+                return this;
+            }
 
             // TODO: According to Wiki, alpha textures upscale via cubic interpolation. This is just expanding pixels size by 4.
             var buffer = new byte[OriginalData.Length];
@@ -94,6 +99,11 @@ namespace WoWMapRenderer
             return new Texture(buffer, Width, Height);
         }
 
+        public void UnbindTexture() // Yeaaaah
+        {
+            CanBeBound = true;
+        }
+
         public void Delete()
         {
             if (GL.IsTexture(ID))
@@ -102,9 +112,13 @@ namespace WoWMapRenderer
 
         public void BindTexture(TextureUnit unit)
         {
+            // Already bound
+            if (unit == Unit + TextureUnit.Texture0)
+                return;
+
             Unit = unit - TextureUnit.Texture0;
 
-            Debug.Assert(CanBeBound, "Texture cannot be bound to GPU!");
+            // Debug.Assert(CanBeBound, "Texture cannot be bound to GPU!");
 
             GL.ActiveTexture(unit);
             GL.BindTexture(TextureTarget.Texture2D, ID); // Lock

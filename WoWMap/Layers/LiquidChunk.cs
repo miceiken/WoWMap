@@ -15,13 +15,11 @@ namespace WoWMap.Layers
     {
         public LiquidChunk(ADT adt, Chunk chunk)
         {
-            ADT = adt;
             Chunk = chunk;
 
-            Read();
+            Read(adt);
         }
 
-        public ADT ADT { get; private set; }
         public Chunk Chunk { get; private set; }
 
         public MH2O MH2O { get; private set; }
@@ -30,7 +28,7 @@ namespace WoWMap.Layers
         public List<Vector3> Vertices { get; private set; }
         public List<Triangle<uint>> Indices { get; private set; }
 
-        public void Read()
+        public void Read(ADT tileData)
         {
             if (Chunk == null) return;
 
@@ -41,9 +39,9 @@ namespace WoWMap.Layers
 
             MH2O = new MH2O();
             MH2O.Read(Chunk.GetReader());
-            HeightMaps = new Chunks.MH2O.MH2OHeightmapData[256];
+            HeightMaps = new MH2O.MH2OHeightmapData[256];
 
-            var tilePos = ADT.TilePosition;
+            var tilePos = tileData.TilePosition;
             for (int i = 0; i < MH2O.Headers.Length; i++)
             {
                 var header = MH2O.Headers[i];
@@ -59,20 +57,19 @@ namespace WoWMap.Layers
                 // Not an ocean, lets grab the height map and render mask
                 MH2O.MH2OHeightmapData heightMap;
                 if (!IsOcean(information.LiquidObjectId, information.LiquidTypeId))
-                { // Read the height map
+                {
+                    // Read the height map
                     stream.Seek(Chunk.Offset + information.ofsHeightmapData, SeekOrigin.Begin);
                     heightMap = new MH2O.MH2OHeightmapData();
                     heightMap.Read(Chunk.GetReader());
                     heightMap.RenderMask = GetRenderMask(header, information);
                 }
                 else
-                {
                     heightMap = GetOceanHeightMap(information.MinHeightLevel);
-                }
 
                 HeightMaps[i] = heightMap;
 
-                var basePos = new Vector3(tilePos.X - (Constants.ChunkSize * (i % 16)), tilePos.Y - (Constants.ChunkSize * (i / 16)), 0);
+                var basePos = new Vector2(tilePos.X - (Constants.ChunkSize * (i % 16)), tilePos.Y - (Constants.ChunkSize * (i / 16)));
                 for (int y = information.YOffset; y < (information.YOffset + information.Height); y++)
                 {
                     for (int x = information.XOffset; x < (information.XOffset + information.Width); x++)
@@ -82,6 +79,7 @@ namespace WoWMap.Layers
 
                         var v = new Vector3(basePos.X - (x * Constants.UnitSize), basePos.Y - (y * Constants.UnitSize), heightMap.Heightmap[x, y]);
                         var vo = (uint)Vertices.Count;
+
                         Vertices.Add(v);
                         Vertices.Add(new Vector3(v.X - Constants.UnitSize, v.Y, v.Z));
                         Vertices.Add(new Vector3(v.X, v.Y - Constants.UnitSize, v.Z));
@@ -119,7 +117,13 @@ namespace WoWMap.Layers
 
         public static MH2O.MH2OHeightmapData GetOceanHeightMap(float heightLevel)
         {
-            var data = new MH2O.MH2OHeightmapData { RenderMask = new MH2O.MH2ORenderMask { Mask = new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } } };
+            var data = new MH2O.MH2OHeightmapData
+            {
+                RenderMask = new MH2O.MH2ORenderMask
+                {
+                    Mask = new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }
+                }
+            };
             data.Heightmap = new float[9, 9];
             for (int y = 0; y < 9; y++)
                 for (int x = 0; x < 9; x++)

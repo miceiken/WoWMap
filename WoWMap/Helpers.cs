@@ -29,7 +29,7 @@ namespace WoWMap
                 {
                     if (sb.Length > 1)
                         ret.Add(offset, sb.ToString());
-                    offset = i+1;
+                    offset = i + 1;
                     sb = new StringBuilder();
 
                     continue;

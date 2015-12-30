@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using WoWMap;
+using WoWMap.Chunks;
 using WoWMap.Layers;
 
 namespace WoWMapRenderer.Renderers
@@ -24,6 +25,8 @@ namespace WoWMapRenderer.Renderers
         public int VerticeCount { get { return _vertices.Count; } }
         public int IndiceCount { get { return _indices.Count; } }
 
+        private List<Texture>[] _textures = new List<Texture>[255];
+
         private int _triangleCount;
 
         public TileRenderer()
@@ -33,21 +36,33 @@ namespace WoWMapRenderer.Renderers
 
         ~TileRenderer()
         {
-            foreach (var r in Renderers)
+            /*foreach (var r in Renderers)
                 r.Delete();
-            Renderers.Clear();
+            Renderers.Clear();*/
         }
 
         public void Generate(ADT tile)
         {
-            for (var i = 0; i < tile.MapChunks.Length; ++i)
+            for (var i = 0; i < tile.MapChunks.Count; ++i)
             {
                 var mapChunk = tile.MapChunks[i];
                 if (mapChunk == null)
                     continue;
 
+                var mapChunkRenderer = new MapChunkRenderer(mapChunk);
+                mapChunkRenderer.AddTextureNames(tile.MTEX);
+
+                var mapChunkIndiceStart = IndiceCount;
+
                 GenerateIndices(mapChunk);
                 GenerateVertices(mapChunk);
+
+                var mapChunkIndiceCount = IndiceCount - mapChunkIndiceStart;
+                mapChunkRenderer.SetIndices(mapChunkIndiceCount, mapChunkIndiceStart);
+
+                mapChunkRenderer.ApplyAlphaMap(mapChunk.MCAL);
+
+                Renderers.Add(mapChunkRenderer);
             }
         }
 
@@ -147,24 +162,14 @@ namespace WoWMapRenderer.Renderers
             _indices.Clear();
         }
 
-        public MapChunkRenderer this[int index]
-        {
-            get { return Renderers.ElementAtOrDefault(index); }
-        }
-
-        public void AddMapChunk(MapChunkRenderer mapChunk)
-        {
-            Renderers.Add(mapChunk);
-        }
-
         public void Delete()
         {
-            foreach (var renderer in Renderers)
-                renderer.Delete();
+            /*foreach (var renderer in Renderers)
+                renderer.Delete();*/
             Renderers.Clear();
         }
 
-        public void Render(Shader shader)
+        public void Render(Shader shader, bool polygonForced)
         {
             GL.BindVertexArray(VAO);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
@@ -172,7 +177,7 @@ namespace WoWMapRenderer.Renderers
             foreach (var renderer in Renderers)
                 renderer.Render(shader);
 
-            GL.DrawElements(PrimitiveType.Triangles, _triangleCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
+            // GL.DrawElements(PrimitiveType.Triangles, _triangleCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
 
             GL.BindVertexArray(0);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);

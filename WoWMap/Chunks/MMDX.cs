@@ -13,8 +13,6 @@ namespace WoWMap.Chunks
         public MMDX(Chunk c, uint h) : base(c, h) { }
         public MMDX(Chunk c) : base(c, c.Size) { }
 
-        private string[] _filenames;
-
         public Dictionary<uint, string> Filenames;
 
         public override void Read()

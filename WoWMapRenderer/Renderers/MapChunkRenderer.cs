@@ -2,41 +2,92 @@
 using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL;
 using System.Diagnostics;
+using WoWMap.Layers;
+using WoWMap.Chunks;
+using System.Linq;
 
 namespace WoWMapRenderer.Renderers
 {
     public class MapChunkRenderer
     {
-        private List<int> _textureSamplers = new List<int>();
-        private List<Texture> _textures = new List<Texture>();
-
-        public MapChunkRenderer()
+        public class TextureInfo
         {
+            public uint TextureID; // Offset into MCAL
+            public MCLY.MCLYFlags Flags;
+            public int AlphaMap;
+            public Texture Texture;
+            // public int EffectId;
         }
 
-        public void AddTexture(Texture texture)
+        public int Offset { get; private set; }
+        public int Count { get; private set; }
+
+        public List<TextureInfo> Textures { get; private set; }
+
+        public MapChunkRenderer(MapChunk mapChunk)
         {
-            Debug.Assert(_textureSamplers.Count <= 4, "MapChunkRenderer: Trying to load too many samplers !");
-
-            _textures.Add(texture);
-            texture.BindTexture(TextureUnit.Texture0 + TextureCache.Unit);
-
-            var sampler = GL.GenSampler();
-            GL.BindSampler(texture.Unit, sampler);
-            _textureSamplers.Add(sampler);
+            Textures = new List<TextureInfo>(mapChunk.MCLY.Count);
+            for (var i = 0; i < mapChunk.MCLY.Count; ++i)
+            {
+                Textures.Add(new TextureInfo
+                {
+                    TextureID = mapChunk.MCLY[i].TextureId,
+                    Flags = mapChunk.MCLY[i].Flags,
+                    AlphaMap = (int)mapChunk.MCLY[i].ofsMCAL
+                });
+            }
         }
 
-        public void Delete()
+        public void SetIndices(int indiceCount, int indiceOffset)
         {
-            foreach (var sampler in _textureSamplers)
-                GL.DeleteSampler(sampler);
-            _textureSamplers.Clear();
+            Offset = indiceOffset * sizeof(uint);
+            Count = indiceCount * sizeof(uint);
+        }
+
+        public void AddTextureNames(MTEX mtexChunk)
+        {
+            for (var i = 0; i < Textures.Count; ++i)
+                Textures[i].Texture = TextureCache.GetRawTexture(mtexChunk.Filenames[(int)Textures[i].TextureID]);
+        }
+
+        public void ApplyAlphaMap(MCAL mcalChunk)
+        {
+            for (var i = 0; i < Textures.Count; ++i)
+            {
+                byte[] alphaMap = null;
+                if (mcalChunk != null && mcalChunk.HasAlpha(Textures[i].AlphaMap))
+                    alphaMap = mcalChunk.GetAlpha(Textures[i].AlphaMap);
+
+                Textures[i].Texture = Textures[i].Texture.ApplyAlpha(alphaMap);
+                // Textures are not bound until rendering.
+            }
         }
 
         public void Render(Shader shader)
         {
-            for (var i = 0; i < _textureSamplers.Count; ++i)
-                GL.Uniform1(shader.GetUniformLocation("texture_sampler" + i), _textureSamplers[i]); 
+            // Bind textures and samplers
+            var samplers = new int[4];
+            GL.GenSamplers(4, samplers);
+
+            // TODO Assess how bad this is during render
+            // I can't figure out anything better. Fucking GPU limitations need to be standardized.
+            for (var i = 0; i < Textures.Count; ++i)
+            {
+                var textureInfo = Textures[i];
+                if (textureInfo.Texture.Unit != i)
+                {
+                    textureInfo.Texture.BindTexture(TextureUnit.Texture0 + i);
+                    GL.BindSampler(i, samplers[i]);
+                }
+                GL.Uniform1(shader.GetUniformLocation("texture_sampler" + i), samplers[i]);
+            }
+
+            GL.DrawElements(PrimitiveType.Triangles, Count, DrawElementsType.UnsignedInt, (IntPtr)Offset);
+
+            for (var i = 0; i < Textures.Count; ++i)
+                GL.BindSampler(i, 0);
+
+            GL.DeleteSamplers(4, samplers);
         }
     }
 }

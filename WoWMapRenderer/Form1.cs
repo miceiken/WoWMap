@@ -6,6 +6,8 @@ using CASCExplorer;
 using WoWMap.Archive;
 using WoWMapRenderer.Renderers;
 using OpenGL = OpenTK.Graphics.OpenGL;
+using System.Linq;
+using System.Diagnostics;
 
 namespace WoWMapRenderer
 {
@@ -15,6 +17,8 @@ namespace WoWMapRenderer
         private BackgroundWorkerEx _mapAction;
 
         private DBC<MapRecord> _mapRecords;
+        private DBC<AreaTableRecord> _areaTableRecords;
+        private DB2<AreaAssignmentRecord> _areaAssignmentRecords;
 
         private string _localCascPath = string.Empty;
 
@@ -71,14 +75,14 @@ namespace WoWMapRenderer
             _mapAction.DoWork += (sender, e) => {
                 _cascAction.ReportProgress(0, "Loading maps ...");
 
+                _areaTableRecords = new DBC<AreaTableRecord>(@"DBFilesClient\AreaTable.dbc");
                 _mapRecords = new DBC<MapRecord>(@"DBFilesClient\Map.dbc");
+                _areaAssignmentRecords = new DB2<AreaAssignmentRecord>(@"DBFilesClient\AreaAssignment.db2");
 
                 var rowIndex = 0;
                 foreach (var mapEntry in _mapRecords.Rows)
                 {
-                    _mapAction.ReportProgress(++rowIndex * 100 / _mapRecords.Rows.Length, new [] {
-                        mapEntry.MapNameLang, mapEntry.Directory
-                    });
+                    _mapAction.ReportProgress(++rowIndex * 100 / _mapRecords.Rows.Length, mapEntry);
                 }
             };
             _mapAction.ProgressChanged += (sender, e) => 
@@ -88,11 +92,18 @@ namespace WoWMapRenderer
                 _backgroundTaskProgress.Maximum = 100;
                 _backgroundTaskProgress.Value = e.ProgressPercentage;
 
+                var mapEntry = (MapRecord)e.UserState;
+
                 _mapListBox.Items.Add(new MapListBoxEntry
                 {
-                    Name = ((string[])e.UserState)[0],
-                    Directory = ((string[])e.UserState)[1],
+                    Name = mapEntry.MapNameLang,
+                    Directory = mapEntry.Directory,
+                    MapID = mapEntry.ID
                 });
+            };
+            _mapAction.RunWorkerCompleted += (sender, e) =>
+            {
+                _feedbackText.Text = "Maps loaded.";
             };
         }
 
@@ -104,6 +115,22 @@ namespace WoWMapRenderer
         private void MapSelected(object sender, EventArgs e)
         {
             var entry = (MapListBoxEntry)_mapListBox.SelectedItem;
+            _areaListBox.Items.Clear();
+
+            for (var i = 0; i < _areaTableRecords.Rows.Length; ++i)
+            {
+                var record = _areaTableRecords.Rows[i];
+                /*AreaTableRecord parentRecord = null;
+                if (record.ParentAreaID != 0)
+                    parentRecord = _areaTableRecords.Rows.ToList().First(k => k.ID == record.ParentAreaID);
+
+                while (parentRecord.ParentAreaID != 0)
+                    parentRecord = _areaTableRecords.Rows.ToList().First(k => k.ID == parentRecord.ParentAreaID);*/
+
+                if (record.ContinentID == entry.MapID)
+                    _areaListBox.Items.Add(new AreaListBoxItem(record));
+            }
+
             _renderer.LoadMap(entry.Directory);
         }
 
@@ -135,12 +162,41 @@ namespace WoWMapRenderer
                 _renderer.OnForceWireframeToggle(forceWireframeToolStripMenuItem.Checked);
             }
         }
+
+        private void OnAreaSelected(object sender, EventArgs e)
+        {
+            var entry = (AreaListBoxItem)_areaListBox.SelectedItem;
+            var x = _areaAssignmentRecords.Rows.ToList().Where(k => k.MapID == entry.MapId);
+            var locs = _areaAssignmentRecords.Rows.ToList().Where(k => k.AreaID == entry.AreaID);
+            Debug.Assert(locs.Count() == 1, $"Expected one AreaAssignment record for AreaID {entry.AreaID}, found {locs.Count()}");
+            _feedbackText.Text = $"Chunk [ {locs.First().ChunkX} {locs.First().ChunkY} ]";
+        }
     }
 
     internal struct MapListBoxEntry
     {
         public string Name;
         public string Directory;
+        public int MapID;
+
+        public override string ToString()
+        {
+            return Name;
+        }
+    }
+
+    internal struct AreaListBoxItem
+    {
+        public string Name;
+        public int AreaID;
+        public int MapId;
+
+        public AreaListBoxItem(AreaTableRecord record)
+        {
+            Name = record.AreaName;
+            AreaID = record.ID;
+            MapId = record.ContinentID;
+        }
 
         public override string ToString()
         {
