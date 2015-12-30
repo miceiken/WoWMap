@@ -2,6 +2,7 @@
 using OpenTK.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using WoWMap;
@@ -171,7 +172,7 @@ namespace WoWMapRenderer.Renderers
             foreach (var renderer in Renderers)
                 renderer.Render(shader);
 
-            GL.DrawElements(PrimitiveType.TriangleFan, _triangleCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
+            GL.DrawElements(PrimitiveType.Triangles, _triangleCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
 
             GL.BindVertexArray(0);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);

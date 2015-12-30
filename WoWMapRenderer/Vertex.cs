@@ -3,7 +3,7 @@ using OpenTK;
 
 namespace WoWMapRenderer
 {
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 0)]
     internal struct Vertex
     {
         public Vector3 Color;
