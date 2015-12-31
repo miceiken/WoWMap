@@ -10,84 +10,89 @@ namespace WoWMapRenderer.Renderers
 {
     public class MapChunkRenderer
     {
-        public class TextureInfo
+        public class Material
         {
             public uint TextureID; // Offset into MCAL
             public MCLY.MCLYFlags Flags;
-            public int AlphaMap;
+            public int AlphaMapId;
+
+            public Texture AlphaTexture;
             public Texture Texture;
-            // public int EffectId;
         }
 
-        public int Offset { get; private set; }
-        public int Count { get; private set; }
+        public int IndicesOffset { get; private set; } // For rendering vertices
+        public int IndicesCount { get; private set; } // For rendering vertices
 
-        public List<TextureInfo> Textures { get; private set; }
+        public int LayerCount { get { return Materials.Count; } } // Sent to shader program
+
+        public List<Material> Materials { get; private set; }
 
         public MapChunkRenderer(MapChunk mapChunk)
         {
-            Textures = new List<TextureInfo>(mapChunk.MCLY.Count);
+            Materials = new List<Material>(mapChunk.MCLY.Count);
             for (var i = 0; i < mapChunk.MCLY.Count; ++i)
             {
-                Textures.Add(new TextureInfo
+                Materials.Add(new Material
                 {
                     TextureID = mapChunk.MCLY[i].TextureId,
                     Flags = mapChunk.MCLY[i].Flags,
-                    AlphaMap = (int)mapChunk.MCLY[i].ofsMCAL
+                    AlphaMapId = (int)mapChunk.MCLY[i].ofsMCAL
                 });
             }
         }
 
         public void SetIndices(int indiceCount, int indiceOffset)
         {
-            Offset = indiceOffset * sizeof(uint);
-            Count = indiceCount * sizeof(uint);
+            IndicesOffset = indiceOffset * sizeof(uint);
+            IndicesCount = indiceCount * sizeof(uint);
         }
 
         public void AddTextureNames(MTEX mtexChunk)
         {
-            for (var i = 0; i < Textures.Count; ++i)
-                Textures[i].Texture = TextureCache.GetRawTexture(mtexChunk.Filenames[(int)Textures[i].TextureID]);
+            for (var i = 0; i < Materials.Count; ++i)
+            {
+                var textureName = mtexChunk.Filenames[(int)Materials[i].TextureID];
+
+                Materials[i].Texture = TextureCache.GetRawTexture(textureName);
+                Materials[i].Texture.InternalFormat = PixelInternalFormat.Rgba;
+                Materials[i].Texture.Format = PixelFormat.Rgba;
+                Materials[i].Texture.WrapS = (int)All.Repeat;
+                Materials[i].Texture.WrapT = (int)All.Repeat;
+            }
         }
 
         public void ApplyAlphaMap(MCAL mcalChunk)
         {
-            for (var i = 0; i < Textures.Count; ++i)
+            for (var i = 1; i < Materials.Count; ++i)
             {
-                byte[] alphaMap = null;
-                if (mcalChunk != null && mcalChunk.HasAlpha(Textures[i].AlphaMap))
-                    alphaMap = mcalChunk.GetAlpha(Textures[i].AlphaMap);
+                if (mcalChunk == null || !mcalChunk.HasAlpha(Materials[i].AlphaMapId))
+                    continue;
 
-                Textures[i].Texture = Textures[i].Texture.ApplyAlpha(alphaMap);
-                // Textures are not bound until rendering.
+                Materials[i - 1].AlphaTexture = new Texture(mcalChunk.GetAlpha(Materials[i - 1].AlphaMapId), 64, 64);
+                // TODO: Luminance is legacy.
+                Materials[i - 1].AlphaTexture.InternalFormat = PixelInternalFormat.Luminance;
+                Materials[i - 1].AlphaTexture.Format = PixelFormat.Luminance;
+                Materials[i - 1].AlphaTexture.MagFilter = (int)All.Linear;
+                Materials[i - 1].AlphaTexture.MinFilter = (int)All.Linear;
             }
         }
 
         public void Render(Shader shader)
         {
             // Bind textures and samplers
-            var samplers = new int[4];
-            GL.GenSamplers(4, samplers);
+            GL.Uniform1(shader.GetUniformLocation("layerCount"), LayerCount);
 
-            // TODO Assess how bad this is during render
-            // I can't figure out anything better. Fucking GPU limitations need to be standardized.
-            for (var i = 0; i < Textures.Count; ++i)
+            // This should use up at most 7 texture units - should be fine on even the shittyest GPU.
+            for (var i = 0; i < Materials.Count; ++i)
             {
-                var textureInfo = Textures[i];
-                if (textureInfo.Texture.Unit != i)
-                {
-                    textureInfo.Texture.BindTexture(TextureUnit.Texture0 + i);
-                    GL.BindSampler(i, samplers[i]);
-                }
-                GL.Uniform1(shader.GetUniformLocation("texture_sampler" + i), samplers[i]);
+                var textureInfo = Materials[i];
+                textureInfo.Texture.BindToUnit(TextureUnit.Texture0 + 2 * i);
+
+                if (i > 0 && textureInfo.AlphaTexture != null)
+                    textureInfo.AlphaTexture.BindToUnit(TextureUnit.Texture0 + 2 * i - 1);
             }
 
-            GL.DrawElements(PrimitiveType.Triangles, Count, DrawElementsType.UnsignedInt, (IntPtr)Offset);
-
-            for (var i = 0; i < Textures.Count; ++i)
-                GL.BindSampler(i, 0);
-
-            GL.DeleteSamplers(4, samplers);
+            GL.DrawElements(PrimitiveType.Triangles, IndicesCount, DrawElementsType.UnsignedShort, (IntPtr)IndicesOffset);
         }
     }
 }

@@ -9,5 +9,6 @@ namespace WoWMapRenderer
         public Vector3 Color;
         public Vector3 Position;
         public Vector2 TextureCoordinates;
+        public Vector2 AlphaCoordinates;
     }
 }

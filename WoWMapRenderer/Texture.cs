@@ -10,7 +10,7 @@ using WoWMap.Archive;
 
 namespace WoWMapRenderer
 {
-    public class Texture
+    /*public class Texture
     {
         public Texture(int width, int height, PixelInternalFormat internalFormat, PixelFormat format, bool empty = true)
         {
@@ -45,8 +45,7 @@ namespace WoWMapRenderer
         public bool CanBeBound { get; private set; }
         public bool Empty { get; private set; }
 
-        public byte[] OriginalData { get; private set; }
-        public byte[] BGRA { get; private set; }
+        public byte[] Data { get; private set; }
 
         public Texture(string filePath)
         {
@@ -63,7 +62,7 @@ namespace WoWMapRenderer
 
                 byte[] bgra;
                 blp.GetByteBuffer(0, out bgra);
-                OriginalData = bgra;
+                Data = bgra;
                 Empty = false;
 
                 Format = PixelFormat.Rgba;
@@ -82,8 +81,8 @@ namespace WoWMapRenderer
             }
 
             // TODO: According to Wiki, alpha textures upscale via cubic interpolation. This is just expanding pixels size by 4.
-            var buffer = new byte[OriginalData.Length];
-            Buffer.BlockCopy(OriginalData, 0, buffer, 0, OriginalData.Length);
+            var buffer = new byte[Data.Length];
+            Buffer.BlockCopy(Data, 0, buffer, 0, Data.Length);
             if (alphaMap.Length == 64 * 64)
             {
                 var pos = 3u;
@@ -123,19 +122,19 @@ namespace WoWMapRenderer
             GL.ActiveTexture(unit);
             GL.BindTexture(TextureTarget.Texture2D, ID); // Lock
             int level = 0;
-            var fn = (int)All.Nearest;
+            var fn = (int)All.Linear;
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, ref fn);
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, ref fn);
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, ref level);
             GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, ref level);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, Width, Height, 0, Format, PixelType.UnsignedByte, OriginalData);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, Width, Height, 0, Format, PixelType.UnsignedByte, Data);
             GL.BindTexture(TextureTarget.Texture2D, 0); // Release
         }
 
         public Texture(byte[] data, int width, int height)
         {
-            OriginalData = new byte[data.Length];
-            Buffer.BlockCopy(data, 0, OriginalData, 0, data.Length);
+            Data = new byte[data.Length];
+            Buffer.BlockCopy(data, 0, Data, 0, data.Length);
 
             Format = PixelFormat.Rgba;
             InternalFormat = PixelInternalFormat.Rgba;
@@ -144,5 +143,5 @@ namespace WoWMapRenderer
             Empty = false;
             CanBeBound = true;
         }
-    }
+    }*/
 }

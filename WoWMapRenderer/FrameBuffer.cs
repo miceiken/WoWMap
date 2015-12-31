@@ -6,7 +6,7 @@ using OpenTK.Graphics.OpenGL;
 
 namespace WoWMapRenderer
 {
-    class FrameBuffer
+    /*class FrameBuffer
     {
         private Dictionary<int, Texture>  _textures = new Dictionary<int, Texture>();
 
@@ -35,7 +35,7 @@ namespace WoWMapRenderer
             if (GL.IsRenderbuffer(_depthBufferID))
             GL.DeleteRenderbuffer(_depthBufferID);
             _textures.Clear();
-        }*/
+        }
 
         public FrameBuffer(int width, int height)
         {
@@ -102,5 +102,5 @@ namespace WoWMapRenderer
         {
             get { return _textures.FirstOrDefault(kv => kv.Value.Filename == filename).Value; }
         }
-    }
+    }*/
 }

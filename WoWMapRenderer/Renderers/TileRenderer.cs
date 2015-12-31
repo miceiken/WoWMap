@@ -20,14 +20,12 @@ namespace WoWMapRenderer.Renderers
         public int IndicesVBO { get; private set; }
 
         private List<Vertex> _vertices = new List<Vertex>();
-        private List<uint> _indices = new List<uint>();
+        private List<ushort> _indices = new List<ushort>();
 
         public int VerticeCount { get { return _vertices.Count; } }
         public int IndiceCount { get { return _indices.Count; } }
 
         private List<Texture>[] _textures = new List<Texture>[255];
-
-        private int _triangleCount;
 
         public TileRenderer()
         {
@@ -61,6 +59,7 @@ namespace WoWMapRenderer.Renderers
                 mapChunkRenderer.SetIndices(mapChunkIndiceCount, mapChunkIndiceStart);
 
                 mapChunkRenderer.ApplyAlphaMap(mapChunk.MCAL);
+                // mapChunkRenderer.ApplyShadowMap(mapChunk.MCSH);
 
                 Renderers.Add(mapChunkRenderer);
             }
@@ -81,7 +80,7 @@ namespace WoWMapRenderer.Renderers
                         color.Z = mapChunk.MCCV.Entries[idx].Blue / 127.0f;
                     }
 
-                    _vertices.Add(new Vertex
+                    var vertex = new Vertex
                     {
                         Color = color,
                         Position = new Vector3
@@ -95,7 +94,15 @@ namespace WoWMapRenderer.Renderers
                             X = i * 0.5f / 8.0f,
                             Y = (j + (((i % 2) != 0) ? 0.5f : 0.0f)) / 8.0f
                         }
-                    });
+                    };
+
+                    vertex.AlphaCoordinates = new Vector2
+                    {
+                        X = vertex.TextureCoordinates.X, 
+                        Y = vertex.TextureCoordinates.Y
+                    };
+
+                    _vertices.Add(vertex);
 
                     ++idx;
                 }
@@ -111,10 +118,10 @@ namespace WoWMapRenderer.Renderers
                 if (!mapChunk.HasHole(unitidx % 8, unitidx++ / 8))
                 {
                     _indices.AddRange(new[] {
-                        (uint)(j + offset), (uint)(j - 9 + offset), (uint)(j + 8 + offset),
-                        (uint)(j + offset), (uint)(j - 8 + offset), (uint)(j - 9 + offset),
-                        (uint)(j + offset), (uint)(j + 9 + offset), (uint)(j - 8 + offset),
-                        (uint)(j + offset), (uint)(j + 8 + offset), (uint)(j + 9 + offset)
+                        (ushort)(j + offset), (ushort)(j - 9 + offset), (ushort)(j + 8 + offset),
+                        (ushort)(j + offset), (ushort)(j - 8 + offset), (ushort)(j - 9 + offset),
+                        (ushort)(j + offset), (ushort)(j + 9 + offset), (ushort)(j - 8 + offset),
+                        (ushort)(j + offset), (ushort)(j + 8 + offset), (ushort)(j + 9 + offset)
                     });
                 }
                 if ((j + 1) % (9 + 8) == 0) j += 9;
@@ -126,8 +133,6 @@ namespace WoWMapRenderer.Renderers
             VerticeVBO = GL.GenBuffer();
             IndicesVBO = GL.GenBuffer();
             VAO = GL.GenVertexArray();
-
-            _triangleCount = _indices.Count;
 
             GL.BindVertexArray(VAO);
 
@@ -141,16 +146,20 @@ namespace WoWMapRenderer.Renderers
                 vertexSize, IntPtr.Zero);
             GL.EnableVertexAttribArray(shader.GetAttribLocation("vertex_shading"));
 
-            GL.VertexAttribPointer(shader.GetAttribLocation("vertice_position"), 3, VertexAttribPointerType.Float, false,
+            GL.VertexAttribPointer(shader.GetAttribLocation("position"), 3, VertexAttribPointerType.Float, false,
                 vertexSize, sizeof(float) * 3);
-            GL.EnableVertexAttribArray(shader.GetAttribLocation("vertice_position"));
+            GL.EnableVertexAttribArray(shader.GetAttribLocation("position"));
 
-            GL.VertexAttribPointer(shader.GetAttribLocation("in_TexCoord0"), 2, VertexAttribPointerType.Float, true,
+            GL.VertexAttribPointer(shader.GetAttribLocation("texture_coordinates"), 2, VertexAttribPointerType.Float, true,
                 vertexSize, (IntPtr)(sizeof(float) * 6));
-            GL.EnableVertexAttribArray(shader.GetAttribLocation("in_TexCoord0"));
+            GL.EnableVertexAttribArray(shader.GetAttribLocation("texture_coordinates"));
+
+            GL.VertexAttribPointer(shader.GetAttribLocation("alpha_coordinates"), 2, VertexAttribPointerType.Float, true,
+                vertexSize, (IntPtr)(sizeof(float) * 8));
+            GL.EnableVertexAttribArray(shader.GetAttribLocation("alpha_coordinates"));
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(_indices.Count * sizeof(uint)),
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(_indices.Count * sizeof(ushort)),
                 _indices.ToArray(), BufferUsageHint.StaticDraw);
 
             GL.BindVertexArray(0);
@@ -164,20 +173,16 @@ namespace WoWMapRenderer.Renderers
 
         public void Delete()
         {
-            /*foreach (var renderer in Renderers)
-                renderer.Delete();*/
             Renderers.Clear();
         }
 
-        public void Render(Shader shader, bool polygonForced)
+        public void Render(Shader shader)
         {
             GL.BindVertexArray(VAO);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
 
             foreach (var renderer in Renderers)
                 renderer.Render(shader);
-
-            // GL.DrawElements(PrimitiveType.Triangles, _triangleCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
 
             GL.BindVertexArray(0);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);

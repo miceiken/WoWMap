@@ -288,7 +288,7 @@ namespace SereniaBLPLib
             return bmp;
         }
 
-        public void GetByteBuffer(int mipmapLevel, out byte[] picture)
+        public byte[] GetByteBuffer(int mipmapLevel)
         {
             if (mipmapLevel >= MipMapCount) mipmapLevel = MipMapCount - 1;
             if (mipmapLevel < 0) mipmapLevel = 0;
@@ -299,8 +299,7 @@ namespace SereniaBLPLib
             var h = Height / scale;
             if (h < 1) h = 1;
 
-            picture = GetImageBytes(w, h, GetPictureData(mipmapLevel));
-
+            return GetImageBytes(w, h, GetPictureData(mipmapLevel));
             // ARGBColor8.ConvertToBgra(ref picture);
         }
 
