@@ -63,17 +63,17 @@ namespace WoWMapRenderer.Renderers
 
         public void ApplyAlphaMap(MCAL mcalChunk)
         {
-            for (var i = 1; i < Materials.Count; ++i)
+            for (var i = 0; i < Materials.Count; ++i)
             {
                 if (mcalChunk == null || !mcalChunk.HasAlpha(Materials[i].AlphaMapId))
                     continue;
 
-                Materials[i - 1].AlphaTexture = new Texture(mcalChunk.GetAlpha(Materials[i - 1].AlphaMapId), 64, 64);
+                Materials[i].AlphaTexture = new Texture(mcalChunk.GetAlpha(Materials[i].AlphaMapId), 64, 64);
                 // TODO: Luminance is legacy.
-                Materials[i - 1].AlphaTexture.InternalFormat = PixelInternalFormat.Luminance;
-                Materials[i - 1].AlphaTexture.Format = PixelFormat.Luminance;
-                Materials[i - 1].AlphaTexture.MagFilter = (int)All.Linear;
-                Materials[i - 1].AlphaTexture.MinFilter = (int)All.Linear;
+                Materials[i].AlphaTexture.InternalFormat = PixelInternalFormat.Luminance;
+                Materials[i].AlphaTexture.Format = PixelFormat.Luminance;
+                Materials[i].AlphaTexture.MagFilter = (int)All.Linear;
+                Materials[i].AlphaTexture.MinFilter = (int)All.Linear;
             }
         }
 
@@ -86,10 +86,10 @@ namespace WoWMapRenderer.Renderers
             for (var i = 0; i < Materials.Count; ++i)
             {
                 var textureInfo = Materials[i];
-                textureInfo.Texture.BindToUnit(TextureUnit.Texture0 + 2 * i);
+                textureInfo.Texture.BindToUnit(TextureUnit.Texture1 + 2 * i);
 
                 if (i > 0 && textureInfo.AlphaTexture != null)
-                    textureInfo.AlphaTexture.BindToUnit(TextureUnit.Texture0 + 2 * i - 1);
+                    textureInfo.AlphaTexture.BindToUnit(TextureUnit.Texture1 + 2 * i - 1);
             }
 
             GL.DrawElements(PrimitiveType.Triangles, IndicesCount, DrawElementsType.UnsignedShort, (IntPtr)IndicesOffset);

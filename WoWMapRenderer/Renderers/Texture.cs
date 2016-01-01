@@ -13,6 +13,8 @@ namespace WoWMapRenderer.Renderers
     {
         public int TextureId { get; private set; }
 
+        public string Filename { get; private set; }
+
         public int MinFilter;
         public int MagFilter;
 
@@ -50,6 +52,8 @@ namespace WoWMapRenderer.Renderers
         {
             using (var blp = new BlpFile(CASC.OpenFile(filePath)))
             {
+                Filename = filePath;
+
                 Width = blp.Width;
                 Height = blp.Height;
 
@@ -61,7 +65,7 @@ namespace WoWMapRenderer.Renderers
                 MagFilter = (int)All.Linear;
                 MinFilter = (int)All.LinearMipmapLinear;
 
-                CurrentUnit = TextureUnit.Texture31; // Some we will never reach
+                CurrentUnit = TextureUnit.Texture31; // Some value we will never ever reach
             }
         }
 
@@ -82,11 +86,11 @@ namespace WoWMapRenderer.Renderers
             TextureId = GL.GenTexture();
 
             GL.BindTexture(TextureTarget.Texture2D, TextureId);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, Width, Height, 0, Format, PixelType.Byte, Data);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, MinFilter);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, MagFilter);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, WrapS);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, WrapT);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, Width, Height, 0, Format, PixelType.UnsignedByte, Data);
             return true;
         }
     }

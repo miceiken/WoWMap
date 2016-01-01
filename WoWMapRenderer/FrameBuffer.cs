@@ -6,101 +6,73 @@ using OpenTK.Graphics.OpenGL;
 
 namespace WoWMapRenderer
 {
-    /*class FrameBuffer
+    class Framebuffer
     {
-        private Dictionary<int, Texture>  _textures = new Dictionary<int, Texture>();
-
-        public Dictionary<int, Texture> Store
-        {
-            get { return _textures; }
-        }
-
-        private int _depthBufferID = 0;
-        private int _frameBufferID = 0;
-
-        public int FrameBufferID { get { return _frameBufferID; } }
-        public int DepthBufferID { get { return _depthBufferID; } }
         public int Width { get; private set; }
         public int Height { get; private set; }
 
-        public FrameBuffer() : this(0, 0)
-        {
-            
-        }
+        private int FBO;
+        public int TexColorBuffer { get; private set; }
+        private int RboDepthStencil;
 
-        /*~FrameBuffer()
-        {
-            if (GL.IsFramebuffer(_frameBufferID))
-                GL.DeleteFramebuffer(_frameBufferID);
-            if (GL.IsRenderbuffer(_depthBufferID))
-            GL.DeleteRenderbuffer(_depthBufferID);
-            _textures.Clear();
-        }
+        public FramebufferErrorCode ErrorCode { get; private set; }
 
-        public FrameBuffer(int width, int height)
+        public Framebuffer(int width, int height)
         {
             Width = width;
             Height = height;
-            _frameBufferID = 0;
-            _depthBufferID = 0;
-        }
 
-        public int AddTexture(int key, string tex)
-        {
-            var text = new Texture(tex);
-            _textures[key] = text;
-            return text.ID;
-        }
+            FBO = GL.GenFramebuffer();
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, FBO);
 
-        public bool Load()
-        {
-            _frameBufferID = GL.GenFramebuffer();
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, _frameBufferID);
+            TexColorBuffer = GL.GenTexture();
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, TexColorBuffer);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Width, Height, 0,
+                PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)All.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)All.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)All.Clamp);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)All.Clamp);
 
-            var colorBuffer = new Texture(Width, Height, PixelInternalFormat.Rgba, PixelFormat.Bgra, true);
-            colorBuffer.LoadEmptyTexture();
-            _textures.Add(0, colorBuffer);
+            GL.FramebufferTexture(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TexColorBuffer, 0);
+            GL.DrawBuffer(DrawBufferMode.ColorAttachment0);
 
-            CreateRenderbuffer(RenderbufferStorage.Depth24Stencil8, ref _depthBufferID);
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
-                TextureTarget.Texture2D, colorBuffer.ID, 0);
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment,
-                RenderbufferTarget.Renderbuffer, DepthBufferID);
+            RboDepthStencil = GL.GenRenderbuffer();
+            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, RboDepthStencil);
+            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.Depth24Stencil8, Width, Height);
 
-            var errCode = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
-            if (errCode != FramebufferErrorCode.FramebufferComplete)
+            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, RenderbufferTarget.Renderbuffer, RboDepthStencil);
+
+            ErrorCode = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+            if (ErrorCode != FramebufferErrorCode.FramebufferComplete)
             {
-                GL.DeleteFramebuffer(FrameBufferID);
-                GL.DeleteRenderbuffer(DepthBufferID);
-                _textures.Clear();
-                Debug.Assert(false, "Error while constructing FBO !");
-                return false;
+                GL.DeleteFramebuffer(FBO);
+                GL.DeleteRenderbuffer(RboDepthStencil);
+                GL.DeleteTexture(TexColorBuffer);
             }
 
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-            return true;
         }
 
-        public void CreateRenderbuffer(RenderbufferStorage internalFmt, ref int id)
+        public void Bind()
         {
-            if (GL.IsRenderbuffer(id))
-                GL.DeleteRenderbuffer(id);
-
-            id = GL.GenRenderbuffer();
-            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, id);
-            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, internalFmt, Width, Height);
-
-            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, FBO);
         }
 
-        public Texture this[int key]
+        /// <summary>
+        /// Renders to back buffer.
+        /// </summary>
+        public void Release()
         {
-            get { return _textures[key]; }
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         }
 
-        public Texture this[string filename]
+        ~Framebuffer()
         {
-            get { return _textures.FirstOrDefault(kv => kv.Value.Filename == filename).Value; }
+            /* GL.DeleteFramebuffer(FBO);
+            GL.DeleteRenderbuffer(RboDepthStencil);
+            GL.DeleteTexture(TexColorBuffer); */
         }
-    }*/
+    }
 }

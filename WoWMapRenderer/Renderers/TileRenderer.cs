@@ -178,6 +178,10 @@ namespace WoWMapRenderer.Renderers
 
         public void Render(Shader shader)
         {
+            // TODO: Don't bother calling glDrawElements on ranges when there is only one
+            // texture used on the whole tile. Rather acquire the texture, load it,
+            // and render all the terrain at once.
+            
             GL.BindVertexArray(VAO);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
 

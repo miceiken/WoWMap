@@ -11,6 +11,7 @@ using OpenTK.Graphics.OpenGL;
 using WoWMap;
 using WoWMap.Chunks;
 using WoWMap.Layers;
+using System.Drawing;
 
 namespace WoWMapRenderer.Renderers
 {
@@ -20,6 +21,8 @@ namespace WoWMapRenderer.Renderers
         private GLControl _control;
 
         private WDT _wdt;
+
+        private Framebuffer _framebuffer;
 
         private Dictionary<int, ADT> _mapTiles = new Dictionary<int, ADT>();
         private Dictionary<int, TileRenderer> _batchRenderers = new Dictionary<int, TileRenderer>(9 * 3);
@@ -57,6 +60,12 @@ namespace WoWMapRenderer.Renderers
                 if (_camera != null)
                     _camera.Update();
             };
+        }
+
+        ~TerrainRenderer()
+        {
+            /*if (_framebuffer != null)
+                _framebuffer.Release();*/
         }
 
         public void OnForceWireframeToggle(bool forceWireframe)
@@ -130,6 +139,8 @@ namespace WoWMapRenderer.Renderers
 
         private void InitializeView()
         {
+            //_framebuffer = new Framebuffer(_control.Width, _control.Height);
+
             _shader = new Shader();
             _shader.CreateFromFile("shaders/vertex.glsl", "shaders/fragment.glsl");
             _shader.SetCurrent();
@@ -309,8 +320,10 @@ namespace WoWMapRenderer.Renderers
 
         private void Render()
         {
-            // var buffer = new FrameBuffer(512, 512);
-            // buffer.Load();
+            //_framebuffer.Bind();
+            GL.ClearColor(Color.White);
+            //GL.Viewport(0, 0, _framebuffer.Width, _framebuffer.Height);
+            GL.Viewport(0, 0, _control.Width, _control.Height);
 
             GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
 
@@ -320,14 +333,22 @@ namespace WoWMapRenderer.Renderers
             GL.UniformMatrix4(_shader.GetUniformLocation("projection_modelview"), false, ref uniform);
 
             GL.Enable(EnableCap.Texture2D);
-
             GL.Enable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Less);
 
             foreach (var renderer in _batchRenderers.Values)
                 renderer.Render(_shader);
 
-            GL.BindTexture(TextureTarget.Texture2D, 0);
+            //_framebuffer.Release();
+
+            // Second passthru
+            /*GL.ClearColor(Color.White);
+            GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
+            GL.Viewport(0, 0, _control.Width, _control.Height);
+            Matrix4.LookAt()
+
+            GL.BindTexture(TextureTarget.Texture2D, _framebuffer.TexColorBuffer);
+            GL.DrawElements(PrimitiveType.Triangles, 0, )*/
 
             _control.SwapBuffers();
         }
