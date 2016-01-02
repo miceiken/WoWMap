@@ -53,11 +53,7 @@ namespace WoWMapRenderer.Renderers
             {
                 var textureName = mtexChunk.Filenames[(int)Materials[i].TextureID];
 
-                Materials[i].Texture = TextureCache.GetRawTexture(textureName);
-                Materials[i].Texture.InternalFormat = PixelInternalFormat.Rgba;
-                Materials[i].Texture.Format = PixelFormat.Rgba;
-                Materials[i].Texture.WrapS = (int)All.Repeat;
-                Materials[i].Texture.WrapT = (int)All.Repeat;
+                Materials[i].Texture = TextureCache.GetRawTexture(textureName); // Properties set in texture cache - thus done once
             }
         }
 
@@ -79,17 +75,16 @@ namespace WoWMapRenderer.Renderers
 
         public void Render(Shader shader)
         {
-            // Bind textures and samplers
             GL.Uniform1(shader.GetUniformLocation("layerCount"), LayerCount);
 
             // This should use up at most 7 texture units - should be fine on even the shittyest GPU.
             for (var i = 0; i < Materials.Count; ++i)
             {
                 var textureInfo = Materials[i];
-                textureInfo.Texture.BindToUnit(TextureUnit.Texture1 + 2 * i);
+                textureInfo.Texture.BindToUnit(TextureUnit.Texture0 + 2 * i);
 
                 if (i > 0 && textureInfo.AlphaTexture != null)
-                    textureInfo.AlphaTexture.BindToUnit(TextureUnit.Texture1 + 2 * i - 1);
+                    textureInfo.AlphaTexture.BindToUnit(TextureUnit.Texture0 + 2 * i - 1);
             }
 
             GL.DrawElements(PrimitiveType.Triangles, IndicesCount, DrawElementsType.UnsignedShort, (IntPtr)IndicesOffset);

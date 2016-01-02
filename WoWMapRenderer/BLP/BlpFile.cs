@@ -299,8 +299,9 @@ namespace SereniaBLPLib
             var h = Height / scale;
             if (h < 1) h = 1;
 
-            return GetImageBytes(w, h, GetPictureData(mipmapLevel));
-            // ARGBColor8.ConvertToBgra(ref picture);
+            var data = GetPictureData(mipmapLevel);
+            var pic = GetImageBytes(w, h, data);
+            return pic;
         }
 
         /// <summary>

@@ -19,9 +19,8 @@ namespace WoWMapRenderer
 
         public static void RemoveRawTexture(string textureName)
         {
-            if (!RawTextures.ContainsKey(textureName))
-                return;
-            RawTextures.Remove(textureName);
+            if (RawTextures.ContainsKey(textureName))
+                RawTextures.Remove(textureName);
         }
 
         public static bool ContainsRawTexture(string textureName)
@@ -35,6 +34,11 @@ namespace WoWMapRenderer
                 return RawTextures[textureName];
 
             var texture = new Texture(textureName);
+            texture.InternalFormat = PixelInternalFormat.Rgba8;
+            texture.Format = PixelFormat.Rgba;
+            texture.WrapS = (int)All.Repeat;
+            texture.WrapT = (int)All.Repeat;
+
             RawTextures[textureName] = texture;
             return texture;
         }

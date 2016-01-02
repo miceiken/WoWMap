@@ -15,17 +15,42 @@ namespace WoWMapRenderer.Renderers
 
         public string Filename { get; private set; }
 
-        public int MinFilter;
-        public int MagFilter;
+        public int MinFilter
+        {
+            get;
+            set;
+        }
+        public int MagFilter
+        {
+            get;
+            set;
+        }
 
-        public int WrapS;
-        public int WrapT;
+        public int WrapS
+        {
+            get;
+            set;
+        }
+
+        public int WrapT
+        {
+            get;
+            set;
+        }
 
         public int Width;
         public int Height;
 
-        public PixelFormat Format;
-        public PixelInternalFormat InternalFormat;
+        public PixelFormat Format
+        {
+            get;
+            set;
+        }
+        public PixelInternalFormat InternalFormat
+        {
+            get;
+            set;
+        }
 
         public byte[] Data { get; private set; }
 
@@ -73,7 +98,10 @@ namespace WoWMapRenderer.Renderers
         {
             // Don't waste cycles rebinding if target has not changed.
             if (unit == CurrentUnit)
+            {
+                GL.ActiveTexture(unit);
                 return false;
+            }
 
             // Cleanup!
             if (GL.IsTexture(TextureId))

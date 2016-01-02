@@ -320,9 +320,7 @@ namespace WoWMapRenderer.Renderers
 
         private void Render()
         {
-            //_framebuffer.Bind();
             GL.ClearColor(Color.White);
-            //GL.Viewport(0, 0, _framebuffer.Width, _framebuffer.Height);
             GL.Viewport(0, 0, _control.Width, _control.Height);
 
             GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
@@ -338,17 +336,6 @@ namespace WoWMapRenderer.Renderers
 
             foreach (var renderer in _batchRenderers.Values)
                 renderer.Render(_shader);
-
-            //_framebuffer.Release();
-
-            // Second passthru
-            /*GL.ClearColor(Color.White);
-            GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
-            GL.Viewport(0, 0, _control.Width, _control.Height);
-            Matrix4.LookAt()
-
-            GL.BindTexture(TextureTarget.Texture2D, _framebuffer.TexColorBuffer);
-            GL.DrawElements(PrimitiveType.Triangles, 0, )*/
 
             _control.SwapBuffers();
         }
