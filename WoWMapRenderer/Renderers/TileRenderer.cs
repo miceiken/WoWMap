@@ -22,8 +22,12 @@ namespace WoWMapRenderer.Renderers
         private List<Vertex> _vertices = new List<Vertex>();
         private List<ushort> _indices = new List<ushort>();
 
+        private Texture _renderAllTexture = null;
+
+        private int _indicesCount = 0;
+
         public int VerticeCount { get { return _vertices.Count; } }
-        public int IndiceCount { get { return _indices.Count; } }
+        public int IndiceCount { get { return _indicesCount; } }
 
         private List<Texture>[] _textures = new List<Texture>[255];
 
@@ -41,6 +45,9 @@ namespace WoWMapRenderer.Renderers
 
         public void Generate(ADT tile)
         {
+            if (tile.MTEX.Filenames.Count == 1)
+                _renderAllTexture = TextureCache.GetRawTexture(tile.MTEX.Filenames[0]);
+
             for (var i = 0; i < tile.MapChunks.Count; ++i)
             {
                 var mapChunk = tile.MapChunks[i];
@@ -50,12 +57,12 @@ namespace WoWMapRenderer.Renderers
                 var mapChunkRenderer = new MapChunkRenderer(mapChunk);
                 mapChunkRenderer.AddTextureNames(tile.MTEX);
 
-                var mapChunkIndiceStart = IndiceCount;
+                var mapChunkIndiceStart = _indicesCount;
 
                 GenerateIndices(mapChunk);
                 GenerateVertices(mapChunk);
 
-                var mapChunkIndiceCount = IndiceCount - mapChunkIndiceStart;
+                var mapChunkIndiceCount = _indicesCount - mapChunkIndiceStart;
                 mapChunkRenderer.SetIndices(mapChunkIndiceCount, mapChunkIndiceStart);
 
                 mapChunkRenderer.ApplyAlphaMap(mapChunk.MCAL);
@@ -123,6 +130,7 @@ namespace WoWMapRenderer.Renderers
                         (ushort)(j + offset), (ushort)(j + 9 + offset), (ushort)(j - 8 + offset),
                         (ushort)(j + offset), (ushort)(j + 8 + offset), (ushort)(j + 9 + offset)
                     });
+                    _indicesCount += 4 * 3;
                 }
                 if ((j + 1) % (9 + 8) == 0) j += 9;
             }
@@ -159,7 +167,7 @@ namespace WoWMapRenderer.Renderers
             GL.EnableVertexAttribArray(shader.GetAttribLocation("alpha_coordinates"));
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(_indices.Count * sizeof(ushort)),
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(_indicesCount * sizeof(ushort)),
                 _indices.ToArray(), BufferUsageHint.StaticDraw);
 
             GL.BindVertexArray(0);
@@ -178,16 +186,19 @@ namespace WoWMapRenderer.Renderers
 
         public void Render(Shader shader)
         {
-            // TODO: Don't bother calling glDrawElements on ranges when there is only one
-            // texture used on the whole tile. Rather acquire the texture, load it,
-            // and render all the terrain at once.
-            
             GL.BindVertexArray(VAO);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
 
-            foreach (var renderer in Renderers)
-                renderer.Render(shader);
-
+            if (_renderAllTexture == null)
+            {
+                foreach (var renderer in Renderers)
+                    renderer.Render(shader);
+            }
+            else
+            {
+                _renderAllTexture.BindToUnit(TextureUnit.Texture0);
+                GL.DrawElements(PrimitiveType.Triangles, _indicesCount, DrawElementsType.UnsignedShort, IntPtr.Zero);
+            }
             GL.BindVertexArray(0);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
         }

@@ -15,42 +15,17 @@ namespace WoWMapRenderer.Renderers
 
         public string Filename { get; private set; }
 
-        public int MinFilter
-        {
-            get;
-            set;
-        }
-        public int MagFilter
-        {
-            get;
-            set;
-        }
+        public int MinFilter { get; set; }
+        public int MagFilter { get; set; }
 
-        public int WrapS
-        {
-            get;
-            set;
-        }
-
-        public int WrapT
-        {
-            get;
-            set;
-        }
+        public int WrapS { get; set; }
+        public int WrapT { get; set; }
 
         public int Width;
         public int Height;
 
-        public PixelFormat Format
-        {
-            get;
-            set;
-        }
-        public PixelInternalFormat InternalFormat
-        {
-            get;
-            set;
-        }
+        public PixelFormat Format { get; set; }
+        public PixelInternalFormat InternalFormat { get; set; }
 
         public byte[] Data { get; private set; }
 
@@ -98,10 +73,7 @@ namespace WoWMapRenderer.Renderers
         {
             // Don't waste cycles rebinding if target has not changed.
             if (unit == CurrentUnit)
-            {
-                GL.ActiveTexture(unit);
                 return false;
-            }
 
             // Cleanup!
             if (GL.IsTexture(TextureId))
@@ -117,6 +89,8 @@ namespace WoWMapRenderer.Renderers
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, MinFilter);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, MagFilter);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, WrapS);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 0);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 0);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, WrapT);
             GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, Width, Height, 0, Format, PixelType.UnsignedByte, Data);
             return true;

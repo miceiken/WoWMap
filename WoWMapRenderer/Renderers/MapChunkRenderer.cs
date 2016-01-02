@@ -65,7 +65,7 @@ namespace WoWMapRenderer.Renderers
                     continue;
 
                 Materials[i].AlphaTexture = new Texture(mcalChunk.GetAlpha(Materials[i].AlphaMapId), 64, 64);
-                // TODO: Luminance is legacy.
+                // TODO: Luminance is legacy. Use Alpha.
                 Materials[i].AlphaTexture.InternalFormat = PixelInternalFormat.Luminance;
                 Materials[i].AlphaTexture.Format = PixelFormat.Luminance;
                 Materials[i].AlphaTexture.MagFilter = (int)All.Linear;
