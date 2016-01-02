@@ -73,7 +73,7 @@ namespace WoWMapRenderer.Renderers
             }
         }
 
-        public void Render(Shader shader)
+        public void Render(Shader shader, int[] terrainSamplers, int[] alphaMapSamplers)
         {
             GL.Uniform1(shader.GetUniformLocation("layerCount"), LayerCount);
 
@@ -82,9 +82,13 @@ namespace WoWMapRenderer.Renderers
             {
                 var textureInfo = Materials[i];
                 textureInfo.Texture.BindToUnit(TextureUnit.Texture0 + 2 * i);
+                textureInfo.Texture.BindToSampler(terrainSamplers[i], shader.GetUniformLocation("texture" + i));
 
                 if (i > 0 && textureInfo.AlphaTexture != null)
+                {
                     textureInfo.AlphaTexture.BindToUnit(TextureUnit.Texture0 + 2 * i - 1);
+                    textureInfo.AlphaTexture.BindToSampler(alphaMapSamplers[i], shader.GetUniformLocation("alphaMap" + i));
+                }
             }
 
             GL.DrawElements(PrimitiveType.Triangles, IndicesCount, DrawElementsType.UnsignedShort, (IntPtr)IndicesOffset);

@@ -63,7 +63,7 @@ namespace WoWMapRenderer.Renderers
                 WrapS = (int)All.ClampToEdge;
 
                 MagFilter = (int)All.Linear;
-                MinFilter = (int)All.LinearMipmapLinear;
+                MinFilter = (int)All.Linear;
 
                 CurrentUnit = TextureUnit.Texture31; // Some value we will never ever reach
             }
@@ -80,11 +80,10 @@ namespace WoWMapRenderer.Renderers
                 GL.DeleteTexture(TextureId);
 
             CurrentUnit = unit;
-            GL.ActiveTexture(unit);
 
-            // TODO: is this guaranteed to circle back and not go over implementation limits?
             TextureId = GL.GenTexture();
 
+            GL.ActiveTexture(unit);
             GL.BindTexture(TextureTarget.Texture2D, TextureId);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, MinFilter);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, MagFilter);
@@ -94,6 +93,12 @@ namespace WoWMapRenderer.Renderers
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, WrapT);
             GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, Width, Height, 0, Format, PixelType.UnsignedByte, Data);
             return true;
+        }
+
+        public void BindToSampler(int sampler, int uniform)
+        {
+            GL.BindSampler(CurrentUnit - TextureUnit.Texture0, sampler);
+            GL.Uniform1(uniform, sampler);
         }
     }
 }

@@ -118,10 +118,10 @@ namespace WoWMapRenderer.Renderers
                                 _loader.ReportProgress(tileIdx * 100 / tileCount, "Loading ADTs (" + tileIdx + " / " + tileCount + ") ...");
                             }*/
 
-                    if (!_wdt.HasTile(29, 30))
+                    if (!_wdt.HasTile(28, 28))
                         Console.WriteLine("fuck me");
 
-                    _mapTiles[(29 << 8) | 30] = new ADT(mapName, 29, 30, _wdt);
+                    _mapTiles[(28 << 8) | 28] = new ADT(mapName, 28, 28, _wdt);
                 };
                 _loader.ProgressChanged += (sender, args) =>
                 {
@@ -141,25 +141,14 @@ namespace WoWMapRenderer.Renderers
         {
             //_framebuffer = new Framebuffer(_control.Width, _control.Height);
 
+            #region Generating samplers
+            GL.GenSamplers(4, _terrainSamplers);
+            GL.GenSamplers(3, _alphaTerrainSamplers);
+            #endregion
+
             _shader = new Shader();
             _shader.CreateFromFile("shaders/vertex.glsl", "shaders/fragment.glsl");
             _shader.SetCurrent();
-
-            #region Binding samplers
-            GL.GenSamplers(4, _terrainSamplers);
-            for (var i = 0; i < 4; ++i)
-            {
-                GL.BindSampler(2 * i, _terrainSamplers[i]);
-                GL.Uniform1(_shader.GetUniformLocation("texture" + i), _terrainSamplers[i]);
-            }
-
-            GL.GenSamplers(3, _alphaTerrainSamplers);
-            for (var i = 1; i < 4; ++i)
-            {
-                GL.BindSampler(2 * i - 1, _alphaTerrainSamplers[i - 1]);
-                GL.Uniform1(_shader.GetUniformLocation("alphaMap" + (i - 1)), _alphaTerrainSamplers[i - 1]);
-            }
-            #endregion
 
             _control.Resize += (sender, args) =>
             {
@@ -214,8 +203,8 @@ namespace WoWMapRenderer.Renderers
                 }
             }*/
 
-            var tileX = 29;
-            var tileY = 30;
+            var tileX = 28;
+            var tileY = 28;
             keysToKeep.Add((tileX << 8) | tileY);
             LoadTile(tileX, tileY);
 
@@ -293,8 +282,8 @@ namespace WoWMapRenderer.Renderers
         /// </summary>
         private void GetCenterTile(out int x, out int y)
         {
-            x = 29;
-            y = 30;
+            x = 28;
+            y = 28;
             return; // HACK HACK HACK REMOVE ME LATER
 
             /*
@@ -335,7 +324,7 @@ namespace WoWMapRenderer.Renderers
             GL.DepthFunc(DepthFunction.Less);
 
             foreach (var renderer in _batchRenderers.Values)
-                renderer.Render(_shader);
+                renderer.Render(_shader, _terrainSamplers, _alphaTerrainSamplers);
 
             _control.SwapBuffers();
         }

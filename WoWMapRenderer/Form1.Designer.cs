@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.GL = new OpenTK.GLControl();
+            this.GL = new OpenTK.GLControl(OpenTK.Graphics.GraphicsMode.Default, 3, 3, OpenTK.Graphics.GraphicsContextFlags.Debug);
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.loadCASCToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.localToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();

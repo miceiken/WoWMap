@@ -96,17 +96,12 @@ namespace WoWMapRenderer.Renderers
                             Y = mapChunk.MCNK.Position.Y - (j * Constants.UnitSize) - (((i % 2) != 0) ? (0.5f * Constants.UnitSize) : 0.0f),
                             Z = mapChunk.MCVT.Heights[idx] + mapChunk.MCNK.Position.Z
                         },
-                        TextureCoordinates = new Vector2
-                        {
-                            X = i * 0.5f / 8.0f,
-                            Y = (j + (((i % 2) != 0) ? 0.5f : 0.0f)) / 8.0f
-                        }
                     };
 
-                    vertex.AlphaCoordinates = new Vector2
+                    vertex.TextureCoordinates = new Vector2
                     {
-                        X = vertex.TextureCoordinates.X, 
-                        Y = vertex.TextureCoordinates.Y
+                        X = (mapChunk.MCNK.Position.X - vertex.Position.X) / Constants.ChunkSize,
+                        Y = (mapChunk.MCNK.Position.Y - vertex.Position.Y) / Constants.ChunkSize,
                     };
 
                     _vertices.Add(vertex);
@@ -158,13 +153,9 @@ namespace WoWMapRenderer.Renderers
                 vertexSize, sizeof(float) * 3);
             GL.EnableVertexAttribArray(shader.GetAttribLocation("position"));
 
-            GL.VertexAttribPointer(shader.GetAttribLocation("texture_coordinates"), 2, VertexAttribPointerType.Float, true,
+            GL.VertexAttribPointer(shader.GetAttribLocation("texture_coordinates"), 2, VertexAttribPointerType.Float, false,
                 vertexSize, (IntPtr)(sizeof(float) * 6));
             GL.EnableVertexAttribArray(shader.GetAttribLocation("texture_coordinates"));
-
-            GL.VertexAttribPointer(shader.GetAttribLocation("alpha_coordinates"), 2, VertexAttribPointerType.Float, true,
-                vertexSize, (IntPtr)(sizeof(float) * 8));
-            GL.EnableVertexAttribArray(shader.GetAttribLocation("alpha_coordinates"));
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
             GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(_indicesCount * sizeof(ushort)),
@@ -184,7 +175,7 @@ namespace WoWMapRenderer.Renderers
             Renderers.Clear();
         }
 
-        public void Render(Shader shader)
+        public void Render(Shader shader, int[] terrainSamplers, int[] alphaMapSamplers)
         {
             GL.BindVertexArray(VAO);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
@@ -192,15 +183,18 @@ namespace WoWMapRenderer.Renderers
             if (_renderAllTexture == null)
             {
                 foreach (var renderer in Renderers)
-                    renderer.Render(shader);
+                    renderer.Render(shader, terrainSamplers, alphaMapSamplers);
             }
             else
             {
+                GL.Uniform1(shader.GetUniformLocation("layerCount"), 1);
                 _renderAllTexture.BindToUnit(TextureUnit.Texture0);
+                _renderAllTexture.BindToSampler(terrainSamplers[0], shader.GetUniformLocation("texture0"));
                 GL.DrawElements(PrimitiveType.Triangles, _indicesCount, DrawElementsType.UnsignedShort, IntPtr.Zero);
             }
-            GL.BindVertexArray(0);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+
+            // GL.BindVertexArray(0);
+            // GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
         }
     }
 }

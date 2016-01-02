@@ -8,14 +8,12 @@ in vec2 alpha_coordinates;
 uniform mat4 projection_modelview; /* projection * modelview */
 
 out vec2 texCoord;
-out vec2 alphaCoordinates;
 out vec3 vertexShading;
 
 void main()
 {
 	vertexShading = vertex_shading;
 	texCoord = texture_coordinates;
-	alphaCoordinates = alpha_coordinates;
 
     gl_Position = projection_modelview * vec4(position, 1.0f);
 }
