@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WoWMapRenderer", "WoWMapRen
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CascLib", "CASCExplorer\CascLib\CascLib.csproj", "{E08E1E48-6585-4137-8405-661C62C10713}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WoWMapRenderExportTester", "WoWMapRenderExportTester\WoWMapRenderExportTester.csproj", "{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -105,6 +107,22 @@ Global
 		{E08E1E48-6585-4137-8405-661C62C10713}.Unity3D|Any CPU.Build.0 = Release|Any CPU
 		{E08E1E48-6585-4137-8405-661C62C10713}.XNA|Any CPU.ActiveCfg = Release|Any CPU
 		{E08E1E48-6585-4137-8405-661C62C10713}.XNA|Any CPU.Build.0 = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.MonoGame|Any CPU.ActiveCfg = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.MonoGame|Any CPU.Build.0 = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.OpenTK|Any CPU.ActiveCfg = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.OpenTK|Any CPU.Build.0 = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.SharpDX|Any CPU.ActiveCfg = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.SharpDX|Any CPU.Build.0 = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.Standalone|Any CPU.ActiveCfg = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.Standalone|Any CPU.Build.0 = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.Unity3D|Any CPU.ActiveCfg = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.Unity3D|Any CPU.Build.0 = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.XNA|Any CPU.ActiveCfg = Release|Any CPU
+		{B3A3CD13-37BB-4E38-8611-BC5F65BCA665}.XNA|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

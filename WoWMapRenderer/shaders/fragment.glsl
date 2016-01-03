@@ -41,5 +41,5 @@ void main()
 		color = mix(color, layer, blend);
 	}
 	
-	outputColor = color;// * vec4(vertexShading, 1.0f);
+	outputColor = color * vec4(vertexShading, 1.0f);
 }

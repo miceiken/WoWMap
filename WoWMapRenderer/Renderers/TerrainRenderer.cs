@@ -48,7 +48,7 @@ namespace WoWMapRenderer.Renderers
             _control = control;
             _control.MouseClick += (sender, args) => {
                 if (args.Button == MouseButtons.Right)
-                    OnRightClick(ProjectCoordinates(args.X, args.Y));
+                    OnRightClick(UnprojectCoordinates(args.X, args.Y));
             };
             _control.KeyPress += (sender, args) =>
             {
@@ -79,12 +79,10 @@ namespace WoWMapRenderer.Renderers
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        private Vector3 ProjectCoordinates(float x, float y)
+        private Vector3 UnprojectCoordinates(float x, float y)
         {
-            // Translate click coord to 3D.
-            // Fire a ray from there and detect hits
-            // Not sure OpenTK has an easy way to do this ...
-            return Vector3.One;
+            var mouse = new Vector2(x, y);
+            return mouse.UnProject(_camera.Projection, _camera.View, new Size(_control.Width, _control.Height)).ToVector3();
         }
 
         private void OnRightClick(Vector3 terrainCoordinates)

@@ -70,6 +70,25 @@ namespace WoWMapRenderer.Renderers
 
                 Renderers.Add(mapChunkRenderer);
             }
+
+            using (var fs = new System.IO.StreamWriter("terraindata.txt", false))
+            {
+                foreach (var v in _vertices)
+                    fs.WriteLine($"v {v.Position.X} {v.Position.Y} {v.Position.Z} {v.Color.X} {v.Color.Y} {v.Color.Z} {v.TextureCoordinates.X} {v.TextureCoordinates.Y}");
+
+                fs.Write("i ");
+                foreach (var i in _indices)
+                    fs.Write($"{i} ");
+                fs.WriteLine();
+
+                for (var i = 0; i < tile.MTEX.Filenames.Count; ++i)
+                {
+                    fs.Write($"t{i} ");
+                    foreach (var b in TextureCache.GetRawTexture(tile.MTEX.Filenames[i]).Data)
+                        fs.Write("{0:X2} ", b);
+                    fs.WriteLine();
+                }
+            }
         }
 
         private void GenerateVertices(MapChunk mapChunk)
@@ -193,8 +212,8 @@ namespace WoWMapRenderer.Renderers
                 GL.DrawElements(PrimitiveType.Triangles, _indicesCount, DrawElementsType.UnsignedShort, IntPtr.Zero);
             }
 
-            // GL.BindVertexArray(0);
-            // GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+            GL.BindVertexArray(0);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
         }
     }
 }
