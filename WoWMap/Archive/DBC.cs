@@ -7,6 +7,7 @@ using System.IO;
 using System.Reflection;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.ComponentModel;
 
 namespace WoWMap.Archive
 {
@@ -14,7 +15,7 @@ namespace WoWMap.Archive
     {
         private const uint DBCFmtSig = 0x43424457; // WDBC
 
-        public DBC(string filename)
+        public DBC(string filename, BackgroundWorker worker = null)
         {
             if (!CASC.Initialized) return;
             if (!CASC.FileExists(filename))
@@ -76,6 +77,9 @@ namespace WoWMap.Archive
                                 break;
                         }
                     }
+
+                    if (worker != null)
+                        worker.ReportProgress(i * 100 / Header.RecordCount, row);
 
                     var diffSize = (br.BaseStream.Position - startPos);
                     if (diffSize > Header.RecordSize) return; // We read too much! Struct is wrong

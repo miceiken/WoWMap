@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -16,7 +17,7 @@ namespace WoWMap.Archive
         private int[] Indices;
         private short[] StringLengths;
 
-        public DB2(string filename)
+        public DB2(string filename, BackgroundWorker worker = null)
         {
             if (!CASC.Initialized) return;
             if (!CASC.FileExists(filename))
@@ -58,9 +59,6 @@ namespace WoWMap.Archive
                 // Move back to where we were
                 br.BaseStream.Position = readPos;
 
-                Debug.Assert(Marshal.SizeOf(typeof(T)) == Header.RecordSize,
-                    $"Invalid record size, got {Marshal.SizeOf(typeof(T))}, expected {Header.RecordSize}.");
-
                 Rows = new T[Header.RecordCount];
                 var tProperties = typeof(T).GetProperties();
                 for (var i = 0; i < Header.RecordCount; i++)
@@ -89,6 +87,9 @@ namespace WoWMap.Archive
                                 break;
                         }
                     }
+
+                    if (worker != null)
+                        worker.ReportProgress(i * 100 / Header.RecordCount, row);
 
                     var diffSize = (br.BaseStream.Position - startPos);
                     if (diffSize > Header.RecordSize) return; // We read too much! Struct is wrong

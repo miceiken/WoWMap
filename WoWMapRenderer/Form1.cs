@@ -8,14 +8,16 @@ using WoWMapRenderer.Renderers;
 using OpenGL = OpenTK.Graphics.OpenGL;
 using System.Linq;
 using System.Diagnostics;
+using System.ComponentModel;
 
 namespace WoWMapRenderer
 {
     public partial class Form1 : Form
     {
         private BackgroundWorkerEx _cascAction;
-        private BackgroundWorkerEx _mapAction;
+        private BackgroundWorkerEx _dbcAction;
 
+        private int _dbcIndex = 0;
         private DBC<MapRecord> _mapRecords;
         private DBC<AreaTableRecord> _areaTableRecords;
         private DB2<AreaAssignmentRecord> _areaAssignmentRecords;
@@ -53,7 +55,7 @@ namespace WoWMapRenderer
                     CASC.InitializeOnline(_cascAction);
                 else {
                     try {
-                        CASC.Initialize(_localCascPath);
+                        CASC.Initialize(_localCascPath, _cascAction);
                     } catch (Exception /* ex */) {
                         MessageBox.Show("Path '" + _localCascPath + "/Data' was not found.", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
@@ -68,42 +70,54 @@ namespace WoWMapRenderer
             };
             _cascAction.RunWorkerCompleted += (sender, e) => {
                 if (CASC.Initialized)
-                    _mapAction.RunWorkerAsync();
+                    _dbcAction.RunWorkerAsync();
             };
 
-            _mapAction = new BackgroundWorkerEx();
-            _mapAction.DoWork += (sender, e) => {
-                _cascAction.ReportProgress(0, "Loading maps ...");
-
-                _areaTableRecords = new DBC<AreaTableRecord>(@"DBFilesClient\AreaTable.dbc");
-                _mapRecords = new DBC<MapRecord>(@"DBFilesClient\Map.dbc");
-                _areaAssignmentRecords = new DB2<AreaAssignmentRecord>(@"DBFilesClient\AreaAssignment.db2");
-
-                var rowIndex = 0;
-                foreach (var mapEntry in _mapRecords.Rows)
+            _dbcAction = new BackgroundWorkerEx();
+            _dbcAction.DoWork += (sender, e) => {
+                switch (_dbcIndex)
                 {
-                    _mapAction.ReportProgress(++rowIndex * 100 / _mapRecords.Rows.Length, mapEntry);
+                    case 0:
+                        _mapRecords = new DBC<MapRecord>(@"DBFilesClient\Map.dbc", _dbcAction);
+                        break;
+                    case 1:
+                        _areaTableRecords = new DBC<AreaTableRecord>(@"DBFilesClient\AreaTable.dbc", _dbcAction);
+                        break;
+                    case 2:
+                        // _areaAssignmentRecords = new DB2<AreaAssignmentRecord>(@"DBFilesClient\AreaAssignment.db2");
+                        break;
                 }
             };
-            _mapAction.ProgressChanged += (sender, e) => 
+            _dbcAction.ProgressChanged += (sender, e) => 
             {
-                _feedbackText.Text = "Loading maps ...";
+                _feedbackText.Text = string.Format(@"Loading {0} ...", (new[] { "maps", "areas" })[_dbcIndex]);
                 _backgroundTaskProgress.Style = ProgressBarStyle.Continuous;
                 _backgroundTaskProgress.Maximum = 100;
                 _backgroundTaskProgress.Value = e.ProgressPercentage;
 
-                var mapEntry = (MapRecord)e.UserState;
-
-                _mapListBox.Items.Add(new MapListBoxEntry
+                switch (_dbcIndex)
                 {
-                    Name = mapEntry.MapNameLang,
-                    Directory = mapEntry.Directory,
-                    MapID = mapEntry.ID
-                });
+                    case 0:
+                        var mapEntry = (MapRecord)e.UserState;
+                        _mapListBox.Items.Add(new MapListBoxEntry
+                        {
+                            Name = mapEntry.MapNameLang,
+                            Directory = mapEntry.Directory,
+                            MapID = mapEntry.ID
+                        });
+                        break;
+                    case 1:
+                        // Don't populate yet
+                        break;
+                }
             };
-            _mapAction.RunWorkerCompleted += (sender, e) =>
+            _dbcAction.RunWorkerCompleted += (sender, e) =>
             {
-                _feedbackText.Text = "Maps loaded.";
+                _feedbackText.Text = string.Format(@"{0} loaded.", (new[] { "Maps", "Areas" })[_dbcIndex]);
+                ++_dbcIndex;
+                if (_dbcIndex < 2)
+                    _dbcAction.RunWorkerAsync();
+
             };
         }
 
@@ -120,13 +134,6 @@ namespace WoWMapRenderer
             for (var i = 0; i < _areaTableRecords.Rows.Length; ++i)
             {
                 var record = _areaTableRecords.Rows[i];
-                /*AreaTableRecord parentRecord = null;
-                if (record.ParentAreaID != 0)
-                    parentRecord = _areaTableRecords.Rows.ToList().First(k => k.ID == record.ParentAreaID);
-
-                while (parentRecord.ParentAreaID != 0)
-                    parentRecord = _areaTableRecords.Rows.ToList().First(k => k.ID == parentRecord.ParentAreaID);*/
-
                 if (record.ContinentID == entry.MapID)
                     _areaListBox.Items.Add(new AreaListBoxItem(record));
             }

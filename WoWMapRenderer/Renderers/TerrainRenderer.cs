@@ -81,13 +81,17 @@ namespace WoWMapRenderer.Renderers
         /// <returns></returns>
         private Vector3 UnprojectCoordinates(float x, float y)
         {
+            if (_camera == null)
+                return Vector3.Zero;
             var mouse = new Vector2(x, y);
-            return mouse.UnProject(_camera.Projection, _camera.View, new Size(_control.Width, _control.Height)).ToVector3();
+            var mat4 = mouse.UnProject(_camera.Projection, _camera.View, new Size(_control.Width, _control.Height));
+            return mat4.Xyz;
         }
 
         private void OnRightClick(Vector3 terrainCoordinates)
         {
             // 3D space coordinates passed as parameter
+            // TODO fix, not working as planned
             Console.WriteLine($"Clicked coordinates [ {terrainCoordinates.X} {terrainCoordinates.Y} {terrainCoordinates.Z} ]");
         }
 
@@ -141,8 +145,8 @@ namespace WoWMapRenderer.Renderers
             //_framebuffer = new Framebuffer(_control.Width, _control.Height);
 
             #region Generating samplers
-            GL.GenSamplers(4, _terrainSamplers);
-            GL.GenSamplers(3, _alphaTerrainSamplers);
+            // GL.GenSamplers(4, _terrainSamplers);
+            // GL.GenSamplers(3, _alphaTerrainSamplers);
             #endregion
 
             _shader = new Shader();
