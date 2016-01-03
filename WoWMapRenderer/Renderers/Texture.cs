@@ -15,6 +15,8 @@ namespace WoWMapRenderer.Renderers
 
         public string Filename { get; private set; }
 
+        public bool Loaded { get; private set; }
+
         public int MinFilter { get; set; }
         public int MagFilter { get; set; }
 
@@ -45,7 +47,7 @@ namespace WoWMapRenderer.Renderers
             MagFilter = (int)All.Linear;
             MinFilter = (int)All.LinearMipmapLinear;
 
-            CurrentUnit = TextureUnit.Texture31; // Some we will never reach
+            CurrentUnit = TextureUnit.Texture31; // Default. Will never stay like this due to subsequent calls
         }
 
         public Texture(string filePath)
@@ -65,43 +67,70 @@ namespace WoWMapRenderer.Renderers
                 MagFilter = (int)All.Linear;
                 MinFilter = (int)All.Linear;
 
-                CurrentUnit = TextureUnit.Texture31; // Some value we will never ever reach
+                CurrentUnit = TextureUnit.Texture31; // Default. Will never stay like this due to subsequent calls
             }
         }
 
-        public bool BindToUnit(TextureUnit unit)
+        public bool Load()
         {
-            // Don't waste cycles rebinding if target has not changed.
-            if (unit == CurrentUnit)
+            // Don't waste cycles reloading the texture if it is already loaded
+            if (Loaded)
                 return false;
 
             // Cleanup!
             if (GL.IsTexture(TextureId))
                 GL.DeleteTexture(TextureId);
 
-            Console.WriteLine($"Binding {Filename}");
-
-            CurrentUnit = unit;
-
             TextureId = GL.GenTexture();
 
-            GL.ActiveTexture(unit);
+            GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, TextureId);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, MinFilter);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, MagFilter);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, WrapS);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, WrapT);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 0);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 0);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, WrapT);
             GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, Width, Height, 0, Format, PixelType.UnsignedByte, Data);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
+            Data = null;
+
+            Loaded = true;
             return true;
         }
 
-        public void BindToSampler(int sampler, int uniform)
+        public bool Bind(TextureUnit unit, int uniformLocation)
         {
-            GL.BindSampler(CurrentUnit - TextureUnit.Texture0, sampler);
-            GL.Uniform1(uniform, sampler); // Wat
-            GL.Uniform1(uniform, CurrentUnit - TextureUnit.Texture0);
+            // TODO: Unbind needs to be properly called.
+            // Right now this breaks stuff.
+            if (/*unit == CurrentUnit || */!Loaded)
+                return false;
+
+            CurrentUnit = unit;
+            GL.ActiveTexture(CurrentUnit);
+            GL.BindTexture(TextureTarget.Texture2D, TextureId);
+            GL.Uniform1(uniformLocation, CurrentUnit - TextureUnit.Texture0);
+            return true;
+        }
+
+        public void Unbind()
+        {
+            if (!Loaded)
+                return;
+
+            GL.ActiveTexture(CurrentUnit);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            CurrentUnit = TextureUnit.Texture31;
+        }
+
+        public void Delete()
+        {
+            if (!GL.IsTexture(TextureId) || !Loaded)
+                return;
+
+            Loaded = false;
+            GL.DeleteTexture(TextureId);
         }
     }
 }

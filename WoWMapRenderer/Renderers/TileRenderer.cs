@@ -119,8 +119,8 @@ namespace WoWMapRenderer.Renderers
 
                     vertex.TextureCoordinates = new Vector2
                     {
-                        Y = (mapChunk.MCNK.Position.X - vertex.Position.X) / Constants.ChunkSize,
-                        X = (mapChunk.MCNK.Position.Y - vertex.Position.Y) / Constants.ChunkSize,
+                        Y = (j / 8.0f) + (((i % 2) != 0) ? (0.5f / 8.0f) : 0.0f),
+                        X = i * 0.5f / 8.0f
                     };
 
                     _vertices.Add(vertex);
@@ -132,8 +132,9 @@ namespace WoWMapRenderer.Renderers
 
         private void GenerateIndices(MapChunk mapChunk)
         {
-            var offset = VerticeCount;
+            var offset = (ushort)VerticeCount;
             var unitidx = 0;
+
             for (uint j = 9; j < 8 * 8 + 9 * 8; j++)
             {
                 if (!mapChunk.HasHole(unitidx % 8, unitidx++ / 8))
@@ -207,8 +208,7 @@ namespace WoWMapRenderer.Renderers
             else
             {
                 GL.Uniform1(shader.GetUniformLocation("layerCount"), 1);
-                _renderAllTexture.BindToUnit(TextureUnit.Texture0);
-                _renderAllTexture.BindToSampler(terrainSamplers[0], shader.GetUniformLocation("texture0"));
+                _renderAllTexture.Bind(TextureUnit.Texture0, shader.GetUniformLocation("texture0"));
                 GL.DrawElements(PrimitiveType.Triangles, _indicesCount, DrawElementsType.UnsignedShort, IntPtr.Zero);
             }
 

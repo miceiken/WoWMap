@@ -38,6 +38,7 @@ namespace WoWMapRenderer
             texture.Format = PixelFormat.Rgba;
             texture.WrapS = (int)All.Repeat;
             texture.WrapT = (int)All.Repeat;
+            texture.Load();
 
             RawTextures[textureName] = texture;
             return texture;

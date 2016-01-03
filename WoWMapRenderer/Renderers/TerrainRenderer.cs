@@ -88,6 +88,7 @@ namespace WoWMapRenderer.Renderers
         private void OnRightClick(Vector3 terrainCoordinates)
         {
             // 3D space coordinates passed as parameter
+            Console.WriteLine($"Clicked coordinates [ {terrainCoordinates.X} {terrainCoordinates.Y} {terrainCoordinates.Z} ]");
         }
 
         public void LoadMap(string mapName)

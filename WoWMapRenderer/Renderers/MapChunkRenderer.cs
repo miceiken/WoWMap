@@ -13,7 +13,6 @@ namespace WoWMapRenderer.Renderers
         public class Material
         {
             public uint TextureID; // Offset into MCAL
-            public MCLY.MCLYFlags Flags;
             public int AlphaMapId;
 
             public Texture AlphaTexture;
@@ -35,7 +34,6 @@ namespace WoWMapRenderer.Renderers
                 Materials.Add(new Material
                 {
                     TextureID = mapChunk.MCLY.Entries[i].TextureId,
-                    Flags = mapChunk.MCLY.Entries[i].Flags,
                     AlphaMapId = (int)mapChunk.MCLY.Entries[i].ofsMCAL
                 });
             }
@@ -53,7 +51,8 @@ namespace WoWMapRenderer.Renderers
             {
                 var textureName = mtexChunk.Filenames[(int)Materials[i].TextureID];
 
-                Materials[i].Texture = TextureCache.GetRawTexture(textureName); // Properties set in texture cache - thus done once
+                // Get the texture and define a default slot for it
+                Materials[i].Texture = TextureCache.GetRawTexture(textureName);
             }
         }
 
@@ -70,6 +69,7 @@ namespace WoWMapRenderer.Renderers
                 Materials[i].AlphaTexture.Format = PixelFormat.Luminance;
                 Materials[i].AlphaTexture.MagFilter = (int)All.Linear;
                 Materials[i].AlphaTexture.MinFilter = (int)All.Linear;
+                Materials[i].AlphaTexture.Load();
             }
         }
 
@@ -77,17 +77,16 @@ namespace WoWMapRenderer.Renderers
         {
             GL.Uniform1(shader.GetUniformLocation("layerCount"), LayerCount);
 
-            // This should use up at most 7 texture units - should be fine on even the shittyest GPU.
             for (var i = 0; i < Materials.Count; ++i)
             {
                 var textureInfo = Materials[i];
-                textureInfo.Texture.BindToUnit(TextureUnit.Texture0 + 2 * i);
-                textureInfo.Texture.BindToSampler(terrainSamplers[i], shader.GetUniformLocation("texture" + i));
+                textureInfo.Texture.Bind(TextureUnit.Texture0 + 2 * i,
+                    shader.GetUniformLocation("texture" + i));
 
                 if (i > 0 && textureInfo.AlphaTexture != null)
                 {
-                    textureInfo.AlphaTexture.BindToUnit(TextureUnit.Texture0 + 2 * i - 1);
-                    textureInfo.AlphaTexture.BindToSampler(alphaMapSamplers[i - 1], shader.GetUniformLocation("alphaMap" + (i - 1)));
+                    textureInfo.AlphaTexture.Bind(TextureUnit.Texture0 + 2 * i - 1,
+                        shader.GetUniformLocation("alphaMap" + (i - 1)));
                 }
             }
 
