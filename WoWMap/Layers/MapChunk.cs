@@ -22,8 +22,6 @@ namespace WoWMap.Layers
             var stream = chunk.GetStream();
             stream.Seek(chunk.Offset + MCNK.ChunkHeaderSize, SeekOrigin.Begin);
 
-            MCLY = new List<MCLY>();
-
             Read(new ChunkData(stream, chunk.Size - MCNK.ChunkHeaderSize));
         }
 
@@ -45,7 +43,7 @@ namespace WoWMap.Layers
         public MCNR MCNR { get; private set; }
         public MCCV MCCV { get; private set; }
         public MCSH MCSH { get; private set; }
-        public List<MCLY> MCLY { get; private set; }
+        public MCLY MCLY { get; private set; }
 
         public Vector3[] Vertices { get; private set; }
         public List<Triangle<uint>> Indices { get; private set; }
@@ -123,8 +121,7 @@ namespace WoWMap.Layers
                         MCSH = new MCSH(subChunk);
                         break;
                     case "MCLY":
-                        Debug.Assert(MCLY.Count <= 4, "More than 4 MCLY chunks found! WTF");
-                        MCLY.Add(new MCLY(subChunk));
+                        MCLY = new MCLY(subChunk);
                         break;
                     case "MCAL":
                         if (WDT == null)
@@ -133,7 +130,7 @@ namespace WoWMap.Layers
                             MCAL = new MCAL(this, WDT, subChunk);
                         break;
                     default:
-                        // Console.WriteLine($"Skipped {subChunk.Name} MCNK subchunk.");
+                        Console.WriteLine($"Skipped {subChunk.Name} MapChunk sub-chunk.");
                         break;
                 }
             }

@@ -79,6 +79,8 @@ namespace WoWMapRenderer.Renderers
             if (GL.IsTexture(TextureId))
                 GL.DeleteTexture(TextureId);
 
+            Console.WriteLine($"Binding {Filename}");
+
             CurrentUnit = unit;
 
             TextureId = GL.GenTexture();
@@ -98,7 +100,8 @@ namespace WoWMapRenderer.Renderers
         public void BindToSampler(int sampler, int uniform)
         {
             GL.BindSampler(CurrentUnit - TextureUnit.Texture0, sampler);
-            GL.Uniform1(uniform, sampler);
+            GL.Uniform1(uniform, sampler); // Wat
+            GL.Uniform1(uniform, CurrentUnit - TextureUnit.Texture0);
         }
     }
 }

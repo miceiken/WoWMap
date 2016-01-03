@@ -29,14 +29,14 @@ namespace WoWMapRenderer.Renderers
 
         public MapChunkRenderer(MapChunk mapChunk)
         {
-            Materials = new List<Material>(mapChunk.MCLY.Count);
-            for (var i = 0; i < mapChunk.MCLY.Count; ++i)
+            Materials = new List<Material>(mapChunk.MCLY.Entries.Length);
+            for (var i = 0; i < mapChunk.MCLY.Entries.Length; ++i)
             {
                 Materials.Add(new Material
                 {
-                    TextureID = mapChunk.MCLY[i].TextureId,
-                    Flags = mapChunk.MCLY[i].Flags,
-                    AlphaMapId = (int)mapChunk.MCLY[i].ofsMCAL
+                    TextureID = mapChunk.MCLY.Entries[i].TextureId,
+                    Flags = mapChunk.MCLY.Entries[i].Flags,
+                    AlphaMapId = (int)mapChunk.MCLY.Entries[i].ofsMCAL
                 });
             }
         }
@@ -87,7 +87,7 @@ namespace WoWMapRenderer.Renderers
                 if (i > 0 && textureInfo.AlphaTexture != null)
                 {
                     textureInfo.AlphaTexture.BindToUnit(TextureUnit.Texture0 + 2 * i - 1);
-                    textureInfo.AlphaTexture.BindToSampler(alphaMapSamplers[i], shader.GetUniformLocation("alphaMap" + i));
+                    textureInfo.AlphaTexture.BindToSampler(alphaMapSamplers[i - 1], shader.GetUniformLocation("alphaMap" + (i - 1)));
                 }
             }
 

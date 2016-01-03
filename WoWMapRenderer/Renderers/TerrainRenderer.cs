@@ -116,10 +116,10 @@ namespace WoWMapRenderer.Renderers
                                 _loader.ReportProgress(tileIdx * 100 / tileCount, "Loading ADTs (" + tileIdx + " / " + tileCount + ") ...");
                             }*/
 
-                    if (!_wdt.HasTile(28, 28))
+                    if (!_wdt.HasTile(29, 30))
                         Console.WriteLine("fuck me");
 
-                    _mapTiles[(28 << 8) | 28] = new ADT(mapName, 28, 28, _wdt);
+                    _mapTiles[(29 << 8) | 30] = new ADT(mapName, 29, 30, _wdt);
                 };
                 _loader.ProgressChanged += (sender, args) =>
                 {
@@ -178,10 +178,8 @@ namespace WoWMapRenderer.Renderers
         private void UpdateRenderers()
         {
             var cameraPosition = _camera.Position;
-            var centeredTile = GetTileAt(cameraPosition.Xy);
-            Debug.Assert(centeredTile != Vector2.Zero, "Unable to determinate the tile in which the camera is!");
-            if (_currentCenteredTile != centeredTile)
-                _currentCenteredTile = centeredTile;
+            var _currentCenteredTile = GetTileAt(cameraPosition.Xy);
+            Debug.Assert(_currentCenteredTile != Vector2.Zero, "Unable to determinate the tile in which the camera is!");
 
             var keysToKeep = new List<int>(9);
 
@@ -201,8 +199,8 @@ namespace WoWMapRenderer.Renderers
                 }
             }*/
 
-            var tileX = 28;
-            var tileY = 28;
+            var tileX = 29;
+            var tileY = 30;
             keysToKeep.Add((tileX << 8) | tileY);
             LoadTile(tileX, tileY);
 
@@ -280,8 +278,8 @@ namespace WoWMapRenderer.Renderers
         /// </summary>
         private void GetCenterTile(out int x, out int y)
         {
-            x = 28;
-            y = 28;
+            x = 29;
+            y = 30;
             return; // HACK HACK HACK REMOVE ME LATER
 
             /*

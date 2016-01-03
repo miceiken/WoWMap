@@ -13,11 +13,20 @@ namespace WoWMap.Chunks
         public MCLY(Chunk c, uint h) : base(c, h) { }
         public MCLY(Chunk c) : base(c, c.Size) { }
 
-        public uint TextureId;
-        public MCLYFlags Flags;
-        public uint ofsMCAL;
-        public short EffectId;
-        private short padding;
+        public struct MCLYEntry
+        {
+            public uint TextureId;
+            public MCLYFlags Flags;
+            public uint ofsMCAL;
+            public short EffectId;
+
+            public bool HasFlag(MCLYFlags flags)
+            {
+                return (Flags & flags) != 0;
+            }
+        }
+
+        public MCLYEntry[] Entries;
 
         [Flags]
         public enum MCLYFlags : uint
@@ -35,22 +44,24 @@ namespace WoWMap.Chunks
             SkyboxReflection = 0x400
         };
 
-        public bool HasFlag(MCLYFlags flags)
-        {
-            return (Flags & flags) != 0;
-        }
-
         public override void Read()
         {
             var br = Chunk.GetReader();
             if (Chunk.Size == 0)
                 return;
 
-            TextureId = br.ReadUInt32();
-            Flags = (MCLYFlags)br.ReadUInt32();
-            ofsMCAL = br.ReadUInt32();
-            EffectId = br.ReadInt16();
-            padding = br.ReadInt16();
+            var recordCount = Chunk.Size / 16;
+            Entries = new MCLYEntry[recordCount];
+            for (var i = 0; i < recordCount; ++i)
+            {
+                var entry = new MCLYEntry();
+                entry.TextureId = br.ReadUInt32();
+                entry.Flags = (MCLYFlags)br.ReadUInt32();
+                entry.ofsMCAL = br.ReadUInt32();
+                entry.EffectId = br.ReadInt16();
+                br.ReadInt16(); // "Padding"
+                Entries[i] = entry;
+            }
         }
     }
 }

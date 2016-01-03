@@ -40,17 +40,17 @@ namespace WoWMap.Chunks
             var br = Chunk.GetReader();
             var chunkData = br.ReadBytes((int)Chunk.Size);
 
-            for (var i = 0; i < _mapChunk.MCLY.Count; ++i)
+            for (var i = 0; i < _mapChunk.MCLY.Entries.Length; ++i)
             {
-                if (!_mapChunk.MCLY[i].HasFlag(MCLY.MCLYFlags.AlphaMap))
+                if (!_mapChunk.MCLY.Entries[i].HasFlag(MCLY.MCLYFlags.AlphaMap))
                     continue;
 
                 var layerRead = 0;
-                var alphaOffset = _mapChunk.MCLY[i].ofsMCAL;
-                alphaTextures[_mapChunk.MCLY[i].ofsMCAL] = new byte[64 * 64];
+                var alphaOffset = _mapChunk.MCLY.Entries[i].ofsMCAL;
+                alphaTextures[_mapChunk.MCLY.Entries[i].ofsMCAL] = new byte[64 * 64];
                 var outputOffset = 0;
 
-                if (_mapChunk.MCLY[i].HasFlag(MCLY.MCLYFlags.CompressedAlphaMap))
+                if (_mapChunk.MCLY.Entries[i].HasFlag(MCLY.MCLYFlags.CompressedAlphaMap))
                 {
                     while (layerRead != 4096)
                     {
@@ -63,7 +63,7 @@ namespace WoWMap.Chunks
                             if (layerRead == 4096)
                                 break;
 
-                            alphaTextures[_mapChunk.MCLY[i].ofsMCAL][outputOffset++] = chunkData[alphaOffset];
+                            alphaTextures[_mapChunk.MCLY.Entries[i].ofsMCAL][outputOffset++] = chunkData[alphaOffset];
                             ++layerRead;
 
                             if (!doFill)
@@ -79,7 +79,7 @@ namespace WoWMap.Chunks
                     {
                         for (var y = 0; y < 64; ++y)
                         {
-                            alphaTextures[_mapChunk.MCLY[i].ofsMCAL][outputOffset++] = chunkData[alphaOffset++];
+                            alphaTextures[_mapChunk.MCLY.Entries[i].ofsMCAL][outputOffset++] = chunkData[alphaOffset++];
 
                             ++layerRead;
                         }
@@ -91,8 +91,8 @@ namespace WoWMap.Chunks
                     {
                         for (var y = 0; y < 32; ++y)
                         {
-                            alphaTextures[_mapChunk.MCLY[i].ofsMCAL][outputOffset++] = (byte)(((chunkData[alphaOffset] & 0xf0) >> 4) * 17);
-                            alphaTextures[_mapChunk.MCLY[i].ofsMCAL][outputOffset++] = (byte)((chunkData[alphaOffset++] & 0x0f) * 17);
+                            alphaTextures[_mapChunk.MCLY.Entries[i].ofsMCAL][outputOffset++] = (byte)(((chunkData[alphaOffset] & 0xf0) >> 4) * 17);
+                            alphaTextures[_mapChunk.MCLY.Entries[i].ofsMCAL][outputOffset++] = (byte)((chunkData[alphaOffset++] & 0x0f) * 17);
 
                             layerRead += 2;
                         }

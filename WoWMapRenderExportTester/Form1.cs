@@ -136,10 +136,10 @@ namespace WoWMapRenderExportTester
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)All.Repeat);
                 GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 256, 256, 0, PixelFormat.Rgba, PixelType.UnsignedByte, tkv.Value.ToArray());
 
-                var sampler = GL.GenSampler();
+                /*var sampler = GL.GenSampler();
                 samplers.Add(sampler);
-                GL.BindSampler(tkv.Key, sampler);
-                GL.Uniform1(shader.GetUniformLocation("texture0"), sampler);
+                GL.BindSampler(tkv.Key, sampler);*/
+                GL.Uniform1(shader.GetUniformLocation("texture0"), tkv.Key);
             }
 
             // Render pass

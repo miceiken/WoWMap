@@ -71,7 +71,7 @@ namespace WoWMapRenderer.Renderers
                 Renderers.Add(mapChunkRenderer);
             }
 
-            using (var fs = new System.IO.StreamWriter("terraindata.txt", false))
+            /*using (var fs = new System.IO.StreamWriter("terraindata.txt", false))
             {
                 foreach (var v in _vertices)
                     fs.WriteLine($"v {v.Position.X} {v.Position.Y} {v.Position.Z} {v.Color.X} {v.Color.Y} {v.Color.Z} {v.TextureCoordinates.X} {v.TextureCoordinates.Y}");
@@ -88,7 +88,7 @@ namespace WoWMapRenderer.Renderers
                         fs.Write("{0:X2} ", b);
                     fs.WriteLine();
                 }
-            }
+            }*/
         }
 
         private void GenerateVertices(MapChunk mapChunk)
@@ -119,8 +119,8 @@ namespace WoWMapRenderer.Renderers
 
                     vertex.TextureCoordinates = new Vector2
                     {
-                        X = (mapChunk.MCNK.Position.X - vertex.Position.X) / Constants.ChunkSize,
-                        Y = (mapChunk.MCNK.Position.Y - vertex.Position.Y) / Constants.ChunkSize,
+                        Y = (mapChunk.MCNK.Position.X - vertex.Position.X) / Constants.ChunkSize,
+                        X = (mapChunk.MCNK.Position.Y - vertex.Position.Y) / Constants.ChunkSize,
                     };
 
                     _vertices.Add(vertex);
