@@ -126,23 +126,23 @@ namespace WoWMap.Layers
                     case "MCCV":
                         MCCV = new MCCV(subChunk);
                         break;
-                    case "MCSH":
-                        MCSH = new MCSH(subChunk);
-                        break;
-                    case "MCLY":
-                        if (subChunk.Size == 0)
-                            ++mclyIdx;
-                        else
-                        {
-                            if (mclyIdx >= 4)
-                                Debug.Assert(false, "More than 4 MCLY chunks found! WTFWTFWTFWTF");
-                            MCLY[mclyIdx++] = new MCLY(subChunk);
-                        }
-                        break;
-                    case "MCAL":
-                        if (WDT != null)
-                            MCAL = new MCAL(this, WDT, subChunk);
-                        break;
+                    //case "MCSH":
+                    //    MCSH = new MCSH(subChunk);
+                    //    break;
+                    //case "MCLY":
+                    //    if (subChunk.Size == 0)
+                    //        ++mclyIdx;
+                    //    else
+                    //    {
+                    //        if (mclyIdx >= 4)
+                    //            Debug.Assert(false, "More than 4 MCLY chunks found! WTFWTFWTFWTF");
+                    //        MCLY[mclyIdx++] = new MCLY(subChunk);
+                    //    }
+                    //    break;
+                    //case "MCAL":
+                    //    if (WDT != null)
+                    //        MCAL = new MCAL(this, WDT, subChunk);
+                    //    break;
                 }
             }
         }

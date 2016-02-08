@@ -143,7 +143,7 @@ namespace WoWMap.Layers
             if (Type != ADTType.Normal)
                 return;
             Objects.Generate();
-            Textures.Generate();
+            //Textures.Generate();
         }
 
         private void ReadModels()

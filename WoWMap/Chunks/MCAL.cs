@@ -4,7 +4,7 @@ using WoWMap.Readers;
 
 namespace WoWMap.Chunks
 {
-    public sealed class MCAL: ChunkReader
+    public sealed class MCAL : ChunkReader
     {
         public MCAL(MapChunk chunk, WDT wdt, Chunk c) : base(c, false)
         {
@@ -33,7 +33,7 @@ namespace WoWMap.Chunks
             var br = Chunk.GetReader();
             var chunkData = br.ReadBytes((int)Chunk.Size);
 
-            alphaTextures = new byte[_mapChunk.MCLY.Length][]; 
+            alphaTextures = new byte[_mapChunk.MCLY.Length][];
 
             for (var i = 0; i < _mapChunk.MCLY.Length; ++i)
             {
