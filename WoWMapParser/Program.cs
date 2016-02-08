@@ -21,7 +21,7 @@ namespace WoWMapParser
 
             //ReadMapsDBC();
             ReadADT();
-            //ReadADTs();
+            ReadADTs();
             //CreateNavmesh();
             //TestNavmesh();
             //ReadWDT();
@@ -94,6 +94,7 @@ namespace WoWMapParser
                     sw.Start();
                     var adt = new ADT(continent, x, y);
                     adt.Read();
+                    adt.Generate();
                     sw.Reset();
                     Console.WriteLine(" (done! {0}ms)", sw.ElapsedMilliseconds);
                     allGeom.AddADT(adt);

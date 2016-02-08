@@ -117,21 +117,21 @@ namespace WoWMap.Layers
                     case "MCCV":
                         MCCV = new MCCV(subChunk);
                         break;
-                    case "MCSH":
-                        MCSH = new MCSH(subChunk);
-                        break;
-                    case "MCLY":
-                        MCLY = new MCLY(subChunk);
-                        break;
-                    case "MCAL":
-                        if (WDT == null)
-                            Console.WriteLine($"Skipping MCAL Chunk in MCNK #{Index} because no WDT was provided!");
-                        else
-                            MCAL = new MCAL(this, WDT, subChunk);
-                        break;
-                    default:
-                        Console.WriteLine($"Skipped {subChunk.Name} MapChunk sub-chunk.");
-                        break;
+                    //case "MCSH":
+                    //    MCSH = new MCSH(subChunk);
+                    //    break;
+                    //case "MCLY":
+                    //    MCLY = new MCLY(subChunk);
+                    //    break;
+                    //case "MCAL":
+                    //    if (WDT == null)
+                    //        Console.WriteLine($"Skipping MCAL Chunk in MCNK #{Index} because no WDT was provided!");
+                    //    else
+                    //        MCAL = new MCAL(this, WDT, subChunk);
+                    //    break;
+                    //default:
+                    //    Console.WriteLine($"Skipped {subChunk.Name} MapChunk sub-chunk.");
+                    //    break;
                 }
             }
         }

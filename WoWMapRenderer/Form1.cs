@@ -29,7 +29,7 @@ namespace WoWMapRenderer
         public Form1()
         {
             InitializeComponent();
-            TextureCache.Initialize();
+            //TextureCache.Initialize();
 
             _renderer = new TerrainRenderer(GL);
             _renderer.OnProgress += (progress, state) =>
