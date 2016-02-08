@@ -11,6 +11,7 @@ using OpenTK.Graphics.OpenGL;
 using WoWMap;
 using WoWMap.Chunks;
 using WoWMap.Layers;
+using System.Drawing;
 
 namespace WoWMapRenderer.Renderers
 {
@@ -20,6 +21,8 @@ namespace WoWMapRenderer.Renderers
         private GLControl _control;
 
         private WDT _wdt;
+
+        private Framebuffer _framebuffer;
 
         private Dictionary<int, ADT> _mapTiles = new Dictionary<int, ADT>();
         private Dictionary<int, TileRenderer> _batchRenderers = new Dictionary<int, TileRenderer>(9 * 3);
@@ -37,12 +40,15 @@ namespace WoWMapRenderer.Renderers
 
         public bool ForceWireframe { get; private set; }
 
+        private int[] _terrainSamplers = new int[4];
+        private int[] _alphaTerrainSamplers = new int[3];
+
         public TerrainRenderer(GLControl control)
         {
             _control = control;
             _control.MouseClick += (sender, args) => {
                 if (args.Button == MouseButtons.Right)
-                    OnRightClick(ProjectCoordinates(args.X, args.Y));
+                    OnRightClick(UnprojectCoordinates(args.X, args.Y));
             };
             _control.KeyPress += (sender, args) =>
             {
@@ -56,6 +62,12 @@ namespace WoWMapRenderer.Renderers
             };
         }
 
+        ~TerrainRenderer()
+        {
+            /*if (_framebuffer != null)
+                _framebuffer.Release();*/
+        }
+
         public void OnForceWireframeToggle(bool forceWireframe)
         {
             ForceWireframe = forceWireframe;
@@ -67,17 +79,20 @@ namespace WoWMapRenderer.Renderers
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        private Vector3 ProjectCoordinates(float x, float y)
+        private Vector3 UnprojectCoordinates(float x, float y)
         {
-            // Translate click coord to 3D.
-            // Fire a ray from there and detect hits
-            // Not sure OpenTK has an easy way to do this ...
-            return Vector3.One;
+            if (_camera == null)
+                return Vector3.Zero;
+            var mouse = new Vector2(x, y);
+            var mat4 = mouse.UnProject(_camera.Projection, _camera.View, new Size(_control.Width, _control.Height));
+            return mat4.Xyz;
         }
 
         private void OnRightClick(Vector3 terrainCoordinates)
         {
             // 3D space coordinates passed as parameter
+            // TODO fix, not working as planned
+            Console.WriteLine($"Clicked coordinates [ {terrainCoordinates.X} {terrainCoordinates.Y} {terrainCoordinates.Z} ]");
         }
 
         public void LoadMap(string mapName)
@@ -97,14 +112,19 @@ namespace WoWMapRenderer.Renderers
 
                     _mapTiles.Clear();
                     int tileIdx = 0, tileCount = _wdt.TileCount;
-                    for (var i = 0; i < 64; ++i)
-                        for (var j = 0; j < 64; ++j)
+                    /*for (var i = 20; i < 30; ++i)
+                        for (var j = 20; j < 30; ++j)
                             if (_wdt.HasTile(i, j))
                             {
                                 ++tileIdx;
-                                _mapTiles[(i << 8) | j] = new ADT(mapName, i, j);
+                                _mapTiles[(i << 8) | j] = new ADT(mapName, i, j, _wdt);
                                 _loader.ReportProgress(tileIdx * 100 / tileCount, "Loading ADTs (" + tileIdx + " / " + tileCount + ") ...");
-                            }
+                            }*/
+
+                    if (!_wdt.HasTile(29, 30))
+                        Console.WriteLine("fuck me");
+
+                    _mapTiles[(29 << 8) | 30] = new ADT(mapName, 29, 30, _wdt);
                 };
                 _loader.ProgressChanged += (sender, args) =>
                 {
@@ -122,6 +142,13 @@ namespace WoWMapRenderer.Renderers
 
         private void InitializeView()
         {
+            //_framebuffer = new Framebuffer(_control.Width, _control.Height);
+
+            #region Generating samplers
+            // GL.GenSamplers(4, _terrainSamplers);
+            // GL.GenSamplers(3, _alphaTerrainSamplers);
+            #endregion
+
             _shader = new Shader();
             _shader.CreateFromFile("shaders/vertex.glsl", "shaders/fragment.glsl");
             _shader.SetCurrent();
@@ -145,7 +172,6 @@ namespace WoWMapRenderer.Renderers
 
             _camera.OnMovement += () =>
             {
-                // Camera already updated
                 UpdateRenderers();
                 Render();
             };
@@ -157,16 +183,14 @@ namespace WoWMapRenderer.Renderers
         private void UpdateRenderers()
         {
             var cameraPosition = _camera.Position;
-            var centeredTile = GetTileAt(cameraPosition.Xy);
-            Debug.Assert(centeredTile != Vector2.Zero, "Unable to determinate the tile in which the camera is!");
-            if (_currentCenteredTile != centeredTile)
-                _currentCenteredTile = centeredTile;
+            var _currentCenteredTile = GetTileAt(cameraPosition.Xy);
+            Debug.Assert(_currentCenteredTile != Vector2.Zero, "Unable to determinate the tile in which the camera is!");
 
             var keysToKeep = new List<int>(9);
 
-            for (var i = 0; i < 1; ++i)
+            /*for (var i = 1; i < 2; ++i)
             {
-                for (var j = 0; j < 1; ++j)
+                for (var j = 1; j < 2; ++j)
                 {
                     var tileX = (int)(_currentCenteredTile.X - 1 + i);
                     var tileY = (int)(_currentCenteredTile.Y - 1 + j);
@@ -178,7 +202,12 @@ namespace WoWMapRenderer.Renderers
 
                     LoadTile(tileX, tileY);
                 }
-            }
+            }*/
+
+            var tileX = 29;
+            var tileY = 30;
+            keysToKeep.Add((tileX << 8) | tileY);
+            LoadTile(tileX, tileY);
 
             while (_loadedTiles.Count != 1)
             {
@@ -189,148 +218,19 @@ namespace WoWMapRenderer.Renderers
             }
         }
 
-        private void LoadTile(int tileX, int tileY)
+        private bool LoadTile(int tileX, int tileY)
         {
             var tileToLoadKey = (tileX << 8) | tileY;
             _mapTiles[tileToLoadKey].Read();
 
-            foreach (var t in _mapTiles[tileToLoadKey].Textures.MTEX.Filenames)
-                TextureCache.AddRawTexture(t.Value);
-
             _loadedTiles[tileToLoadKey] = true;
 
-            var verticeList = new List<Vertex>(145);
-            var indiceList = new List<uint>();
-
             var tileRenderer = new TileRenderer();
+            tileRenderer.Generate(_mapTiles[tileToLoadKey]);
+            tileRenderer.Bind(_shader);
 
-            var mapChunkIndex = 0;
-            foreach (var adtChunk in _mapTiles[tileToLoadKey].MapChunks)
-            {
-                if (adtChunk == null)
-                    continue;
-
-                var offset = (uint)verticeList.Count;
-
-                #region Terrain indices
-                // Generate indices
-                var unitidx = 0;
-                for (uint j = 9; j < 8 * 8 + 9 * 8; j++)
-                {
-                    if (!adtChunk.HasHole(unitidx % 8, unitidx++ / 8))
-                    {
-                        indiceList.AddRange(new[] { j + offset, j - 9 + offset, j + 8 + offset });
-                        indiceList.AddRange(new[] { j + offset, j - 8 + offset, j - 9 + offset });
-                        indiceList.AddRange(new[] { j + offset, j + 9 + offset, j - 8 + offset });
-                        indiceList.AddRange(new[] { j + offset, j + 8 + offset, j + 9 + offset });
-                    }
-                    if ((j + 1) % (9 + 8) == 0) j += 9;
-                }
-                #endregion
-
-                #region Terrain vertices
-                for (int i = 0, idx = 0; i < 17; ++i)
-                {
-                    var maxJ = ((i % 2) != 0) ? 8 : 9;
-                    for (var j = 0; j < maxJ; j++)
-                    {
-                        var color = new Vector3(1.0f, 1.0f, 1.0f);
-                        if (adtChunk.MCCV != null)
-                        {
-                            color.X = adtChunk.MCCV.Entries[idx].Red / 127.0f;
-                            color.Y = adtChunk.MCCV.Entries[idx].Green / 127.0f;
-                            color.Z = adtChunk.MCCV.Entries[idx].Blue / 127.0f;
-                        }
-
-                        verticeList.Add(new Vertex
-                        {
-                            Color = color,
-                            Position = new Vector3
-                            {
-                                X = adtChunk.MCNK.Position.X - (i * Constants.UnitSize * 0.5f),
-                                Y = adtChunk.MCNK.Position.Y - ((j + (((i % 2) != 0) ? 0.5f : 0.0f)) * Constants.UnitSize),
-                                Z = adtChunk.MCVT.Heights[idx] + adtChunk.MCNK.Position.Z
-                            },
-                            // TODO Unfuck these up
-                            TextureCoordinates = new Vector2(i / 8.0f + (((i & 2) == 0) ? 0.5f / 8.0f : 0.0f), j / 17.0f),
-                        });
-
-                        ++idx;
-                    }
-                }
-                #endregion
-
-                tileRenderer.AddMapChunk(BindIndexedVertex(mapChunkIndex, _mapTiles[tileToLoadKey], 
-                    verticeList.ToArray(), indiceList.ToArray()));
-
-                ++mapChunkIndex;
-                verticeList.Clear();
-            }
             _batchRenderers[tileToLoadKey] = tileRenderer;
-
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-        }
-
-        private MapChunkRenderer BindIndexedVertex(int mapChunkIndex, ADT terrainTile, Vertex[] vertices, uint[] indices)
-        {
-            var renderer = new MapChunkRenderer { TriangleCount = indices.Length };
-
-            // Schlumpf guarantees the chunks are "always in the exactly same order". You know who to blame.
-            var mapChunk = terrainTile.MapChunks[mapChunkIndex];
-            var texMapChunk = terrainTile.Textures.MapChunks[mapChunkIndex];
-
-            TextureCache.ResetFreeForMapChunk();
-
-            for (var i = 0; i < texMapChunk.MCLY.Length; ++i)
-            {
-                // TODO: This still doesnt work for a LOT of tiles
-                if (texMapChunk.MCLY[i] == null || texMapChunk.MCAL == null)
-                    continue;
-
-                var rawTexture = TextureCache.GetRawTexture(terrainTile.Textures.MTEX.Filenames.ElementAt((int)texMapChunk.MCLY[i].TextureId).Value);
-                var newTexture = rawTexture.ApplyAlpha(texMapChunk.MCAL.GetAlpha(i));
-
-                TextureCache.AddBoundTexture(newTexture);
-                renderer.AddTexture(newTexture);
-            }
-
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-
-            GL.BindVertexArray(renderer.VAO);
-
-            var vertexSize = Marshal.SizeOf(typeof(Vertex));
-            var verticeSize = vertices.Length * vertexSize;
-
-            GL.BindBuffer(BufferTarget.ArrayBuffer, renderer.VerticeVBO);
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(verticeSize), vertices, BufferUsageHint.StaticDraw);
-
-            VertexAttribPointer(_shader.GetAttribLocation("vertex_shading"), 3,
-                VertexAttribPointerType.Float, vertexSize, IntPtr.Zero, true);
-
-            VertexAttribPointer(_shader.GetAttribLocation("vertice_position"), 3,
-                VertexAttribPointerType.Float, vertexSize, sizeof(float) * 3);
-
-            VertexAttribPointer(_shader.GetAttribLocation("in_TexCoord0"), 2,
-                VertexAttribPointerType.Float, vertexSize, (IntPtr)(sizeof(float) * 6));
-
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, renderer.IndiceVBO);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(indices.Length * sizeof(uint)),
-                indices, BufferUsageHint.StaticDraw);
-
-            return renderer;
-        }
-
-        private void VertexAttribPointer(int location, int size, VertexAttribPointerType type, int stride, IntPtr offset, bool normalized = false)
-        {
-            GL.VertexAttribPointer(location, size, type, normalized, stride, offset);
-            GL.EnableVertexAttribArray(location);
-        }
-
-        private void VertexAttribPointer(int location, int size, VertexAttribPointerType type, int stride, int offset)
-        {
-            GL.VertexAttribPointer(location, size, type, false, stride, offset);
-            GL.EnableVertexAttribArray(location);
+            return true;
         }
 
         /// <summary>
@@ -383,6 +283,11 @@ namespace WoWMapRenderer.Renderers
         /// </summary>
         private void GetCenterTile(out int x, out int y)
         {
+            x = 29;
+            y = 30;
+            return; // HACK HACK HACK REMOVE ME LATER
+
+            /*
             var topLeft = new[] { 64, 64 };
             var bottomRight = new[] { 0, 0 };
             for (var xx = 0; xx < 64; ++xx)
@@ -400,32 +305,27 @@ namespace WoWMapRenderer.Renderers
             }
 
             x = (int)Math.Floor((topLeft[0] + bottomRight[0]) / 2.0f);
-            y = (int)Math.Floor((topLeft[1] + bottomRight[1]) / 2.0f);
+            y = (int)Math.Floor((topLeft[1] + bottomRight[1]) / 2.0f);*/
         }
 
         private void Render()
         {
-            // var buffer = new FrameBuffer(512, 512);
-            // buffer.Load();
+            GL.ClearColor(Color.White);
+            GL.Viewport(0, 0, _control.Width, _control.Height);
 
             GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
 
-            if (ForceWireframe)
-                GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            GL.PolygonMode(MaterialFace.FrontAndBack, ForceWireframe ? PolygonMode.Line : PolygonMode.Fill);
 
             var uniform = Matrix4.Mult(_camera.View, _camera.Projection);
             GL.UniformMatrix4(_shader.GetUniformLocation("projection_modelview"), false, ref uniform);
 
             GL.Enable(EnableCap.Texture2D);
-
             GL.Enable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Less);
 
             foreach (var renderer in _batchRenderers.Values)
-                renderer.Render(_shader);
-
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-            GL.BindVertexArray(0);
+                renderer.Render(_shader, _terrainSamplers, _alphaTerrainSamplers);
 
             _control.SwapBuffers();
         }

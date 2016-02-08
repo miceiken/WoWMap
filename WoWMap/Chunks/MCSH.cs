@@ -13,28 +13,15 @@ namespace WoWMap.Chunks
         public MCSH(Chunk c, uint h) : base(c, h) { }
         public MCSH(Chunk c) : base(c, c.Size) { }
 
-        private BitArray[] shadowMap; // Inefficient. Sue me.
+        public BitArray[] ShadowMap { get; private set; } // Inefficient. Sue me.
 
         public override void Read()
         {
             var br = Chunk.GetReader();
 
-            shadowMap = new BitArray[64];
+            ShadowMap = new BitArray[64];
             for (var i = 0; i < 64; ++i)
-                shadowMap[i] = new BitArray(br.ReadBytes(64));
-        }
-
-        // TODO: Order swapped ?
-
-        public bool White(int x, int y)
-        {
-            return shadowMap[x][y];
-        }
-
-        // No racism here.
-        public bool Black(int x, int y)
-        {
-            return !White(x, y);
+                ShadowMap[i] = new BitArray(br.ReadBytes(64));
         }
     }
 }

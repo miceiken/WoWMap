@@ -82,45 +82,73 @@ namespace WoWMapRenderer
         /// <summary>
         /// Handle the camera movement using user input.
         /// </summary>
-        protected virtual void ProcessInput()
+        protected virtual bool ProcessInput()
         {
             var mouse = Mouse.GetState();
             var keyboard = Keyboard.GetState();
 
+            var inputProcessed = false;
+
             // Move camera with WASD keys
             if (keyboard.IsKeyDown(Key.W))
+            {
                 _position += _direction * _speed * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f);
+                inputProcessed = true;
+            }
 
             if (keyboard.IsKeyDown(Key.S))
-                _position -= _direction * _speed * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f); ;
+            {
+                _position -= _direction * _speed * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f);
+                inputProcessed = true;
+            }
 
             if (keyboard.IsKeyDown(Key.A))
+            {
                 _position += Vector3.Cross(_up, _direction) * _speed * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f); ;
+                inputProcessed = true;
+            }
 
             if (keyboard.IsKeyDown(Key.D))
+            {
                 _position -= Vector3.Cross(_up, _direction) * _speed * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f); ;
+                inputProcessed = true;
+            }
 
             if (keyboard.IsKeyDown(Key.Space))
+            {
                 _position += _up * _speed * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f); ;
+                inputProcessed = true;
+            }
 
             if (keyboard.IsKeyDown(Key.X))
+            {
                 _position -= _up * _speed * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f); ;
-
+                inputProcessed = true;
+            }
 
             if (mouse.IsButtonDown(MouseButton.Left))
             {
-                _direction = Vector3.Transform(_direction,
-                    Matrix4.CreateFromAxisAngle(_up,
-                        - _mouseSpeedX * (mouse.X - m_prevMouse.X) * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f)));
-
-                var angle = _mouseSpeedY * (mouse.Y - m_prevMouse.Y) * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f);
-                if ((Pitch < _pitchLimit || angle > 0) && (Pitch > -_pitchLimit || angle < 0))
+                if (Math.Abs(mouse.X - m_prevMouse.X) > 0.01)
                 {
-                    _direction = Vector3.Transform(_direction, Matrix4.CreateFromAxisAngle(Vector3.Cross(_up, _direction), angle));
+                    _direction = Vector3.Transform(_direction,
+                        Matrix4.CreateFromAxisAngle(_up,
+                            -_mouseSpeedX * (mouse.X - m_prevMouse.X) * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f)));
+                    inputProcessed = true;
+                }
+
+                if (Math.Abs(mouse.Y - m_prevMouse.Y) > 0.01)
+                {
+                    var angle = _mouseSpeedY * (mouse.Y - m_prevMouse.Y) * (keyboard.IsKeyDown(Key.LControl) ? _speedBoost : 1.0f);
+                    if ((Pitch < _pitchLimit || angle > 0) && (Pitch > -_pitchLimit || angle < 0))
+                    {
+                        _direction = Vector3.Transform(_direction, Matrix4.CreateFromAxisAngle(Vector3.Cross(_up, _direction), angle));
+                        inputProcessed = true;
+                    }
                 }
             }
 
             m_prevMouse = mouse;
+            return inputProcessed;
         }
 
 
@@ -130,11 +158,13 @@ namespace WoWMapRenderer
         public void Update()
         {
             // Handle camera movement
-            ProcessInput();
-
-            View = CreateLookAt();
-            if (OnMovement != null)
-                OnMovement();
+            var mouseState = Mouse.GetState();
+            if (ProcessInput())
+            {
+                View = CreateLookAt();
+                if (OnMovement != null)
+                    OnMovement();
+            }
         }
 
 

@@ -1,36 +1,49 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO;
-using System.Reflection;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.ComponentModel;
 
 namespace WoWMap.Archive
 {
-    public class DBC<T> where T : class, new()
+    public class DB2<T> where T : class, new()
     {
-        private const uint DBCFmtSig = 0x43424457; // WDBC
+        private const uint DB2FmtSig = 0x32424457; // WDBC
 
-        public DBC(string filename, BackgroundWorker worker = null)
+        private int[] Indices;
+        private short[] StringLengths;
+
+        public DB2(string filename, BackgroundWorker worker = null)
         {
             if (!CASC.Initialized) return;
             if (!CASC.FileExists(filename))
                 return;
 
-            #region Read DBC
+            #region Read DB2
             using (var br = new BinaryReader(CASC.OpenFile(filename)))
             {
-                // Make sure we've got a valid DBC
-                if (br.BaseStream.Length < DBCHeader.Size) return;
-                if (DBCFmtSig != br.ReadUInt32()) return;
+                // Make sure we've got a valid DB2
+                if (br.BaseStream.Length < DB2Header.Size) return;
+                if (DB2FmtSig != br.ReadUInt32()) return;
 
                 // Read DBC header
-                Header = new DBCHeader();
+                Header = new DB2Header();
                 Header.Read(br);
+
+                if (Header.MaxId != 0)
+                {
+                    Indices = new int[Header.MaxId - Header.MinId + 1];
+                    StringLengths = new short[Header.MaxId - Header.MinId + 1];
+                    for (var i = 0; i < Header.MaxId - Header.MinId + 1; ++i)
+                        Indices[i] = br.ReadInt32();
+
+                    for (var i = 0; i < Header.MaxId - Header.MinId + 1; ++i)
+                        StringLengths[i] = br.ReadInt16();
+                }
 
                 // Read strings to a table
                 var readPos = br.BaseStream.Position;
@@ -45,9 +58,6 @@ namespace WoWMap.Archive
 
                 // Move back to where we were
                 br.BaseStream.Position = readPos;
-
-                Debug.Assert(Marshal.SizeOf(typeof(T)) == Header.RecordSize,
-                    $"Invalid record size, got {Marshal.SizeOf(typeof(T))}, expected {Header.RecordSize}.");
 
                 Rows = new T[Header.RecordCount];
                 var tProperties = typeof(T).GetProperties();
@@ -92,7 +102,7 @@ namespace WoWMap.Archive
             #endregion
         }
 
-        public DBCHeader Header
+        public DB2Header Header
         {
             get;
             private set;
@@ -106,40 +116,28 @@ namespace WoWMap.Archive
 
         public T this[int row]
         {
-            get { return Rows[row]; }
+            get { return Rows[Header.MaxId != 0 ? Indices[row] : row]; }
         }
 
-        #region Nested class: DBCHeader
+        #region Nested class: DB2Header
 
-        public class DBCHeader
+        public class DB2Header
         {
             #region Properties
 
-            public int RecordCount
-            {
-                get;
-                private set;
-            }
+            public int RecordCount { get; private set; }
+            public int FieldCount { get; private set; }
+            public int RecordSize { get; private set; }
+            public int StringBlockSize { get; private set; }
+            public int TableHash { get; private set; }
+            public int Build { get; private set; }
+            public int TimestampLastWritten { get; private set; }
+            public int MinId { get; private set; }
+            public int MaxId { get; private set; }
+            public int Locale { get; private set; }
+            public int CopyTableSize { get; private set; }
 
-            public int FieldCount
-            {
-                get;
-                private set;
-            }
-
-            public int RecordSize
-            {
-                get;
-                private set;
-            }
-
-            public int StringBlockSize
-            {
-                get;
-                private set;
-            }
-
-            public static readonly int Size = 48;
+            public static readonly int Size = 11 * 4;
 
             #endregion
 
@@ -149,6 +147,13 @@ namespace WoWMap.Archive
                 FieldCount = br.ReadInt32();
                 RecordSize = br.ReadInt32();
                 StringBlockSize = br.ReadInt32();
+                TableHash = br.ReadInt32();
+                Build = br.ReadInt32();
+                TimestampLastWritten = br.ReadInt32();
+                MinId = br.ReadInt32();
+                MaxId = br.ReadInt32();
+                Locale = br.ReadInt32();
+                CopyTableSize = br.ReadInt32();
             }
         }
 

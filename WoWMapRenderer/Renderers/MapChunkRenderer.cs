@@ -2,79 +2,95 @@
 using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL;
 using System.Diagnostics;
-using System.Runtime.ExceptionServices;
+using WoWMap.Layers;
+using WoWMap.Chunks;
+using System.Linq;
 
 namespace WoWMapRenderer.Renderers
 {
     public class MapChunkRenderer
     {
-        public int VerticeVBO { get; private set; }
-        public int IndiceVBO { get; private set; }
-        public int VAO { get; private set; }
-
-        private List<int> _textureSamplers = new List<int>();
-        private Dictionary<int /* unit */, Texture> _textures = new Dictionary<int, Texture>();
-
-        public int TriangleCount;
-
-        public MapChunkRenderer()
+        public class Material
         {
-            VAO = GL.GenVertexArray();
-            VerticeVBO = GL.GenBuffer();
-            IndiceVBO = GL.GenBuffer();
+            public uint TextureID; // Offset into MCAL
+            public int AlphaMapId;
+
+            public Texture AlphaTexture;
+            public Texture Texture;
         }
 
-        public void AddTexture(Texture texture)
+        public int IndicesOffset { get; private set; } // For rendering vertices
+        public int IndicesCount { get; private set; } // For rendering vertices
+
+        public int LayerCount { get { return Materials.Count; } } // Sent to shader program
+
+        public List<Material> Materials { get; private set; }
+
+        public MapChunkRenderer(MapChunk mapChunk)
         {
-            Debug.Assert(_textureSamplers.Count <= 4, "MapChunkRenderer: Trying to load too many samplers !");
-
-            // Unit has already been incremented for the next call - we need current value
-            _textures.Add(TextureCache.Unit - 1, texture);
-            var sampler = GL.GenSampler();
-            GL.BindSampler(TextureCache.Unit - 1, sampler);
-            _textureSamplers.Add(sampler);
-        }
-
-        public void Delete()
-        {
-            if (GL.IsBuffer(IndiceVBO))
-                GL.DeleteBuffer(IndiceVBO);
-            if (GL.IsBuffer(VerticeVBO))
-                GL.DeleteBuffer(VerticeVBO);
-            if (GL.IsVertexArray(VAO))
-                GL.DeleteVertexArray(VAO);
-
-            foreach (var sampler in _textureSamplers)
-                GL.DeleteSampler(sampler);
-
-            _textureSamplers.Clear();
-            _textures.Clear();
-        }
-
-        public bool Render(Shader shader)
-        {
-            try {
-                GL.BindVertexArray(VAO);
-
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndiceVBO);
-
-                foreach (var kv in _textures)
-                    kv.Value.BindTexture(TextureUnit.Texture0 + kv.Key);
-
-                for (var i = 0; i < _textureSamplers.Count; ++i)
-                    GL.Uniform1(shader.GetUniformLocation("texture_sampler" + i), _textureSamplers[i]);
-
-                GL.DrawElements(PrimitiveType.Triangles, TriangleCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
-
-                foreach (var kv in _textures)
-                    kv.Value.Unbind();
-
-                return true;
-            }
-            catch
+            Materials = new List<Material>(mapChunk.MCLY.Entries.Length);
+            for (var i = 0; i < mapChunk.MCLY.Entries.Length; ++i)
             {
-                return false;
+                Materials.Add(new Material
+                {
+                    TextureID = mapChunk.MCLY.Entries[i].TextureId,
+                    AlphaMapId = (int)mapChunk.MCLY.Entries[i].ofsMCAL
+                });
             }
+        }
+
+        public void SetIndices(int indiceCount, int indiceOffset)
+        {
+            IndicesOffset = indiceOffset * sizeof(uint);
+            IndicesCount = indiceCount * sizeof(uint);
+        }
+
+        public void AddTextureNames(MTEX mtexChunk)
+        {
+            for (var i = 0; i < Materials.Count; ++i)
+            {
+                var textureName = mtexChunk.Filenames[(int)Materials[i].TextureID];
+
+                // Get the texture and define a default slot for it
+                Materials[i].Texture = TextureCache.GetRawTexture(textureName);
+            }
+        }
+
+        public void ApplyAlphaMap(MCAL mcalChunk)
+        {
+            for (var i = 0; i < Materials.Count; ++i)
+            {
+                if (mcalChunk == null || !mcalChunk.HasAlpha(Materials[i].AlphaMapId))
+                    continue;
+
+                Materials[i].AlphaTexture = new Texture(mcalChunk.GetAlpha(Materials[i].AlphaMapId), 64, 64);
+                // TODO: Luminance is legacy. Use Alpha.
+                Materials[i].AlphaTexture.InternalFormat = PixelInternalFormat.Luminance;
+                Materials[i].AlphaTexture.Format = PixelFormat.Luminance;
+                Materials[i].AlphaTexture.MagFilter = (int)All.Linear;
+                Materials[i].AlphaTexture.MinFilter = (int)All.Linear;
+                Materials[i].AlphaTexture.Load();
+            }
+        }
+
+        public void Render(Shader shader, int[] terrainSamplers, int[] alphaMapSamplers)
+        {
+            GL.Uniform1(shader.GetUniformLocation("layerCount"), LayerCount);
+
+            for (var i = 0; i < Materials.Count; ++i)
+            {
+                var textureInfo = Materials[i];
+                textureInfo.Texture.Bind(TextureUnit.Texture0 + 2 * i,
+                    shader.GetUniformLocation("texture" + i));
+
+                if (i > 0 && textureInfo.AlphaTexture != null)
+                {
+                    textureInfo.AlphaTexture.Bind(TextureUnit.Texture0 + 2 * i - 1,
+                        shader.GetUniformLocation("alphaMap" + (i - 1)));
+                }
+            }
+
+            GL.DrawElements(PrimitiveType.Triangles, IndicesCount, DrawElementsType.UnsignedShort, (IntPtr)IndicesOffset);
         }
     }
 }

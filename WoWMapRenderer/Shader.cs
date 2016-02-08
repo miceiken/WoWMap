@@ -21,12 +21,12 @@ namespace WoWMapRenderer
 
         ~Shader()
         {
-            if (GL.IsProgram(ProgramID))
+            /*if (GL.IsProgram(ProgramID))
                 GL.DeleteProgram(ProgramID);
             if (GL.IsShader(VertexID))
                 GL.DeleteShader(VertexID);
             if (GL.IsShader(FragmentID))
-                GL.DeleteShader(FragmentID);
+                GL.DeleteShader(FragmentID);*/
         }
 
         public void CreateFromFile(string vertexPath, string fragmentPath)
