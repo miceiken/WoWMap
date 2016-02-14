@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using OpenTK;
 using SharpNav;
+using SharpNav.Pathfinding;
 using WoWMap.Archive;
 using WoWMap.Layers;
 using WoWMap.Geometry;
@@ -15,14 +16,17 @@ namespace WoWMapParser
 {
     class Program
     {
+        private static Func<Vector3, Vector3> WoWToSharpNav = v => new Vector3(v.X, v.Z, v.Y);
+        private static Func<Vector3, Vector3> SharpNavToWoW = v => new Vector3(v.X, v.Z, v.Y);
+
         static void Main(string[] args)
         {
             Initialize();
 
             //ReadMapsDBC();
-            ReadADT();
-            ReadADTs();
-            //CreateNavmesh();
+            //ReadADT();
+            //ReadADTs();
+            CreateNavmesh();
             //TestNavmesh();
             //ReadWDT();
             //ReadWMO();
@@ -66,12 +70,7 @@ namespace WoWMapParser
         {
             // var adt = new ADT("Kalimdor", 32, 36);
             //var adt = new ADT("PvPZone01", 32, 30);
-            var adt = new ADT("Azeroth", 28, 28);
-            /*adt.Read();
-            var geom = new Geometry();
-            geom.AddADT(adt);
-            geom.SaveWavefrontObject(Path.GetFileNameWithoutExtension(adt.Filename) + ".obj");*/
-
+            var adt = new ADT("Azeroth", 31, 31);
             // var adt = new ADT("Azeroth", 31, 40);
             adt.Read();
             adt.Generate();
@@ -110,6 +109,7 @@ namespace WoWMapParser
             var sw = Stopwatch.StartNew();
             var adt = new ADT("Azeroth", 28, 28);
             adt.Read();
+            adt.Generate();
             sw.Stop();
             Console.WriteLine("Read ADT in {0}", sw.Elapsed);
             geom.AddADT(adt);
@@ -119,50 +119,57 @@ namespace WoWMapParser
             sw.Stop();
             Console.WriteLine("Generated navmesh in {0}", sw.Elapsed);
 
-            TestNavmesh(new TiledNavMesh(build));
+
+            TestNavmesh(build);
         }
 
-        static void TestNavmesh(TiledNavMesh tmesh)
+        static void TestNavmesh(NavMeshBuilder build)
         {
             // Azeroth 28 28 / Deathknell (wow-style coordinates)
-            // Outside church: 1843,734 1604,214 94,55994
-            // Inside church: 1844,074 1642,581 97,62832
-            // Outside spawn: 1672,226 1662,989 139,2343
-            // Inside spawn: 1665,264 1678,277 120,5302
-            // Outside cave: 2051,3 1807,121 102,5225
-            // Inside cave: 2082,813 1950,718 98,04765
-            // Outside house: 1861,465 1582,03 92,79533
-            // Upstairs house: 1859,929 1560,804 99,07755
+            // Outside church: 1843.734 1604.214 94.55994
+            // Inside church: 1844.074 1642.581 97.62832
+            // Outside spawn: 1672.226 1662.989 139.2343
+            // Inside spawn: 1665.264 1678.277 120.5302
+            // Outside cave: 2051.3 1807.121 102.5225
+            // Inside cave: 2082.813 1950.718 98.04765
+            // Outside house: 1861.465 1582.03 92.79533
+            // Upstairs house: 1859.929 1560.804 99.07755
 
-            var query = new NavMeshQuery(tmesh, 65535);
+            var tmesh = new TiledNavMesh(build);
 
-            var extents = new Vector3(2.5f, 2.5f, 2.5f);
+            var query = new NavMeshQuery(tmesh, 2048);
+            var extents = new Vector3(10f, 10f, 10f);
 
-            // WoW(X, Y, Z) -> SharpNav(Y, Z, X) -- or so I think :-----D
-            var posStart = new Vector3(1662.9f, 139.2f, 1672.2f); // Outside spawn
-            var posEnd = new Vector3(1678.3f, 120.5f, 1665.3f); // Inside spawn
+            var posStart = WoWToSharpNav(new Vector3(1665.2f, 1678.2f, 120.5f)); // Inside spawn
+            var posEnd = WoWToSharpNav(new Vector3(1672.2f, 1662.9f, 139.2f)); // Outside spawn
 
-            Vector3 aStartPos;
-            int snRef;
-            if (!query.FindNearestPoly(ref posStart, ref extents, out snRef, out aStartPos))
-                Console.WriteLine("No start poly");
+            NavPoint endPt;
+            query.FindNearestPoly(ref posEnd, ref extents, out endPt);
 
-            //SharpNav.Vector3 rPos;
-            //int rRef;
-            //if (!query.FindRandomPoint(out rRef, out rPos))
-            //    Console.WriteLine("No end poly");
+            NavPoint startPt;
+            query.FindNearestPoly(ref posStart, ref extents, out startPt);
 
-            Vector3 aEndPos;
-            int enRef;
-            if (!query.FindNearestPoly(ref posEnd, ref extents, out enRef, out aEndPos))
-                Console.WriteLine("No end poly");
+            
 
             var path = new List<int>();
-            if (!query.FindPath(snRef, enRef, ref aStartPos, ref aEndPos, path))
-                Console.WriteLine("No path");
+            if (!query.FindPath(ref startPt, ref endPt, path))
+                Console.WriteLine("No path!");
 
-            //if (!query.FindStraightPath(posStart, posEnd, path.ToArray(), path.Count))
-            //    return;
+            Vector3 actualStart = new Vector3();
+            query.ClosestPointOnPoly(startPt.Polygon, startPt.Position, ref actualStart);
+
+            Vector3 actualEnd = new Vector3();
+            query.ClosestPointOnPoly(endPt.Polygon, endPt.Position, ref actualEnd);
+
+            var smoothPath = new List<Vector3>();
+            Vector3[] straightPath = new Vector3[2048];
+            int[] pathFlags = new int[2048];
+            int[] pathRefs = new int[2048];
+            int pathCount = -1;
+            query.FindStraightPath(actualStart, actualEnd, path.ToArray(), path.Count, straightPath, pathFlags, pathRefs, ref pathCount, 2048, PathBuildFlags.AllCrossingVertices);
+
+            foreach (var v in straightPath)
+                Console.WriteLine(v);
         }
 
         static void ReadWDT()

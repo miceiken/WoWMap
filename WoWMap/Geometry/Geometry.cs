@@ -53,10 +53,10 @@ namespace WoWMap.Geometry
 
         public void AddGeometry(IEnumerable<Vector3> vertices, IEnumerable<Triangle<uint>> indices)
         {
-            // Rotate vertices back to z-up
             var vo = (uint)Vertices.Count;
             foreach (var v in vertices)
-                Vertices.Add(Vector3.Transform(v, Matrix4.CreateRotationX((float)(- Math.PI / 2.0f))));
+                Vertices.Add(v); //Vertices.Add(Vector3.Transform(v, Matrix4.CreateRotationX((float)(- Math.PI / 2.0f))));
+
             foreach (var i in indices)
                 Indices.Add(new Triangle<uint>(i.Type, i.V0 + vo, i.V1 + vo, i.V2 + vo));
         }
@@ -88,15 +88,20 @@ namespace WoWMap.Geometry
             AddGeometry(verts, inds);
         }
 
-        public void GetRawData(out float[] vertices, out int[] indices, out AreaId[] areas)
+        /*
+         * This part is for navmesh generation
+         * THIS IS ALSO WHY WE TAMPER WITH COORDINATE SYSTEMS
+         * IF IT WORKS DON'T BREAK
+         */
+        public void GetRawData(out float[] vertices, out int[] indices)
         {
             vertices = new float[Vertices.Count * 3];
             for (int i = 0; i < Vertices.Count; i++)
             {
                 var vert = Vertices[i];
                 vertices[(i * 3) + 0] = vert.X;
-                vertices[(i * 3) + 1] = vert.Y;
-                vertices[(i * 3) + 2] = vert.Z;
+                vertices[(i * 3) + 1] = vert.Z;
+                vertices[(i * 3) + 2] = vert.Y;
             }
             indices = new int[Indices.Count * 3];
             for (int i = 0; i < Indices.Count; i++)
@@ -106,20 +111,20 @@ namespace WoWMap.Geometry
                 indices[(i * 3) + 1] = (int)tri.V1;
                 indices[(i * 3) + 2] = (int)tri.V2;
             }
-            areas = new AreaId[Indices.Count];
-            for (int i = 0; i < Indices.Count; i++)
-            {
-                switch (Indices[i].Type)
-                {
-                    case TriangleType.Water:
-                        areas[i] = (AreaId)PolyArea.Water;
-                        break;
+            //areas = new AreaId[Indices.Count];
+            //for (int i = 0; i < Indices.Count; i++)
+            //{
+            //    switch (Indices[i].Type)
+            //    {
+            //        case TriangleType.Water:
+            //            areas[i] = (AreaId)PolyArea.Water;
+            //            break;
 
-                    default:
-                        areas[i] = AreaId.Walkable; //(AreaId)PolyArea.Terrain;
-                        break;
-                }
-            }
+            //        default:
+            //            areas[i] = AreaId.Walkable; //(AreaId)PolyArea.Terrain;
+            //            break;
+            //    }
+            //}
         }
 
         public static BBox3 GetBoundingBox(int x, int y, IEnumerable<Vector3> vertices)
@@ -139,26 +144,31 @@ namespace WoWMap.Geometry
         {
             float[] vertices;
             int[] indices;
-            AreaId[] areas;
-            GetRawData(out vertices, out indices, out areas);
+            
+            GetRawData(out vertices, out indices/*, out areas*/);
             var settings = WoWSettings;
 
             var hf = new Heightfield(bbox, settings);
-            hf.RasterizeTrianglesWithAreas(vertices, areas);
+            hf.RasterizeTriangles(vertices, Area.Default);
             hf.FilterLedgeSpans(settings.VoxelAgentHeight, settings.VoxelMaxClimb);
             hf.FilterLowHangingWalkableObstacles(settings.VoxelMaxClimb);
             hf.FilterWalkableLowHeightSpans(settings.VoxelAgentHeight);
 
             var chf = new CompactHeightfield(hf, settings);
-            chf.Erode(settings.VoxelAgentWidth);
+            chf.Erode(settings.VoxelAgentRadius);
             chf.BuildDistanceField();
-            chf.BuildRegions((int)(settings.AgentWidth / settings.CellSize) + 8, settings.MinRegionSize, settings.MergedRegionSize);
+            chf.BuildRegions((int)(settings.AgentRadius / settings.CellSize) + 8, settings.MinRegionSize, settings.MergedRegionSize);
 
-            var cset = new ContourSet(chf, settings);
+            var cset = chf.BuildContourSet(settings);
             var pmesh = new PolyMesh(cset, settings);
             var dmesh = new PolyMeshDetail(pmesh, chf, settings);
 
             var buildData = new NavMeshBuilder(pmesh, dmesh, new SharpNav.Pathfinding.OffMeshConnection[0], settings);
+
+            Console.WriteLine("Rasterized " + vertices.Length / 9 + " triangles.");
+            Console.WriteLine("Generated " + cset.Count + " regions.");
+            Console.WriteLine("PolyMesh contains " + pmesh.VertCount + " vertices in " + pmesh.PolyCount + " polys.");
+            Console.WriteLine("PolyMeshDetail contains " + dmesh.VertCount + " vertices and " + dmesh.TrisCount + " tris in " + dmesh.MeshCount + " meshes.");
 
             return buildData;
         }
@@ -175,8 +185,8 @@ namespace WoWMap.Geometry
                 cfg.MergedRegionSize = (int)Math.Pow(12, 2);
                 cfg.MaxClimb = 1f;
                 cfg.AgentHeight = 2.1f;
-                cfg.AgentWidth = 0.6f;
-                cfg.MaxEdgeLength = (int)(cfg.AgentWidth / cfg.CellSize) * 8;
+                cfg.AgentRadius = 0.6f;
+                cfg.MaxEdgeLength = (int)(cfg.AgentRadius / cfg.CellSize) * 8;
                 cfg.MaxEdgeError = 1.3f;
                 cfg.VertsPerPoly = 6;
                 cfg.SampleDistance = 3;
