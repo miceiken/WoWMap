@@ -52,7 +52,7 @@ namespace WoWMapRenderExportTester
                                 Y = float.Parse(tokens[1]),
                                 Z = float.Parse(tokens[2])
                             };
-                            vert.Color = new OpenTK.Vector3
+                            /*vert.Color = new OpenTK.Vector3
                             {
                                 X = float.Parse(tokens[3]),
                                 Y = float.Parse(tokens[4]),
@@ -62,7 +62,7 @@ namespace WoWMapRenderExportTester
                             {
                                 X = float.Parse(tokens[6]),
                                 Y = float.Parse(tokens[7]),
-                            };
+                            };*/
                             _vertices.Add(vert);
                             break;
                         case 'i':
