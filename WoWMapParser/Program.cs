@@ -11,6 +11,7 @@ using SharpNav.Pathfinding;
 using WoWMap.Archive;
 using WoWMap.Layers;
 using WoWMap.Geometry;
+using WoWMap.Builders;
 
 namespace WoWMapParser
 {
@@ -105,20 +106,9 @@ namespace WoWMapParser
 
         static void CreateNavmesh()
         {
-            var geom = new Geometry();
             var sw = Stopwatch.StartNew();
-            var adt = new ADT("Azeroth", 28, 28);
-            adt.Read();
-            adt.Generate();
-            sw.Stop();
-            Console.WriteLine("Read ADT in {0}", sw.Elapsed);
-            geom.AddADT(adt);
-            sw.Restart();
-            var bbox = Geometry.GetBoundingBox(28, 28, geom.Vertices);
-            var build = geom.GenerateNavmesh(bbox);
-            sw.Stop();
+            var build = new TileBuilder("Azeroth", 28, 28).Build();
             Console.WriteLine("Generated navmesh in {0}", sw.Elapsed);
-
 
             TestNavmesh(build);
         }
@@ -137,8 +127,8 @@ namespace WoWMapParser
 
             var tmesh = new TiledNavMesh(build);
 
-            var query = new NavMeshQuery(tmesh, 2048);
-            var extents = new Vector3(10f, 10f, 10f);
+            var query = new NavMeshQuery(tmesh, 65536);
+            var extents = new Vector3(5f, 5f, 5f);
 
             var posStart = WoWToSharpNav(new Vector3(1665.2f, 1678.2f, 120.5f)); // Inside spawn
             var posEnd = WoWToSharpNav(new Vector3(1672.2f, 1662.9f, 139.2f)); // Outside spawn
@@ -147,9 +137,7 @@ namespace WoWMapParser
             query.FindNearestPoly(ref posEnd, ref extents, out endPt);
 
             NavPoint startPt;
-            query.FindNearestPoly(ref posStart, ref extents, out startPt);
-
-            
+            query.FindNearestPoly(ref posStart, ref extents, out startPt);            
 
             var path = new List<int>();
             if (!query.FindPath(ref startPt, ref endPt, path))
