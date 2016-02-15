@@ -1,19 +1,15 @@
 #version 330
 
 in vec3 position; /* Input vertex */
-in vec3 vertex_shading; /* Vertex shading */
-in vec2 texture_coordinates; /* texture coordinates */
-in vec2 alpha_coordinates;
+in int type; /* vertex type */
 
 uniform mat4 projection_modelview; /* projection * modelview */
 
-out vec2 texCoord;
-out vec3 vertexShading;
+flat out int vertex_type;
 
 void main()
 {
-	vertexShading = vertex_shading;
-	texCoord = texture_coordinates;
+	vertex_type = type;
 
     gl_Position = projection_modelview * vec4(position, 1.0f);
 }
