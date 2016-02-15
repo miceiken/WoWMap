@@ -64,16 +64,11 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Renderers\MapChunkRenderer.cs" />
-    <Compile Include="Renderers\Texture.cs" />
     <Compile Include="Shader.cs" />
     <Compile Include="Renderers\TerrainRenderer.cs" />
-    <Compile Include="Texture.cs" />
     <Compile Include="FrameBuffer.cs" />
     <Compile Include="Renderers\TileRenderer.cs" />
-    <Compile Include="TextureCache.cs" />
     <Compile Include="Vertex.cs" />
-    <Compile Include="WMO.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
