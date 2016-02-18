@@ -29,7 +29,6 @@ namespace WoWMapRenderer
         public Form1()
         {
             InitializeComponent();
-            //TextureCache.Initialize();
 
             _renderer = new TerrainRenderer(GL);
             _renderer.OnProgress += (progress, state) =>
@@ -37,14 +36,6 @@ namespace WoWMapRenderer
                 _backgroundTaskProgress.Value = progress;
                 _feedbackText.Text = state;
             };
-
-            /*int maxCombinedTextureImageUnits;
-            OpenGL.GL.GetInteger(OpenGL.GetPName.MaxCombinedTextureImageUnits, out maxCombinedTextureImageUnits);
-            int maxTextureImageUnits;
-            OpenGL.GL.GetInteger(OpenGL.GetPName.MaxTextureImageUnits, out maxTextureImageUnits);
-
-            openGLInformationsToolStripMenuItem.DropDownItems.Add($"GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS = {maxCombinedTextureImageUnits}");
-            openGLInformationsToolStripMenuItem.DropDownItems.Add($"GL_MAX_TEXTURE_IMAGE_UNITS = {maxTextureImageUnits}");*/
         }
 
         private void OnLoad(object obj, EventArgs ea)

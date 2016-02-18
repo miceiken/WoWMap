@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using WoWMap;
 using WoWMap.Chunks;
+using WoWMap.Geometry;
 using WoWMap.Layers;
 
 namespace WoWMapRenderer.Renderers
@@ -20,10 +21,8 @@ namespace WoWMapRenderer.Renderers
         private List<Vertex> _vertices = new List<Vertex>();
         private List<ushort> _indices = new List<ushort>();
 
-        private int _indicesCount = 0;
-
         public int VerticeCount { get { return _vertices.Count; } }
-        public int IndiceCount { get { return _indicesCount; } }
+        public ushort IndiceCount { get { return (ushort)_indices.Count; } }
 
 
         public TileRenderer()
@@ -43,7 +42,7 @@ namespace WoWMapRenderer.Renderers
                 GenerateTerrainIndices(mapChunk);
                 GenerateTerrainVertices(mapChunk);
                 // GenerateWMO(mapChunk); // Both Indices & Vertices
-                // GenerateM2(mapChunk);  // Both Indices & Vertices
+                GenerateM2(mapChunk);  // Both Indices & Vertices
             }
         }
 
@@ -88,9 +87,38 @@ namespace WoWMapRenderer.Renderers
                         (ushort)(j + offset), (ushort)(j + 9 + offset), (ushort)(j - 8 + offset),
                         (ushort)(j + offset), (ushort)(j + 8 + offset), (ushort)(j + 9 + offset)
                     });
-                    _indicesCount += 4 * 3;
                 }
                 if ((j + 1) % (9 + 8) == 0) j += 9;
+            }
+        }
+
+        private void GenerateM2(MapChunk mapChunk)
+        {
+            if (mapChunk.MCRD == null || mapChunk.ADT.MDDF == null)
+                return;
+
+            var drawn = new HashSet<uint>();
+            for (var i = 0; i < mapChunk.MCRD.MDDFEntryIndex.Length; i++)
+            {
+                var doodad = mapChunk.ADT.MDDF.Entries[mapChunk.MCRD.MDDFEntryIndex[i]];
+                if (drawn.Contains(doodad.UniqueId))
+                    continue;
+                drawn.Add(doodad.UniqueId);
+
+                if (doodad.MMIDEntryIndex >= mapChunk.ADT.DoodadPaths.Count)
+                    continue;
+
+                var path = mapChunk.ADT.DoodadPaths[(int)doodad.MMIDEntryIndex];
+                var model = new M2(path);
+
+                if (!model.IsCollidable)
+                    continue;
+
+                // Doodads outside WMOs are treated like WMOs. Not a typo.
+                var transform = Transformation.GetWMOTransform(doodad.Position, doodad.Rotation, doodad.Scale / 1024.0f);
+                var vo = (ushort)VerticeCount;
+                _vertices.AddRange(model.Vertices.Select(v => new Vertex() { Position = Vector3.Transform(v, transform), Type = 2 }));
+                _indices.AddRange(model.Indices.SelectMany(t => new[] { (ushort)(vo + t.V0), (ushort)(vo + t.V1), (ushort)(vo + t.V2) }));
             }
         }
 
@@ -117,7 +145,7 @@ namespace WoWMapRenderer.Renderers
             GL.EnableVertexAttribArray(shader.GetAttribLocation("type"));
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(_indicesCount * sizeof(ushort)),
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(IndiceCount * sizeof(ushort)),
                 _indices.ToArray(), BufferUsageHint.StaticDraw);
 
             GL.BindVertexArray(0);
@@ -137,7 +165,7 @@ namespace WoWMapRenderer.Renderers
             GL.BindVertexArray(VAO);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
 
-            GL.DrawElements(PrimitiveType.Triangles, _indicesCount, DrawElementsType.UnsignedShort, IntPtr.Zero);
+            GL.DrawElements(PrimitiveType.Triangles, IndiceCount, DrawElementsType.UnsignedShort, IntPtr.Zero);
 
             GL.BindVertexArray(0);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);

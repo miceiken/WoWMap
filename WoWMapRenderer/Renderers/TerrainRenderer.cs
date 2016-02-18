@@ -20,6 +20,7 @@ namespace WoWMapRenderer.Renderers
     {
         private GLControl _control;
 
+        private string _mapName;
         private WDT _wdt;
 
         private Framebuffer _framebuffer;
@@ -46,7 +47,8 @@ namespace WoWMapRenderer.Renderers
         public TerrainRenderer(GLControl control)
         {
             _control = control;
-            _control.MouseClick += (sender, args) => {
+            _control.MouseClick += (sender, args) =>
+            {
                 if (args.Button == MouseButtons.Right)
                     OnRightClick(UnprojectCoordinates(args.X, args.Y));
             };
@@ -102,6 +104,7 @@ namespace WoWMapRenderer.Renderers
                 _loader = new BackgroundWorkerEx();
                 _loader.DoWork += (sender, e) =>
                 {
+                    _mapName = mapName;
                     _loader.ReportProgress(1, "Loading WDT...");
                     _wdt = new WDT(string.Format(@"World\Maps\{0}\{0}.wdt", mapName));
                     if (_wdt.IsGlobalModel)
@@ -111,20 +114,13 @@ namespace WoWMapRenderer.Renderers
                     }
 
                     _mapTiles.Clear();
-                    int tileIdx = 0, tileCount = _wdt.TileCount;
-                    /*for (var i = 20; i < 30; ++i)
-                        for (var j = 20; j < 30; ++j)
-                            if (_wdt.HasTile(i, j))
-                            {
-                                ++tileIdx;
-                                _mapTiles[(i << 8) | j] = new ADT(mapName, i, j, _wdt);
-                                _loader.ReportProgress(tileIdx * 100 / tileCount, "Loading ADTs (" + tileIdx + " / " + tileCount + ") ...");
-                            }*/
+                    int x, y;
+                    GetSpawnTile(out x, out y);
 
-                    if (!_wdt.HasTile(29, 30))
+                    if (!_wdt.HasTile(x, y))
                         Console.WriteLine("fuck me");
 
-                    _mapTiles[(29 << 8) | 30] = new ADT(mapName, 29, 30, _wdt);
+                    _mapTiles[(x << 8) | y] = new ADT(mapName, x, y, _wdt);
                 };
                 _loader.ProgressChanged += (sender, args) =>
                 {
@@ -163,7 +159,7 @@ namespace WoWMapRenderer.Renderers
 
             // Find camera coordinates, set it, set viewport, load tiles, render.
             int x, y;
-            GetCenterTile(out x, out y);
+            GetSpawnTile(out x, out y);
             var tileCenter = GetTileCenter(x, y);
             _currentCenteredTile = new Vector2(x, y);
             _camera = new Camera(new Vector3(tileCenter.X, tileCenter.Y, 300.0f), -Vector3.UnitZ);
@@ -188,42 +184,35 @@ namespace WoWMapRenderer.Renderers
 
             var keysToKeep = new List<int>(9);
 
-            /*for (var i = 1; i < 2; ++i)
-            {
-                for (var j = 1; j < 2; ++j)
-                {
-                    var tileX = (int)(_currentCenteredTile.X - 1 + i);
-                    var tileY = (int)(_currentCenteredTile.Y - 1 + j);
+            var tileX = (int)Math.Floor(_currentCenteredTile.X);
+            var tileY = (int)Math.Floor(_currentCenteredTile.Y);
 
-                    if (IsTileLoaded(tileX, tileY) || !_wdt.HasTile(tileX, tileY))
-                        continue;
+            if (LoadTile(tileX, tileY))
+                keysToKeep.Add((tileX << 8) | tileY);
 
-                    keysToKeep.Add((tileX << 8) | tileY);
-
-                    LoadTile(tileX, tileY);
-                }
-            }*/
-
-            var tileX = 29;
-            var tileY = 30;
-            keysToKeep.Add((tileX << 8) | tileY);
-            LoadTile(tileX, tileY);
-
-            while (_loadedTiles.Count != 1)
-            {
-                var key = _loadedTiles.First(tile => !keysToKeep.Contains(tile.Key)).Key;
-                _batchRenderers[key].Delete();
-                _batchRenderers.Remove(key);
-                _loadedTiles.Remove(key);
-            }
+            //while (_loadedTiles.Count != 1)
+            //{
+            //    var key = _loadedTiles.First(tile => !keysToKeep.Contains(tile.Key)).Key;
+            //    _batchRenderers[key].Delete();
+            //    _batchRenderers.Remove(key);
+            //    _loadedTiles.Remove(key);
+            //}
         }
 
         private bool LoadTile(int tileX, int tileY)
         {
-            var tileToLoadKey = (tileX << 8) | tileY;
-            _mapTiles[tileToLoadKey].Read();
+            if (IsTileLoaded(tileX, tileY))
+                return true;
+            if (!_wdt.HasTile(tileX, tileY))
+                return false;
 
+            Debug.WriteLine($"Loading {tileX}, {tileY} -- already loaded? {IsTileLoaded(tileX, tileY)}");
+
+            var tileToLoadKey = (tileX << 8) | tileY;
             _loadedTiles[tileToLoadKey] = true;
+            if (!_mapTiles.ContainsKey(tileToLoadKey))
+                _mapTiles[tileToLoadKey] = new ADT(_mapName, tileX, tileY, _wdt);
+            _mapTiles[tileToLoadKey].Read();
 
             var tileRenderer = new TileRenderer();
             tileRenderer.Generate(_mapTiles[tileToLoadKey]);
@@ -251,16 +240,7 @@ namespace WoWMapRenderer.Renderers
         /// <returns>(X Y) corresponding to ADT.TilePosition.X and ADT.TilePosition.Y</returns>
         private Vector2 GetTileAt(Vector2 position)
         {
-            foreach (var mapTile in _mapTiles)
-            {
-                var tilePosition = mapTile.Value.TilePosition.Yx;
-                var tileBox = new Box2(tilePosition.X - Constants.TileSize, tilePosition.Y - Constants.TileSize, tilePosition.X, tilePosition.Y);
-                if (!(position.X < tileBox.Right) || !(position.X > tileBox.Left))
-                    continue;
-                if (position.Y < tileBox.Bottom && position.Y > tileBox.Top)
-                    return new Vector2(mapTile.Value.X, mapTile.Value.Y);
-            }
-            return Vector2.Zero;
+            return new Vector2((Constants.MaxXY - position.X) / Constants.TileSize, (Constants.MaxXY - position.Y) / Constants.TileSize);
         }
 
         /// <summary>
@@ -272,7 +252,7 @@ namespace WoWMapRenderer.Renderers
         private Vector2 GetTileCenter(int x, int y)
         {
             var adt = _mapTiles[(x << 8) | y];
-            var tilePosition = adt.TilePosition.Yx;
+            var tilePosition = new Vector2((32 - x) * Constants.TileSize, (32 - y) * Constants.TileSize);
             tilePosition.X -= Constants.TileSize / 2;
             tilePosition.Y -= Constants.TileSize / 2;
             return tilePosition;
@@ -281,13 +261,8 @@ namespace WoWMapRenderer.Renderers
         /// <summary>
         /// Returns the tile at the center of the map.
         /// </summary>
-        private void GetCenterTile(out int x, out int y)
+        private void GetSpawnTile(out int x, out int y)
         {
-            x = 29;
-            y = 30;
-            return; // HACK HACK HACK REMOVE ME LATER
-
-            /*
             var topLeft = new[] { 64, 64 };
             var bottomRight = new[] { 0, 0 };
             for (var xx = 0; xx < 64; ++xx)
@@ -305,7 +280,7 @@ namespace WoWMapRenderer.Renderers
             }
 
             x = (int)Math.Floor((topLeft[0] + bottomRight[0]) / 2.0f);
-            y = (int)Math.Floor((topLeft[1] + bottomRight[1]) / 2.0f);*/
+            y = (int)Math.Floor((topLeft[1] + bottomRight[1]) / 2.0f);
         }
 
         private void Render()

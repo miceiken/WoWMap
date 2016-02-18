@@ -33,6 +33,7 @@ namespace WoWMap.Layers
 
         public bool HasTile(int x, int y)
         {
+            if (x < 0 || x > 64 || y < 0 || y > 64) return false;
             return TileTable[x, y];
         }
 
@@ -63,7 +64,7 @@ namespace WoWMap.Layers
                         TileTable = new bool[64, 64];
                         for (var y = 0; y < 64; y++)
                             for (var x = 0; x < 64; x++)
-                                TileTable[x, y] = MAIN.Entries[x, y].Flags.HasFlag(MAIN.MAINFlags.HasADT);                        
+                                TileTable[x, y] = MAIN.Entries[x, y].Flags.HasFlag(MAIN.MAINFlags.HasADT);
                         break;
 
                     case "MWMO":
