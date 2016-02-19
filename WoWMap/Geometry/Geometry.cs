@@ -71,9 +71,9 @@ namespace WoWMap.Geometry
                     AddGeometry(mc.WMOVertices, mc.WMOIndices);
                 if (mc.DoodadVertices != null && mc.DoodadVertices.Count > 0 && mc.DoodadIndices != null && mc.DoodadIndices.Count > 0)
                     AddGeometry(mc.DoodadVertices, mc.DoodadIndices);
+                if (mc.LiquidVertices != null && mc.LiquidVertices.Count() > 0 && mc.LiquidIndices != null && mc.LiquidIndices.Count > 0)
+                    AddGeometry(mc.LiquidVertices, mc.LiquidIndices);
             }
-            if (s.Liquid != null && s.Liquid.Vertices != null && s.Liquid.Indices != null)
-                AddGeometry(s.Liquid.Vertices, s.Liquid.Indices);
         }
 
         public void AddWDT(WDT source)

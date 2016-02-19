@@ -16,32 +16,29 @@ namespace WoWMap.Layers
         public LiquidChunk(ADT adt, Chunk chunk)
         {
             Chunk = chunk;
+            ADT = adt;
 
-            Read(adt);
+            Read();
         }
 
+        public ADT ADT { get; private set; }
         public Chunk Chunk { get; private set; }
 
         public MH2O MH2O { get; private set; }
+        public MH2O.MH2OInformation[] Information { get; private set; }
         public MH2O.MH2OHeightmapData[] HeightMaps { get; private set; }
 
-        public List<Vector3> Vertices { get; private set; }
-        public List<Triangle<uint>> Indices { get; private set; }
-
-        public void Read(ADT tileData)
+        public void Read()
         {
             if (Chunk == null) return;
-
-            Vertices = new List<Vector3>();
-            Indices = new List<Triangle<uint>>();
 
             var stream = Chunk.GetStream();
 
             MH2O = new MH2O();
             MH2O.Read(Chunk.GetReader());
             HeightMaps = new MH2O.MH2OHeightmapData[256];
+            Information = new MH2O.MH2OInformation[256];
 
-            var tilePos = tileData.TilePosition;
             for (int i = 0; i < MH2O.Headers.Length; i++)
             {
                 var header = MH2O.Headers[i];
@@ -50,6 +47,7 @@ namespace WoWMap.Layers
                 stream.Seek(Chunk.Offset + header.ofsInformation, SeekOrigin.Begin);
                 var information = new MH2O.MH2OInformation();
                 information.Read(Chunk.GetReader());
+                Information[i] = information;
 
                 // Ensure we have heightmap data
                 if (information.ofsHeightmapData == 0) continue;
@@ -68,27 +66,6 @@ namespace WoWMap.Layers
                     heightMap = GetOceanHeightMap(information.MinHeightLevel);
 
                 HeightMaps[i] = heightMap;
-
-                var basePos = new Vector2(tilePos.X - (Constants.ChunkSize * (i % 16)), tilePos.Y - (Constants.ChunkSize * (i / 16)));
-                for (int y = information.YOffset; y < (information.YOffset + information.Height); y++)
-                {
-                    for (int x = information.XOffset; x < (information.XOffset + information.Width); x++)
-                    {
-                        if (!heightMap.RenderMask.ShouldRender(x, y))
-                            continue;
-
-                        var v = new Vector3(basePos.X - (x * Constants.UnitSize), basePos.Y - (y * Constants.UnitSize), heightMap.Heightmap[x, y]);
-                        var vo = (uint)Vertices.Count;
-
-                        Vertices.Add(v);
-                        Vertices.Add(new Vector3(v.X - Constants.UnitSize, v.Y, v.Z));
-                        Vertices.Add(new Vector3(v.X, v.Y - Constants.UnitSize, v.Z));
-                        Vertices.Add(new Vector3(v.X - Constants.UnitSize, v.Y - Constants.UnitSize, v.Z));
-
-                        Indices.Add(new Triangle<uint>(TriangleType.Water, vo, vo + 2, vo + 1));
-                        Indices.Add(new Triangle<uint>(TriangleType.Water, vo + 2, vo + 3, vo + 1));
-                    }
-                }
             }
         }
 

@@ -25,8 +25,9 @@ namespace WoWMap.Layers
             Read(new ChunkData(stream, chunk.Size - MCNK.ChunkHeaderSize));
         }
 
-        public void Merge(Chunk chunk)
+        public void Merge(ADT adt, Chunk chunk)
         {
+            ADT = adt;
             Read(new ChunkData(chunk.GetStream(), chunk.Size));
         }
 
@@ -55,6 +56,9 @@ namespace WoWMap.Layers
         public List<Vector3> WMOVertices;
         public List<Triangle<uint>> WMOIndices;
         public List<Vector3> WMONormals;
+
+        public List<Vector3> LiquidVertices;
+        public List<Triangle<uint>> LiquidIndices;
 
         public int Index
         {
@@ -117,21 +121,21 @@ namespace WoWMap.Layers
                     case "MCCV":
                         MCCV = new MCCV(subChunk);
                         break;
-                    //case "MCSH":
-                    //    MCSH = new MCSH(subChunk);
-                    //    break;
-                    //case "MCLY":
-                    //    MCLY = new MCLY(subChunk);
-                    //    break;
-                    //case "MCAL":
-                    //    if (WDT == null)
-                    //        Console.WriteLine($"Skipping MCAL Chunk in MCNK #{Index} because no WDT was provided!");
-                    //    else
-                    //        MCAL = new MCAL(this, WDT, subChunk);
-                    //    break;
-                    //default:
-                    //    Console.WriteLine($"Skipped {subChunk.Name} MapChunk sub-chunk.");
-                    //    break;
+                        //case "MCSH":
+                        //    MCSH = new MCSH(subChunk);
+                        //    break;
+                        //case "MCLY":
+                        //    MCLY = new MCLY(subChunk);
+                        //    break;
+                        //case "MCAL":
+                        //    if (WDT == null)
+                        //        Console.WriteLine($"Skipping MCAL Chunk in MCNK #{Index} because no WDT was provided!");
+                        //    else
+                        //        MCAL = new MCAL(this, WDT, subChunk);
+                        //    break;
+                        //default:
+                        //    Console.WriteLine($"Skipped {subChunk.Name} MapChunk sub-chunk.");
+                        //    break;
                 }
             }
         }
@@ -149,6 +153,9 @@ namespace WoWMap.Layers
 
             if (MCRD != null)
                 GenerateDoodads(ref DoodadVertices, ref DoodadNormals, ref DoodadIndices);
+
+            if (ADT.Liquid.HeightMaps[Index] != null)
+                GenerateLiquid(ref LiquidVertices, ref LiquidIndices);
         }
 
         #region MCVT - HeightMap
@@ -321,6 +328,44 @@ namespace WoWMap.Layers
                 vertices.AddRange(model.Vertices.Select(v => Vector3.Transform(v, transform)));
                 normals.AddRange(model.Normals.Select(v => Vector3.Transform(v, transform)));
                 indices.AddRange(model.Indices.Select(t => new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
+            }
+        }
+
+        #endregion
+
+        #region MH2O - Liquid
+
+        public void GenerateLiquid(ref List<Vector3> vertices, ref List<Triangle<uint>> indices)
+        {
+            var information = ADT.Liquid.Information[Index];
+            var heightMap = ADT.Liquid.HeightMaps[Index];
+
+            var basePos = MCNK.Position;
+            for (int y = information.YOffset; y < (information.YOffset + information.Height); y++)
+            {
+                for (int x = information.XOffset; x < (information.XOffset + information.Width); x++)
+                {
+                    if (!heightMap.RenderMask.ShouldRender(x, y))
+                        continue;
+
+                    var v = new Vector3(basePos.X - (x * Constants.UnitSize), basePos.Y - (y * Constants.UnitSize), heightMap.Heightmap[x, y]);
+
+                    if (vertices == null)
+                        vertices = new List<Vector3>();
+                    if (indices == null)
+                        indices = new List<Triangle<uint>>();
+
+                    var vo = (uint)vertices.Count;
+
+                    vertices.AddRange(new[] { v,
+                        new Vector3(v.X - Constants.UnitSize, v.Y, v.Z),
+                        new Vector3(v.X, v.Y - Constants.UnitSize, v.Z),
+                        new Vector3(v.X - Constants.UnitSize, v.Y - Constants.UnitSize, v.Z)
+                    });
+
+                    indices.Add(new Triangle<uint>(TriangleType.Water, vo, vo + 2, vo + 1));
+                    indices.Add(new Triangle<uint>(TriangleType.Water, vo + 2, vo + 3, vo + 1));
+                }
             }
         }
 

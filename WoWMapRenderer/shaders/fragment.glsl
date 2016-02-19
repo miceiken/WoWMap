@@ -13,7 +13,7 @@ void main()
 		color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 	else if (vertex_type == 2) // M2
 		color = vec4(1.0f, 1.0f, 0.0f, 1.0f);
-	else if (vertex_type == 2) // Water
+	else if (vertex_type == 3) // Water
 		color = vec4(0.0f, 0.0f, 1.0f, 1.0f);
 	else // Can't be set in first line because glsl is very weird at eval'ing branches
 		color = vec4(1.0, 1.0f, 1.0f, 1.0f);

@@ -19,10 +19,10 @@ namespace WoWMapRenderer.Renderers
         public int IndicesVBO { get; private set; }
 
         private List<Vertex> _vertices = new List<Vertex>();
-        private List<ushort> _indices = new List<ushort>();
+        private List<uint> _indices = new List<uint>();
 
         public int VerticeCount { get { return _vertices.Count; } }
-        public ushort IndiceCount { get { return (ushort)_indices.Count; } }
+        public int IndiceCount { get; private set; }
 
 
         public TileRenderer()
@@ -41,9 +41,12 @@ namespace WoWMapRenderer.Renderers
 
                 GenerateTerrainIndices(mapChunk);
                 GenerateTerrainVertices(mapChunk);
-                // GenerateWMO(mapChunk); // Both Indices & Vertices
-                GenerateM2(mapChunk);  // Both Indices & Vertices
+                GenerateWMO(mapChunk);
+                GenerateM2(mapChunk);
+                GenerateLiquid(mapChunk);
             }
+
+            IndiceCount = _indices.Count;
         }
 
         private void GenerateTerrainVertices(MapChunk mapChunk)
@@ -74,7 +77,7 @@ namespace WoWMapRenderer.Renderers
 
         private void GenerateTerrainIndices(MapChunk mapChunk)
         {
-            var offset = (ushort)VerticeCount;
+            var offset = (uint)VerticeCount;
             var unitidx = 0;
 
             for (uint j = 9; j < 8 * 8 + 9 * 8; j++)
@@ -82,13 +85,43 @@ namespace WoWMapRenderer.Renderers
                 if (!mapChunk.HasHole(unitidx % 8, unitidx++ / 8))
                 {
                     _indices.AddRange(new[] {
-                        (ushort)(j + offset), (ushort)(j - 9 + offset), (ushort)(j + 8 + offset),
-                        (ushort)(j + offset), (ushort)(j - 8 + offset), (ushort)(j - 9 + offset),
-                        (ushort)(j + offset), (ushort)(j + 9 + offset), (ushort)(j - 8 + offset),
-                        (ushort)(j + offset), (ushort)(j + 8 + offset), (ushort)(j + 9 + offset)
+                        (j + offset), (j - 9 + offset), (j + 8 + offset),
+                        (j + offset), (j - 8 + offset), (j - 9 + offset),
+                        (j + offset), (j + 9 + offset), (j - 8 + offset),
+                        (j + offset), (j + 8 + offset), (j + 9 + offset)
                     });
                 }
                 if ((j + 1) % (9 + 8) == 0) j += 9;
+            }
+        }
+
+        private void GenerateWMO(MapChunk mapChunk)
+        {
+            if (mapChunk.MCRW == null || mapChunk.ADT.MODF == null)
+                return;
+
+            var drawn = new HashSet<uint>();
+            for (var i = 0; i < mapChunk.MCRW.MODFEntryIndex.Length; i++)
+            {
+                var wmo = mapChunk.ADT.MODF.Entries[mapChunk.MCRW.MODFEntryIndex[i]];
+                if (drawn.Contains(wmo.UniqueId))
+                    continue;
+                drawn.Add(wmo.UniqueId);
+
+                if (wmo.MWIDEntryIndex >= mapChunk.ADT.ModelPaths.Count)
+                    continue;
+
+                var path = mapChunk.ADT.ModelPaths[(int)wmo.MWIDEntryIndex];
+                var model = new WMORoot(path);
+
+                var vertices = new List<Vector3>(1000);
+                var indices = new List<Triangle<uint>>(1000);
+                var normals = new List<Vector3>(1000);
+
+                MapChunk.InsertWMOGeometry(wmo, model, ref vertices, ref indices, ref normals);
+                var vo = (uint)VerticeCount;
+                _vertices.AddRange(vertices.Select(v => new Vertex() { Position = v, Type = 1 }));
+                _indices.AddRange(indices.SelectMany(t => new[] { (vo + t.V0), (vo + t.V1), (vo + t.V2) }));
             }
         }
 
@@ -116,10 +149,24 @@ namespace WoWMapRenderer.Renderers
 
                 // Doodads outside WMOs are treated like WMOs. Not a typo.
                 var transform = Transformation.GetWMOTransform(doodad.Position, doodad.Rotation, doodad.Scale / 1024.0f);
-                var vo = (ushort)VerticeCount;
+                var vo = (uint)VerticeCount;
                 _vertices.AddRange(model.Vertices.Select(v => new Vertex() { Position = Vector3.Transform(v, transform), Type = 2 }));
-                _indices.AddRange(model.Indices.SelectMany(t => new[] { (ushort)(vo + t.V0), (ushort)(vo + t.V1), (ushort)(vo + t.V2) }));
+                _indices.AddRange(model.Indices.SelectMany(t => new[] { (vo + t.V0), (vo + t.V1), (vo + t.V2) }));
             }
+        }
+
+        private void GenerateLiquid(MapChunk mapChunk)
+        {
+            if (mapChunk.ADT.Liquid.HeightMaps[mapChunk.Index] == null)
+                return;
+
+            var vertices = new List<Vector3>();
+            var indices = new List<Triangle<uint>>();
+            mapChunk.GenerateLiquid(ref vertices, ref indices);
+
+            var vo = (uint)VerticeCount;
+            _vertices.AddRange(vertices.Select(v => new Vertex() { Position = v, Type = 3 }));
+            _indices.AddRange(indices.SelectMany(t => new[] { (vo + t.V0), (vo + t.V1), (vo + t.V2) }));
         }
 
         public void Bind(Shader shader)
@@ -145,7 +192,7 @@ namespace WoWMapRenderer.Renderers
             GL.EnableVertexAttribArray(shader.GetAttribLocation("type"));
 
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(IndiceCount * sizeof(ushort)),
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(IndiceCount * sizeof(uint)),
                 _indices.ToArray(), BufferUsageHint.StaticDraw);
 
             GL.BindVertexArray(0);
@@ -165,7 +212,7 @@ namespace WoWMapRenderer.Renderers
             GL.BindVertexArray(VAO);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
 
-            GL.DrawElements(PrimitiveType.Triangles, IndiceCount, DrawElementsType.UnsignedShort, IntPtr.Zero);
+            GL.DrawElements(PrimitiveType.Triangles, IndiceCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
 
             GL.BindVertexArray(0);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
