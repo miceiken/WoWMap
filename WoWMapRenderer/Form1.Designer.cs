@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.GL = new OpenTK.GLControl(OpenTK.Graphics.GraphicsMode.Default, 3, 3, OpenTK.Graphics.GraphicsContextFlags.Debug);
+            this.GL = new OpenTK.GLControl();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.loadCASCToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.localToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -37,12 +37,17 @@
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.forceWireframeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openGLInformationsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this._backgroundTaskProgress = new System.Windows.Forms.ToolStripProgressBar();
             this._feedbackText = new System.Windows.Forms.ToolStripStatusLabel();
             this._cameraPos = new System.Windows.Forms.ToolStripStatusLabel();
             this._mapListBox = new System.Windows.Forms.ListBox();
             this._areaListBox = new System.Windows.Forms.ListBox();
+            this.drawTerraintoolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.drawWMOtoolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.drawDoodadtoolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.drawLiquidtoolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -105,7 +110,12 @@
             // 
             this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.forceWireframeToolStripMenuItem,
-            this.openGLInformationsToolStripMenuItem});
+            this.openGLInformationsToolStripMenuItem,
+            this.toolStripSeparator1,
+            this.drawTerraintoolStripMenuItem,
+            this.drawWMOtoolStripMenuItem,
+            this.drawDoodadtoolStripMenuItem,
+            this.drawLiquidtoolStripMenuItem});
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
             this.optionsToolStripMenuItem.Text = "Options";
@@ -122,6 +132,11 @@
             this.openGLInformationsToolStripMenuItem.Name = "openGLInformationsToolStripMenuItem";
             this.openGLInformationsToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
             this.openGLInformationsToolStripMenuItem.Text = "OpenGL Informations";
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(185, 6);
             // 
             // statusStrip1
             // 
@@ -173,6 +188,42 @@
             this._areaListBox.TabIndex = 4;
             this._areaListBox.SelectedIndexChanged += new System.EventHandler(this.OnAreaSelected);
             // 
+            // drawTerraintoolStripMenuItem1
+            // 
+            this.drawTerraintoolStripMenuItem.Checked = true;
+            this.drawTerraintoolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.drawTerraintoolStripMenuItem.Name = "drawTerraintoolStripMenuItem1";
+            this.drawTerraintoolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.drawTerraintoolStripMenuItem.Text = "Draw Terrain";
+            this.drawTerraintoolStripMenuItem.Click += new System.EventHandler(this.drawTerraintoolStripMenuItem_Click);
+            // 
+            // drawWMOtoolStripMenuItem2
+            // 
+            this.drawWMOtoolStripMenuItem.Checked = true;
+            this.drawWMOtoolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.drawWMOtoolStripMenuItem.Name = "drawWMOtoolStripMenuItem2";
+            this.drawWMOtoolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.drawWMOtoolStripMenuItem.Text = "Draw WMOs";
+            this.drawWMOtoolStripMenuItem.Click += new System.EventHandler(this.drawWMOtoolStripMenuItem_Click);
+            // 
+            // drawDoodadtoolStripMenuItem3
+            // 
+            this.drawDoodadtoolStripMenuItem.Checked = true;
+            this.drawDoodadtoolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.drawDoodadtoolStripMenuItem.Name = "drawDoodadtoolStripMenuItem3";
+            this.drawDoodadtoolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.drawDoodadtoolStripMenuItem.Text = "Draw Doodads";
+            this.drawDoodadtoolStripMenuItem.Click += new System.EventHandler(this.drawDoodadtoolStripMenuItem_Click);
+            // 
+            // drawLiquidtoolStripMenuItem4
+            // 
+            this.drawLiquidtoolStripMenuItem.Checked = true;
+            this.drawLiquidtoolStripMenuItem.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.drawLiquidtoolStripMenuItem.Name = "drawLiquidtoolStripMenuItem4";
+            this.drawLiquidtoolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.drawLiquidtoolStripMenuItem.Text = "Draw Liquid";
+            this.drawLiquidtoolStripMenuItem.Click += new System.EventHandler(this.drawLiquidtoolStripMenuItem_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -213,6 +264,11 @@
         private System.Windows.Forms.ToolStripMenuItem forceWireframeToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openGLInformationsToolStripMenuItem;
         private System.Windows.Forms.ListBox _areaListBox;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem drawTerraintoolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem drawWMOtoolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem drawDoodadtoolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem drawLiquidtoolStripMenuItem;
     }
 }
 

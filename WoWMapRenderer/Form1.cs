@@ -41,31 +41,38 @@ namespace WoWMapRenderer
         private void OnLoad(object obj, EventArgs ea)
         {
             _cascAction = new BackgroundWorkerEx();
-            _cascAction.DoWork += (sender, e) => {
+            _cascAction.DoWork += (sender, e) =>
+            {
                 if (string.IsNullOrEmpty(_localCascPath))
                     CASC.InitializeOnline(_cascAction);
                 else {
-                    try {
+                    try
+                    {
                         CASC.Initialize(_localCascPath, _cascAction);
-                    } catch (Exception /* ex */) {
+                    }
+                    catch (Exception /* ex */)
+                    {
                         MessageBox.Show("Path '" + _localCascPath + "/Data' was not found.", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     }
                 }
             };
-            _cascAction.ProgressChanged += (sender, e) => {
+            _cascAction.ProgressChanged += (sender, e) =>
+            {
                 _feedbackText.Text = (string)e.UserState;
                 _backgroundTaskProgress.Style = ProgressBarStyle.Continuous;
                 _backgroundTaskProgress.Maximum = 100;
                 _backgroundTaskProgress.Value = e.ProgressPercentage;
             };
-            _cascAction.RunWorkerCompleted += (sender, e) => {
+            _cascAction.RunWorkerCompleted += (sender, e) =>
+            {
                 if (CASC.Initialized)
                     _dbcAction.RunWorkerAsync();
             };
 
             _dbcAction = new BackgroundWorkerEx();
-            _dbcAction.DoWork += (sender, e) => {
+            _dbcAction.DoWork += (sender, e) =>
+            {
                 switch (_dbcIndex)
                 {
                     case 0:
@@ -79,7 +86,7 @@ namespace WoWMapRenderer
                         break;
                 }
             };
-            _dbcAction.ProgressChanged += (sender, e) => 
+            _dbcAction.ProgressChanged += (sender, e) =>
             {
                 _feedbackText.Text = string.Format(@"Loading {0} ...", (new[] { "maps", "areas" })[_dbcIndex]);
                 _backgroundTaskProgress.Style = ProgressBarStyle.Continuous;
@@ -168,6 +175,34 @@ namespace WoWMapRenderer
             var locs = _areaAssignmentRecords.Rows.ToList().Where(k => k.AreaID == entry.AreaID);
             Debug.Assert(locs.Count() == 1, $"Expected one AreaAssignment record for AreaID {entry.AreaID}, found {locs.Count()}");
             _feedbackText.Text = $"Chunk [ {locs.First().ChunkX} {locs.First().ChunkY} ]";
+        }
+
+        private void drawTerraintoolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_renderer == null) return;
+            drawTerraintoolStripMenuItem.Checked = !drawTerraintoolStripMenuItem.Checked;
+            _renderer._drawType[VertexType.Terrain] = drawTerraintoolStripMenuItem.Checked;
+        }
+
+        private void drawWMOtoolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_renderer == null) return;
+            drawWMOtoolStripMenuItem.Checked = !drawWMOtoolStripMenuItem.Checked;
+            _renderer._drawType[VertexType.WMO] = drawWMOtoolStripMenuItem.Checked;
+        }
+
+        private void drawDoodadtoolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_renderer == null) return;
+            drawDoodadtoolStripMenuItem.Checked = !drawDoodadtoolStripMenuItem.Checked;
+            _renderer._drawType[VertexType.M2] = drawDoodadtoolStripMenuItem.Checked;
+        }
+
+        private void drawLiquidtoolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_renderer == null) return;
+            drawLiquidtoolStripMenuItem.Checked = !drawLiquidtoolStripMenuItem.Checked;
+            _renderer._drawType[VertexType.Liquid] = drawLiquidtoolStripMenuItem.Checked;
         }
     }
 

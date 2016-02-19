@@ -16,7 +16,7 @@ using System.Drawing;
 namespace WoWMapRenderer.Renderers
 {
     [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Local")]
-    class TerrainRenderer
+    public class TerrainRenderer
     {
         private GLControl _control;
 
@@ -28,6 +28,14 @@ namespace WoWMapRenderer.Renderers
         private Dictionary<int, ADT> _mapTiles = new Dictionary<int, ADT>();
         private Dictionary<int, TileRenderer> _batchRenderers = new Dictionary<int, TileRenderer>(9 * 3);
         private Dictionary<int, bool> _loadedTiles = new Dictionary<int, bool>();
+        public Dictionary<VertexType, bool> _drawType = new Dictionary<VertexType, bool>()
+        {
+            [VertexType.Terrain] = true,
+            [VertexType.WMO] = true,
+            [VertexType.M2] = true,
+            [VertexType.Liquid] = true,
+        };
+
 
         private Camera _camera;
         private Shader _shader;
@@ -214,7 +222,7 @@ namespace WoWMapRenderer.Renderers
                 _mapTiles[tileToLoadKey] = new ADT(_mapName, tileX, tileY, _wdt);
             _mapTiles[tileToLoadKey].Read();
 
-            var tileRenderer = new TileRenderer();
+            var tileRenderer = new TileRenderer(this);
             tileRenderer.Generate(_mapTiles[tileToLoadKey]);
             tileRenderer.Bind(_shader);
 
