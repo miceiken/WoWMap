@@ -54,11 +54,8 @@ namespace WoWMap.Geometry
         public void AddGeometry(IEnumerable<Vector3> vertices, IEnumerable<Triangle<uint>> indices)
         {
             var vo = (uint)Vertices.Count;
-            foreach (var v in vertices)
-                Vertices.Add(v); //Vertices.Add(Vector3.Transform(v, Matrix4.CreateRotationX((float)(- Math.PI / 2.0f))));
-
-            foreach (var i in indices)
-                Indices.Add(new Triangle<uint>(i.Type, i.V0 + vo, i.V1 + vo, i.V2 + vo));
+            Vertices.AddRange(vertices.Select(v => v));
+            Indices.AddRange(indices.Select(i => new Triangle<uint>(i.Type, i.V0 + vo, i.V1 + vo, i.V2 + vo)));
         }
 
         public void AddADT(ADT s)
@@ -76,8 +73,11 @@ namespace WoWMap.Geometry
             }
         }
 
-        public void AddWDT(WDT source)
-        { }
+        public void AddWDTGlobalModel(WDT s)
+        {
+            if (s.ModelVertices != null && s.ModelVertices.Count() > 0 && s.ModelIndices != null && s.ModelIndices.Count > 0)
+                AddGeometry(s.ModelVertices, s.ModelIndices);
+        }
 
         public void AddDungeon(WMORoot model, MODF.MODFEntry def)
         {

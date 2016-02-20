@@ -27,9 +27,9 @@ namespace WoWMapParser
             //ReadMapsDBC();
             //ReadADT();
             //ReadADTs();
-            CreateNavmesh();
+            //CreateNavmesh();
             //TestNavmesh();
-            //ReadWDT();
+            ReadWDT();
             //ReadWMO();
 
             Console.WriteLine("Done.");
@@ -137,7 +137,7 @@ namespace WoWMapParser
             query.FindNearestPoly(ref posEnd, ref extents, out endPt);
 
             NavPoint startPt;
-            query.FindNearestPoly(ref posStart, ref extents, out startPt);            
+            query.FindNearestPoly(ref posStart, ref extents, out startPt);
 
             var path = new List<int>();
             if (!query.FindPath(ref startPt, ref endPt, path))
@@ -162,13 +162,15 @@ namespace WoWMapParser
 
         static void ReadWDT()
         {
-            const string path = @"PVPZone01.wdt";
-            var wdt = new WDT(path);
+            string path = string.Format(@"World\Maps\{0}\{0}.wdt", "WailingCaverns");
             var sw = Stopwatch.StartNew();
-            wdt.Read();
-            sw.Stop();
-
+            var wdt = new WDT(path);
             Console.WriteLine("Loaded {0} chunks from '{1}' in {2}ms", wdt.Data.Chunks.Count, System.IO.Path.GetFileName(path), sw.ElapsedMilliseconds);
+            wdt.GenerateGlobalModel();
+            sw.Stop();
+            var geom = new Geometry();
+            geom.AddWDTGlobalModel(wdt);
+            geom.SaveWavefrontObject("WailingCaverns.obj");
         }
 
         static void ReadWMO()

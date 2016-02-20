@@ -61,13 +61,13 @@ namespace WoWMap.Layers
                     case "MLIQ":
                         MLIQ = new MLIQ(subChunk);
 
-                        ReadLiquid();
+                        GenerateLiquid();
                         break;
                 }
             }
         }
 
-        public void ReadLiquid()
+        public void GenerateLiquid()
         {
             LiquidVertices = new List<Vector3>((int)(MLIQ.Height * MLIQ.Width) * 4);
             LiquidIndices = new List<Triangle<uint>>((int)((MLIQ.Height * MLIQ.Width) * 2));

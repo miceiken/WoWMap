@@ -20,7 +20,7 @@ namespace WoWMapRenderer.Renderers
         Liquid
     };
 
-    public class TileRenderer
+    public class MapChunkRenderer : IRenderer
     {
         public class TileRenderData
         {
@@ -45,7 +45,7 @@ namespace WoWMapRenderer.Renderers
 
         public TerrainRenderer BaseRenderer { get; private set; }
 
-        public TileRenderer(TerrainRenderer baseRenderer)
+        public MapChunkRenderer(TerrainRenderer baseRenderer)
         {
             BaseRenderer = baseRenderer;
         }

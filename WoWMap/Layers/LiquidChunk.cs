@@ -52,9 +52,9 @@ namespace WoWMap.Layers
                 // Ensure we have heightmap data
                 if (information.ofsHeightmapData == 0) continue;
 
-                // Not an ocean, lets grab the height map and render mask
                 MH2O.MH2OHeightmapData heightMap;
-                if (!IsOcean(information.LiquidObjectId, information.LiquidTypeId))
+                if (IsOcean(information.LiquidObjectId, information.LiquidTypeId)) heightMap = GetOceanHeightMap(information.MinHeightLevel);
+                else
                 {
                     // Read the height map
                     stream.Seek(Chunk.Offset + information.ofsHeightmapData, SeekOrigin.Begin);
@@ -62,8 +62,6 @@ namespace WoWMap.Layers
                     heightMap.Read(Chunk.GetReader());
                     heightMap.RenderMask = GetRenderMask(header, information);
                 }
-                else
-                    heightMap = GetOceanHeightMap(information.MinHeightLevel);
 
                 HeightMaps[i] = heightMap;
             }
@@ -99,9 +97,9 @@ namespace WoWMap.Layers
                 RenderMask = new MH2O.MH2ORenderMask
                 {
                     Mask = new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }
-                }
+                },
+                Heightmap = new float[9, 9]
             };
-            data.Heightmap = new float[9, 9];
             for (int y = 0; y < 9; y++)
                 for (int x = 0; x < 9; x++)
                     data.Heightmap[x, y] = heightLevel;

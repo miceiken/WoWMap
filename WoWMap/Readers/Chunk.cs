@@ -39,5 +39,9 @@ namespace WoWMap
             return _reader ?? (_reader = new BinaryReader(GetStream()));
         }
 
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

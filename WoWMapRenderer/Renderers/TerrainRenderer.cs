@@ -15,7 +15,12 @@ using System.Drawing;
 
 namespace WoWMapRenderer.Renderers
 {
-    [SuppressMessage("ReSharper", "FieldCanBeMadeReadOnly.Local")]
+    public enum SourceDrawType
+    {
+        ADT,
+        GlobalModel
+    };
+
     public class TerrainRenderer
     {
         private GLControl _control;
@@ -23,8 +28,10 @@ namespace WoWMapRenderer.Renderers
         private string _mapName;
         private WDT _wdt;
 
+        private SourceDrawType _source;
+
         private Dictionary<int, ADT> _mapTiles = new Dictionary<int, ADT>();
-        private Dictionary<int, TileRenderer> _batchRenderers = new Dictionary<int, TileRenderer>(9 * 3);
+        private Dictionary<int, IRenderer> _batchRenderers = new Dictionary<int, IRenderer>(9 * 3);
         private Dictionary<int, bool> _loadedTiles = new Dictionary<int, bool>();
 
         private Camera _camera;
@@ -104,7 +111,8 @@ namespace WoWMapRenderer.Renderers
         {
             _loader = new BackgroundWorkerEx();
             _loader.DoWork += (sender, e) =>
-            {                
+            {
+                // Clean up in case we had another map loaded previously
                 _mapTiles.Clear();
                 _loadedTiles.Clear();
                 foreach (var renderer in _batchRenderers.Values)
@@ -114,20 +122,20 @@ namespace WoWMapRenderer.Renderers
                 _mapName = mapName;
                 _loader.ReportProgress(1, "Loading WDT...");
                 _wdt = new WDT(string.Format(@"World\Maps\{0}\{0}.wdt", mapName));
-                if (_wdt.IsGlobalModel)
+                _source = _wdt.IsGlobalModel ? SourceDrawType.GlobalModel : SourceDrawType.ADT;
+                if (_source == SourceDrawType.GlobalModel)
                 {
-                    _loader.ReportProgress(100, "This map is a global model, NYI !");
-                    return;
+                    var modelRenderer = new GlobalModelRenderer(this);
+                    modelRenderer.Generate(_wdt);
+                    _batchRenderers.Add(0, modelRenderer);
                 }
+                if (_source == SourceDrawType.ADT)
+                {
+                    int x, y;
+                    GetSpawnTile(out x, out y);
 
-                _mapTiles.Clear();
-                int x, y;
-                GetSpawnTile(out x, out y);
-
-                if (!_wdt.HasTile(x, y))
-                    Console.WriteLine("fuck me");
-
-                _mapTiles[(x << 8) | y] = new ADT(mapName, x, y, _wdt);
+                    _mapTiles[(x << 8) | y] = new ADT(mapName, x, y, _wdt);
+                }
                 _loader.ReportProgress(100, "Map loaded");
             };
             _loader.ProgressChanged += (sender, args) =>
@@ -157,14 +165,23 @@ namespace WoWMapRenderer.Renderers
             };
             _control.Paint += (sender, args) => { Render(); };
 
-            // Find camera coordinates, set it, set viewport, load tiles, render.
-            int x, y;
-            GetSpawnTile(out x, out y);
-            var tileCenter = GetTileCenter(x, y);
-            _currentCenteredTile = new Vector2(x, y);
-            _camera = new Camera(new Vector3(tileCenter.X, tileCenter.Y, 300.0f), -Vector3.UnitZ);
-            _camera.SetViewport(_control.Width, _control.Height);
-            GL.Viewport(0, 0, _control.Width, _control.Height);
+            if (_source == SourceDrawType.ADT)
+            {
+                // Find camera coordinates, set it, set viewport, load tiles, render.
+                int x, y;
+                GetSpawnTile(out x, out y);
+                var tileCenter = GetTileCenter(x, y);
+                _currentCenteredTile = new Vector2(x, y);
+                _camera = new Camera(new Vector3(tileCenter.X, tileCenter.Y, 300.0f), -Vector3.UnitZ);
+                _camera.SetViewport(_control.Width, _control.Height);
+                GL.Viewport(0, 0, _control.Width, _control.Height);
+            }
+            if (_source == SourceDrawType.GlobalModel)
+            {
+                _camera = new Camera(_wdt.ModelVertices.FirstOrDefault(), -Vector3.UnitZ);
+                _camera.SetViewport(_control.Width, _control.Height);
+                GL.Viewport(0, 0, _control.Width, _control.Height);
+            }
 
             _camera.OnMovement += () =>
             {
@@ -178,18 +195,19 @@ namespace WoWMapRenderer.Renderers
 
         private void UpdateRenderers()
         {
-            var cameraPosition = _camera.Position;
-            var _currentCenteredTile = GetTileAt(cameraPosition.Xy);
-            Debug.Assert(_currentCenteredTile != Vector2.Zero, "Unable to determinate the tile in which the camera is!");
+            if (_source == SourceDrawType.ADT)
+            {
+                var _currentCenteredTile = GetTileAt(_camera.Position.Xy);
+                Debug.Assert(_currentCenteredTile != Vector2.Zero, "Unable to determinate the tile in which the camera is!");
 
-            var keysToKeep = new List<int>(9);
+                var keysToKeep = new List<int>(9);
 
-            var tileX = (int)Math.Floor(_currentCenteredTile.X);
-            var tileY = (int)Math.Floor(_currentCenteredTile.Y);
+                var tileX = (int)Math.Floor(_currentCenteredTile.X);
+                var tileY = (int)Math.Floor(_currentCenteredTile.Y);
 
-            if (LoadTile(tileX, tileY))
-                keysToKeep.Add((tileX << 8) | tileY);
-
+                if (LoadTile(tileX, tileY))
+                    keysToKeep.Add((tileX << 8) | tileY);
+            }
             //while (_loadedTiles.Count != 1)
             //{
             //    var key = _loadedTiles.First(tile => !keysToKeep.Contains(tile.Key)).Key;
@@ -201,12 +219,12 @@ namespace WoWMapRenderer.Renderers
 
         private bool LoadTile(int tileX, int tileY)
         {
+            Debug.WriteLine($"Loading {tileX}, {tileY} -- already loaded? {IsTileLoaded(tileX, tileY)}");
+
             if (IsTileLoaded(tileX, tileY))
                 return true;
             if (!_wdt.HasTile(tileX, tileY))
                 return false;
-
-            Debug.WriteLine($"Loading {tileX}, {tileY} -- already loaded? {IsTileLoaded(tileX, tileY)}");
 
             var tileToLoadKey = (tileX << 8) | tileY;
             _loadedTiles[tileToLoadKey] = true;
@@ -214,7 +232,7 @@ namespace WoWMapRenderer.Renderers
                 _mapTiles[tileToLoadKey] = new ADT(_mapName, tileX, tileY, _wdt);
             _mapTiles[tileToLoadKey].Read();
 
-            var tileRenderer = new TileRenderer(this);
+            var tileRenderer = new MapChunkRenderer(this);
             tileRenderer.Generate(_mapTiles[tileToLoadKey]);
             tileRenderer.Bind(_shader);
 
@@ -251,7 +269,6 @@ namespace WoWMapRenderer.Renderers
         /// <returns></returns>
         private Vector2 GetTileCenter(int x, int y)
         {
-            var adt = _mapTiles[(x << 8) | y];
             var tilePosition = new Vector2((32 - x) * Constants.TileSize, (32 - y) * Constants.TileSize);
             tilePosition.X -= Constants.TileSize / 2;
             tilePosition.Y -= Constants.TileSize / 2;

@@ -7,6 +7,7 @@ using System.IO;
 using WoWMap.Chunks;
 using WoWMap.Geometry;
 using WoWMap.Archive;
+using OpenTK;
 
 namespace WoWMap.Layers
 {
@@ -29,7 +30,13 @@ namespace WoWMap.Layers
         public bool IsGlobalModel { get; private set; }
         public MWMO MWMO { get; private set; }
         public MODF MODF { get; private set; }
+
         public string ModelFile { get; private set; }
+        public WMORoot GlobalModel { get; private set; }
+
+        public List<Vector3> ModelVertices { get; private set; }
+        public List<Triangle<uint>> ModelIndices { get; private set; }
+        public List<Vector3> ModelNormals { get; private set; }
 
         public bool HasTile(int x, int y)
         {
@@ -74,6 +81,7 @@ namespace WoWMap.Layers
                     case "MODF":
                         MODF = new MODF(subChunk);
                         break;
+
                     case "MPHD":
                         MPHD = new MPHD(subChunk);
                         break;
@@ -81,6 +89,30 @@ namespace WoWMap.Layers
             }
 
             IsGlobalModel = (MODF != null && MWMO != null);
+        }
+
+        public void GenerateGlobalModel()
+        {
+            // TODO: exceptions
+
+            // According to wiki this MWMO chunk only contains one zero-terminated string
+            ModelFile = MWMO.Filenames.FirstOrDefault().Value;
+            if (string.IsNullOrEmpty(ModelFile)) return;
+            GlobalModel = new WMORoot(ModelFile);
+            if (GlobalModel == null) return;
+            var placementEntry = MODF.Entries.FirstOrDefault();
+            if (placementEntry == null) return;
+
+            var verts = new List<Vector3>();
+            var norms = new List<Vector3>();
+            var inds = new List<Triangle<uint>>();
+
+            MapChunk.InsertWMOGeometry(placementEntry, GlobalModel, ref verts, ref inds, ref norms);
+
+            // Global model WMO's come out wrong, rotate
+            ModelVertices = verts.Select(v => Vector3.Transform(v, Matrix4.CreateRotationX((float)(-Math.PI / 2.0f)))).ToList();
+            ModelIndices = inds;
+            ModelNormals = norms;
         }
     }
 }
