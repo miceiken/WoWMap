@@ -135,7 +135,6 @@ namespace WoWMapRenderer
                 if (record.ContinentID == entry.MapID)
                     _areaListBox.Items.Add(new AreaListBoxItem(record));
             }
-
             _renderer.LoadMap(entry.Directory);
         }
 
@@ -181,28 +180,28 @@ namespace WoWMapRenderer
         {
             if (_renderer == null) return;
             drawTerraintoolStripMenuItem.Checked = !drawTerraintoolStripMenuItem.Checked;
-            _renderer._drawType[VertexType.Terrain] = drawTerraintoolStripMenuItem.Checked;
+            _renderer.DrawTypePreference[VertexType.Terrain] = drawTerraintoolStripMenuItem.Checked;
         }
 
         private void drawWMOtoolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (_renderer == null) return;
             drawWMOtoolStripMenuItem.Checked = !drawWMOtoolStripMenuItem.Checked;
-            _renderer._drawType[VertexType.WMO] = drawWMOtoolStripMenuItem.Checked;
+            _renderer.DrawTypePreference[VertexType.WMO] = drawWMOtoolStripMenuItem.Checked;
         }
 
         private void drawDoodadtoolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (_renderer == null) return;
             drawDoodadtoolStripMenuItem.Checked = !drawDoodadtoolStripMenuItem.Checked;
-            _renderer._drawType[VertexType.M2] = drawDoodadtoolStripMenuItem.Checked;
+            _renderer.DrawTypePreference[VertexType.M2] = drawDoodadtoolStripMenuItem.Checked;
         }
 
         private void drawLiquidtoolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (_renderer == null) return;
             drawLiquidtoolStripMenuItem.Checked = !drawLiquidtoolStripMenuItem.Checked;
-            _renderer._drawType[VertexType.Liquid] = drawLiquidtoolStripMenuItem.Checked;
+            _renderer.DrawTypePreference[VertexType.Liquid] = drawLiquidtoolStripMenuItem.Checked;
         }
     }
 

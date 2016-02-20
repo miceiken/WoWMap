@@ -35,7 +35,13 @@ namespace WoWMapRenderer.Renderers
             public int IndiceCount { get; set; }
         }
 
-        private Dictionary<VertexType, TileRenderData> _renderData = new Dictionary<VertexType, TileRenderData>();
+        private Dictionary<VertexType, TileRenderData> _renderData = new Dictionary<VertexType, TileRenderData>()
+        {
+            [VertexType.Terrain] = new TileRenderData(),
+            [VertexType.WMO] = new TileRenderData(),
+            [VertexType.M2] = new TileRenderData(),
+            [VertexType.Liquid] = new TileRenderData(),
+        };
 
         public TerrainRenderer BaseRenderer { get; private set; }
 
@@ -52,11 +58,11 @@ namespace WoWMapRenderer.Renderers
                 if (mapChunk == null)
                     continue;
 
-                GenerateTerrainIndices(mapChunk, _renderData[VertexType.Terrain] = new TileRenderData());
+                GenerateTerrainIndices(mapChunk, _renderData[VertexType.Terrain]);
                 GenerateTerrainVertices(mapChunk, _renderData[VertexType.Terrain]);
-                GenerateWMO(mapChunk, _renderData[VertexType.WMO] = new TileRenderData());
-                GenerateM2(mapChunk, _renderData[VertexType.M2] = new TileRenderData());
-                GenerateLiquid(mapChunk, _renderData[VertexType.Liquid] = new TileRenderData());
+                GenerateWMO(mapChunk, _renderData[VertexType.WMO]);
+                GenerateM2(mapChunk, _renderData[VertexType.M2]);
+                GenerateLiquid(mapChunk, _renderData[VertexType.Liquid]);
             }
         }
 
@@ -182,10 +188,8 @@ namespace WoWMapRenderer.Renderers
 
         public void Bind(Shader shader)
         {
-            foreach (var kvp in _renderData)
+            foreach (var renderData in _renderData.Values)
             {
-                var renderData = kvp.Value;
-
                 renderData.VerticeVBO = GL.GenBuffer();
                 renderData.IndicesVBO = GL.GenBuffer();
                 renderData.VAO = GL.GenVertexArray();
@@ -223,13 +227,20 @@ namespace WoWMapRenderer.Renderers
         }
 
         public void Delete()
-        { }
+        {
+            foreach (var renderData in _renderData.Values)
+            {
+                GL.DeleteBuffer(renderData.IndicesVBO);
+                GL.DeleteBuffer(renderData.VerticeVBO);
+                GL.DeleteVertexArray(renderData.VAO);
+            }
+        }
 
-        public void Render(Shader shader, int[] terrainSamplers, int[] alphaMapSamplers)
+        public void Render(Shader shader)
         {
             foreach (var kvp in _renderData)
             {
-                if (!BaseRenderer._drawType[kvp.Key]) continue;
+                if (!BaseRenderer.DrawTypePreference[kvp.Key]) continue;
                 var renderData = kvp.Value;
 
                 GL.BindVertexArray(renderData.VAO);

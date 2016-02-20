@@ -348,7 +348,7 @@ namespace WoWMap.Layers
                     if (!heightMap.RenderMask.ShouldRender(x, y))
                         continue;
 
-                    var v = new Vector3(basePos.X - (x * Constants.UnitSize), basePos.Y - (y * Constants.UnitSize), heightMap.Heightmap[x, y]);
+                    var v = new Vector3(basePos.X - (y * Constants.UnitSize), basePos.Y - (x * Constants.UnitSize), heightMap.Heightmap[x, y]);
 
                     if (vertices == null)
                         vertices = new List<Vector3>();

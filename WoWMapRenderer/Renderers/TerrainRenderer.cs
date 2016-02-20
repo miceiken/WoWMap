@@ -23,19 +23,9 @@ namespace WoWMapRenderer.Renderers
         private string _mapName;
         private WDT _wdt;
 
-        private Framebuffer _framebuffer;
-
         private Dictionary<int, ADT> _mapTiles = new Dictionary<int, ADT>();
         private Dictionary<int, TileRenderer> _batchRenderers = new Dictionary<int, TileRenderer>(9 * 3);
         private Dictionary<int, bool> _loadedTiles = new Dictionary<int, bool>();
-        public Dictionary<VertexType, bool> _drawType = new Dictionary<VertexType, bool>()
-        {
-            [VertexType.Terrain] = true,
-            [VertexType.WMO] = true,
-            [VertexType.M2] = true,
-            [VertexType.Liquid] = true,
-        };
-
 
         private Camera _camera;
         private Shader _shader;
@@ -49,8 +39,13 @@ namespace WoWMapRenderer.Renderers
 
         public bool ForceWireframe { get; private set; }
 
-        private int[] _terrainSamplers = new int[4];
-        private int[] _alphaTerrainSamplers = new int[3];
+        public Dictionary<VertexType, bool> DrawTypePreference { get; private set; } = new Dictionary<VertexType, bool>()
+        {
+            [VertexType.Terrain] = true,
+            [VertexType.WMO] = true,
+            [VertexType.M2] = true,
+            [VertexType.Liquid] = true,
+        };
 
         public TerrainRenderer(GLControl control)
         {
@@ -102,57 +97,54 @@ namespace WoWMapRenderer.Renderers
         {
             // 3D space coordinates passed as parameter
             // TODO fix, not working as planned
-            Console.WriteLine($"Clicked coordinates [ {terrainCoordinates.X} {terrainCoordinates.Y} {terrainCoordinates.Z} ]");
+            Debug.WriteLine($"Clicked coordinates [ {terrainCoordinates.X} {terrainCoordinates.Y} {terrainCoordinates.Z} ]");
         }
 
         public void LoadMap(string mapName)
         {
-            if (_loader == null)
+            _loader = new BackgroundWorkerEx();
+            _loader.DoWork += (sender, e) =>
+            {                
+                _mapTiles.Clear();
+                _loadedTiles.Clear();
+                foreach (var renderer in _batchRenderers.Values)
+                    renderer.Delete();
+                _batchRenderers.Clear();
+
+                _mapName = mapName;
+                _loader.ReportProgress(1, "Loading WDT...");
+                _wdt = new WDT(string.Format(@"World\Maps\{0}\{0}.wdt", mapName));
+                if (_wdt.IsGlobalModel)
+                {
+                    _loader.ReportProgress(100, "This map is a global model, NYI !");
+                    return;
+                }
+
+                _mapTiles.Clear();
+                int x, y;
+                GetSpawnTile(out x, out y);
+
+                if (!_wdt.HasTile(x, y))
+                    Console.WriteLine("fuck me");
+
+                _mapTiles[(x << 8) | y] = new ADT(mapName, x, y, _wdt);
+                _loader.ReportProgress(100, "Map loaded");
+            };
+            _loader.ProgressChanged += (sender, args) =>
             {
-                _loader = new BackgroundWorkerEx();
-                _loader.DoWork += (sender, e) =>
-                {
-                    _mapName = mapName;
-                    _loader.ReportProgress(1, "Loading WDT...");
-                    _wdt = new WDT(string.Format(@"World\Maps\{0}\{0}.wdt", mapName));
-                    if (_wdt.IsGlobalModel)
-                    {
-                        _loader.ReportProgress(100, "This map is a global model, NYI !");
-                        return;
-                    }
-
-                    _mapTiles.Clear();
-                    int x, y;
-                    GetSpawnTile(out x, out y);
-
-                    if (!_wdt.HasTile(x, y))
-                        Console.WriteLine("fuck me");
-
-                    _mapTiles[(x << 8) | y] = new ADT(mapName, x, y, _wdt);
-                };
-                _loader.ProgressChanged += (sender, args) =>
-                {
-                    if (OnProgress != null)
-                        OnProgress(args.ProgressPercentage, (string)args.UserState);
-                };
-                _loader.RunWorkerCompleted += (sender, e) =>
-                {
-                    InitializeView();
-                };
-            }
+                if (OnProgress != null)
+                    OnProgress(args.ProgressPercentage, (string)args.UserState);
+            };
+            _loader.RunWorkerCompleted += (sender, e) =>
+            {
+                InitializeView();
+            };
 
             _loader.RunWorkerAsync();
         }
 
         private void InitializeView()
         {
-            //_framebuffer = new Framebuffer(_control.Width, _control.Height);
-
-            #region Generating samplers
-            // GL.GenSamplers(4, _terrainSamplers);
-            // GL.GenSamplers(3, _alphaTerrainSamplers);
-            #endregion
-
             _shader = new Shader();
             _shader.CreateFromFile("shaders/vertex.glsl", "shaders/fragment.glsl");
             _shader.SetCurrent();
@@ -303,12 +295,11 @@ namespace WoWMapRenderer.Renderers
             var uniform = Matrix4.Mult(_camera.View, _camera.Projection);
             GL.UniformMatrix4(_shader.GetUniformLocation("projection_modelview"), false, ref uniform);
 
-            GL.Enable(EnableCap.Texture2D);
             GL.Enable(EnableCap.DepthTest);
             GL.DepthFunc(DepthFunction.Less);
 
             foreach (var renderer in _batchRenderers.Values)
-                renderer.Render(_shader, _terrainSamplers, _alphaTerrainSamplers);
+                renderer.Render(_shader);
 
             _control.SwapBuffers();
         }
