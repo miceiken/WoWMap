@@ -137,7 +137,7 @@ namespace WoWMapRenderer
                 if (record.ContinentID == entry.MapID)
                     _areaListBox.Items.Add(new AreaListBoxItem(record));
             }
-            _view.Renderer = new WDTRenderer(_view, entry.Directory);
+            _view.LoadMap(entry.Directory);
         }
 
         private void LoadOnlineCASC(object sender, EventArgs e)

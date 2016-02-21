@@ -13,6 +13,7 @@ using WoWMap.Chunks;
 using WoWMap.Layers;
 using System.Drawing;
 using WoWMap.Geometry;
+using WoWMapRenderer.Renderers;
 
 namespace WoWMapRenderer
 {
@@ -30,8 +31,6 @@ namespace WoWMapRenderer
             };
             Control.KeyPress += (sender, args) => Camera?.Update();
             Control.MouseMove += (sender, args) => Camera?.Update();
-
-            InitializeView();
         }
 
         private GLControl Control { get; set; }
@@ -40,6 +39,11 @@ namespace WoWMapRenderer
         public IRenderer Renderer { get; set; }
 
         public Shader Shader { get; private set; }
+
+        private BackgroundWorkerEx _loader;
+
+        public delegate void ProgressHandler(int progress, string state);
+        public event ProgressHandler OnProgress;
 
         public Dictionary<RenderOptions, bool> Options { get; set; } = new Dictionary<RenderOptions, bool>
         {
@@ -53,6 +57,25 @@ namespace WoWMapRenderer
             [MeshType.Doodad] = true,
             [MeshType.Liquid] = true,
         };
+
+        public void LoadMap(string mapName)
+        {
+            _loader = new BackgroundWorkerEx();
+            _loader.DoWork += (sender, e) =>
+            {
+                _loader.ReportProgress(1, "Loading WDT...");
+                var wdt = new WDT(string.Format(@"World\Maps\{0}\{0}.wdt", mapName));
+                Renderer = new WDTRenderer(this, mapName, wdt);
+                _loader.ReportProgress(100, "Map loaded");
+            };
+            _loader.ProgressChanged += (sender, args) =>
+            {
+                if (OnProgress != null)
+                    OnProgress(args.ProgressPercentage, "Loading WDT...");
+            };
+            _loader.RunWorkerCompleted += (sender, e) => InitializeView();
+            _loader.RunWorkerAsync();
+        }
 
         private void InitializeView()
         {
