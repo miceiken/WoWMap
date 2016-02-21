@@ -12,13 +12,14 @@ using WoWMap;
 using WoWMap.Chunks;
 using WoWMap.Layers;
 using System.Drawing;
+using WoWMap.Geometry;
 
 namespace WoWMapRenderer.Renderers
 {
     public enum SourceDrawType
     {
         ADT,
-        GlobalModel
+        Globalmodel
     };
 
     public class TerrainRenderer
@@ -31,7 +32,7 @@ namespace WoWMapRenderer.Renderers
         private SourceDrawType _source;
 
         private Dictionary<int, ADT> _mapTiles = new Dictionary<int, ADT>();
-        private Dictionary<int, IRenderer> _batchRenderers = new Dictionary<int, IRenderer>(9 * 3);
+        private Dictionary<int, IRenderer> _batchRenderers = new Dictionary<int, IRenderer>();
         private Dictionary<int, bool> _loadedTiles = new Dictionary<int, bool>();
 
         private Camera _camera;
@@ -46,12 +47,12 @@ namespace WoWMapRenderer.Renderers
 
         public bool ForceWireframe { get; private set; }
 
-        public Dictionary<VertexType, bool> DrawTypePreference { get; private set; } = new Dictionary<VertexType, bool>()
+        public Dictionary<MeshType, bool> DrawMeshTypeEnabled { get; private set; } = new Dictionary<MeshType, bool>()
         {
-            [VertexType.Terrain] = true,
-            [VertexType.WMO] = true,
-            [VertexType.M2] = true,
-            [VertexType.Liquid] = true,
+            [MeshType.Terrain] = true,
+            [MeshType.WorldModelObject] = true,
+            [MeshType.Doodad] = true,
+            [MeshType.Liquid] = true,
         };
 
         public TerrainRenderer(GLControl control)
@@ -122,20 +123,7 @@ namespace WoWMapRenderer.Renderers
                 _mapName = mapName;
                 _loader.ReportProgress(1, "Loading WDT...");
                 _wdt = new WDT(string.Format(@"World\Maps\{0}\{0}.wdt", mapName));
-                _source = _wdt.IsGlobalModel ? SourceDrawType.GlobalModel : SourceDrawType.ADT;
-                if (_source == SourceDrawType.GlobalModel)
-                {
-                    var modelRenderer = new GlobalModelRenderer(this);
-                    modelRenderer.Generate(_wdt);
-                    _batchRenderers.Add(0, modelRenderer);
-                }
-                if (_source == SourceDrawType.ADT)
-                {
-                    int x, y;
-                    GetSpawnTile(out x, out y);
-
-                    _mapTiles[(x << 8) | y] = new ADT(mapName, x, y, _wdt);
-                }
+                _source = _wdt.IsGlobalModel ? SourceDrawType.Globalmodel : SourceDrawType.ADT;
                 _loader.ReportProgress(100, "Map loaded");
             };
             _loader.ProgressChanged += (sender, args) =>
@@ -176,9 +164,9 @@ namespace WoWMapRenderer.Renderers
                 _camera.SetViewport(_control.Width, _control.Height);
                 GL.Viewport(0, 0, _control.Width, _control.Height);
             }
-            if (_source == SourceDrawType.GlobalModel)
+            if (_source == SourceDrawType.Globalmodel)
             {
-                _camera = new Camera(_wdt.ModelVertices.FirstOrDefault(), -Vector3.UnitZ);
+                _camera = new Camera(_wdt.ModelScene.Flatten().Vertices.FirstOrDefault(), -Vector3.UnitZ);
                 _camera.SetViewport(_control.Width, _control.Height);
                 GL.Viewport(0, 0, _control.Width, _control.Height);
             }
@@ -195,6 +183,13 @@ namespace WoWMapRenderer.Renderers
 
         private void UpdateRenderers()
         {
+            if (_source == SourceDrawType.Globalmodel && _batchRenderers.Count == 0)
+            {
+                var modelRenderer = new GlobalModelRenderer(this);
+                modelRenderer.Generate(_wdt);
+                modelRenderer.Bind(_shader);
+                _batchRenderers[0] = modelRenderer;
+            }
             if (_source == SourceDrawType.ADT)
             {
                 var _currentCenteredTile = GetTileAt(_camera.Position.Xy);
@@ -219,10 +214,8 @@ namespace WoWMapRenderer.Renderers
 
         private bool LoadTile(int tileX, int tileY)
         {
-            Debug.WriteLine($"Loading {tileX}, {tileY} -- already loaded? {IsTileLoaded(tileX, tileY)}");
-
             if (IsTileLoaded(tileX, tileY))
-                return true;
+                return false;
             if (!_wdt.HasTile(tileX, tileY))
                 return false;
 
@@ -302,7 +295,7 @@ namespace WoWMapRenderer.Renderers
 
         private void Render()
         {
-            GL.ClearColor(Color.White);
+            GL.ClearColor(Color.CornflowerBlue);
             GL.Viewport(0, 0, _control.Width, _control.Height);
 
             GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
@@ -312,8 +305,10 @@ namespace WoWMapRenderer.Renderers
             var uniform = Matrix4.Mult(_camera.View, _camera.Projection);
             GL.UniformMatrix4(_shader.GetUniformLocation("projection_modelview"), false, ref uniform);
 
+            GL.Enable(EnableCap.Lighting);
+            GL.Enable(EnableCap.Light0);
             GL.Enable(EnableCap.DepthTest);
-            GL.DepthFunc(DepthFunction.Less);
+            //GL.DepthFunc(DepthFunction.Less);
 
             foreach (var renderer in _batchRenderers.Values)
                 renderer.Render(_shader);

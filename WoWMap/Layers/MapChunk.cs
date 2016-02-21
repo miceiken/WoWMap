@@ -46,19 +46,7 @@ namespace WoWMap.Layers
         public MCSH MCSH { get; private set; }
         public MCLY MCLY { get; private set; }
 
-        public Vector3[] Vertices { get; private set; }
-        public List<Triangle<uint>> Indices { get; private set; }
-
-        public List<Vector3> DoodadVertices;
-        public List<Triangle<uint>> DoodadIndices;
-        public List<Vector3> DoodadNormals;
-
-        public List<Vector3> WMOVertices;
-        public List<Triangle<uint>> WMOIndices;
-        public List<Vector3> WMONormals;
-
-        public List<Vector3> LiquidVertices;
-        public List<Triangle<uint>> LiquidIndices;
+        public Scene Scene { get; private set; }
 
         public int Index
         {
@@ -142,27 +130,23 @@ namespace WoWMap.Layers
 
         public void Generate()
         {
-            if (MCVT != null)
+            Scene = new Scene()
             {
-                GenerateVertices();
-                GenerateIndices();
-            }
-
-            if (MCRW != null)
-                GenerateWMOs(ref WMOVertices, ref WMONormals, ref WMOIndices);
-
-            if (MCRD != null)
-                GenerateDoodads(ref DoodadVertices, ref DoodadNormals, ref DoodadIndices);
-
-            if (ADT.Liquid.HeightMaps[Index] != null)
-                GenerateLiquid(ref LiquidVertices, ref LiquidIndices);
+                Terrain = new[] { GenerateTerrain() },
+                WorldModelObjects = GenerateWMOs(),
+                Doodads = GenerateDoodads(),
+                Liquids = new[] { GenerateLiquid() }
+            };
         }
 
         #region MCVT - HeightMap
 
-        private void GenerateVertices()
+        private Mesh GenerateTerrain()
         {
-            Vertices = new Vector3[145];
+            if (MCVT == null)
+                return null;
+
+            var vertices = new Vector3[145];
 
             for (int i = 0, idx = 0; i < 17; i++)
             {
@@ -170,37 +154,44 @@ namespace WoWMap.Layers
                 {
                     var v = new Vector3(MCNK.Position.X - (i * Constants.UnitSize * 0.5f), MCNK.Position.Y - (j * Constants.UnitSize), MCVT.Heights[idx] + MCNK.Position.Z);
                     if ((i % 2) != 0) v.Y -= 0.5f * Constants.UnitSize;
-                    Vertices[idx++] = v;
+                    vertices[idx++] = v;
                 }
             }
-        }
 
-        private void GenerateIndices()
-        {
-            Indices = new List<Triangle<uint>>(64 * 4);
+            var indices = new List<uint>(64 * 4 * 3);
 
             var unitidx = 0;
             for (uint j = 9; j < 8 * 8 + 9 * 8; j++)
             {
                 if (!HasHole(unitidx % 8, unitidx++ / 8))
                 {
-                    Indices.Add(new Triangle<uint>(TriangleType.Terrain, j, j - 9, j + 8));
-                    Indices.Add(new Triangle<uint>(TriangleType.Terrain, j, j - 8, j - 9));
-                    Indices.Add(new Triangle<uint>(TriangleType.Terrain, j, j + 9, j - 8));
-                    Indices.Add(new Triangle<uint>(TriangleType.Terrain, j, j + 8, j + 9));
+                    indices.AddRange(new uint[] {
+                        j, j - 9, j + 8,
+                        j, j - 8, j - 9,
+                        j, j + 9, j - 8,
+                        j, j + 8, j + 9
+                    });
                 }
                 if ((j + 1) % (9 + 8) == 0) j += 9;
             }
+
+            return new Mesh
+            {
+                Type = MeshType.Terrain,
+                Indices = indices.ToArray(),
+                Vertices = vertices.ToArray()
+            };
         }
+
 
         #endregion
 
         #region MCRW/MODF - WMOs
 
-        public void GenerateWMOs(ref List<Vector3> vertices, ref List<Vector3> normals, ref List<Triangle<uint>> indices)
+        public IEnumerable<WMOScene> GenerateWMOs()
         {
-            if (ADT.MODF == null)
-                return;
+            if (MCRW == null || ADT.MODF == null)
+                yield break;
 
             var drawn = new HashSet<uint>();
             for (var i = 0; i < MCRW.MODFEntryIndex.Length; i++)
@@ -216,87 +207,32 @@ namespace WoWMap.Layers
                 var path = ADT.ModelPaths[(int)wmo.MWIDEntryIndex];
                 var model = new WMORoot(path);
 
-                if (vertices == null)
-                    vertices = new List<Vector3>(1000);
-                if (indices == null)
-                    indices = new List<Triangle<uint>>(1000);
-                if (normals == null)
-                    normals = new List<Vector3>(1000);
-
-                InsertWMOGeometry(wmo, model, ref vertices, ref indices, ref normals);
+                yield return GenerateWMOScene(wmo, model);
             }
         }
 
-        public static void InsertWMOGeometry(MODF.MODFEntry wmo, WMORoot model, ref List<Vector3> vertices, ref List<Triangle<uint>> indices, ref List<Vector3> normals)
+        public static WMOScene GenerateWMOScene(MODF.MODFEntry wmoDefinition, WMORoot model)
         {
-            var transform = Transformation.GetWMOTransform(wmo.Position, wmo.Rotation);
-            foreach (var group in model.Groups)
+            return new WMOScene
             {
-                var vo = (uint)vertices.Count;
-                vertices.AddRange(group.MOVT.Vertices.Select(v => Vector3.Transform(v, transform)));
-                normals.AddRange(group.MONR.Normals.Select(v => Vector3.Transform(v, transform)));
-
-                // No. Makes this thing unreadable.
-                // ReSharper disable once LoopCanBeConvertedToQuery
-                for (var i = 0; i < group.MOVI.Indices.Length; i++)
-                {
-                    if (((byte)group.MOPY.Entries[i].Flags & 0x04) != 0 && group.MOPY.Entries[i].MaterialId != 0xFF)
-                        continue;
-
-                    var idx = group.MOVI.Indices[i];
-                    indices.Add(new Triangle<uint>(TriangleType.Wmo, vo + idx.V0, vo + idx.V1, vo + idx.V2));
-                }
-            }
-
-            if (wmo.DoodadSet < model.MODS.Entries.Length)
-            {
-                var set = model.MODS.Entries[wmo.DoodadSet];
-                var instances = new List<MODD.MODDEntry>((int)set.nDoodads);
-                for (var i = set.FirstInstanceIndex; i < (set.nDoodads + set.FirstInstanceIndex); i++)
-                {
-                    if (i >= model.MODD.Entries.Length)
-                        break;
-                    instances.Add(model.MODD.Entries[(int)i]);
-                }
-
-                foreach (var instance in instances)
-                {
-                    string path;
-                    if (!model.MODN.Filenames.TryGetValue(instance.ofsMODN, out path))
-                        continue;
-
-                    var doodad = new M2(path);
-                    if (!doodad.IsCollidable)
-                        continue;
-
-                    var doodadTransform = Transformation.GetDoodadTransform(instance, wmo);
-                    var vo = (uint)vertices.Count;
-
-                    vertices.AddRange(doodad.Vertices.Select(vertex => Vector3.Transform(vertex, doodadTransform)));
-                    normals.AddRange(doodad.Normals.Select(normal => Vector3.Transform(normal, doodadTransform)));
-                    indices.AddRange(doodad.Indices.Select(t => new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
-                }
-            }
-
-            foreach (var group in model.Groups)
-            {
-                if ((group.LiquidVertices == null || group.LiquidVertices.Count == 0) || (group.LiquidIndices == null || group.LiquidIndices.Count == 0))
-                    continue;
-
-                var vo = (uint)vertices.Count;
-                vertices.AddRange(@group.LiquidVertices.Select(v => Vector3.Transform(v, transform)));
-                indices.AddRange(@group.LiquidIndices.Select(t => new Triangle<uint>(t.Type, t.V1 + vo, t.V0 + vo, t.V2 + vo)));
-            }
+                Terrain = model.Groups.Select(g => g.GenerateTerrain(wmoDefinition)).OfType<Mesh>(),
+                Doodads = model.GenerateDoodads(wmoDefinition.DoodadSet, wmoDefinition).OfType<Mesh>(),
+                Liquids = model.Groups.Select(g => g.GenerateLiquid(wmoDefinition)).OfType<Mesh>(),
+            };
         }
 
         #endregion
 
         #region MCRD/MDDF - Doodads
 
-        public void GenerateDoodads(ref List<Vector3> vertices, ref List<Vector3> normals, ref List<Triangle<uint>> indices)
+        public IEnumerable<Mesh> GenerateDoodads()
         {
-            if (ADT.MDDF == null)
-                return;
+            if (MCRD == null || ADT.MDDF == null)
+                yield break;
+
+            var vertices = new List<Vector3>();
+            var indices = new List<uint>();
+            var normals = new List<Vector3>();
 
             var drawn = new HashSet<uint>();
             for (var i = 0; i < MCRD.MDDFEntryIndex.Length; i++)
@@ -315,19 +251,15 @@ namespace WoWMap.Layers
                 if (!model.IsCollidable)
                     continue;
 
-                if (vertices == null)
-                    vertices = new List<Vector3>((MCRD.MDDFEntryIndex.Length / 4) * model.Vertices.Length);
-                if (indices == null)
-                    indices = new List<Triangle<uint>>((MCRD.MDDFEntryIndex.Length / 4) * model.Indices.Length);
-                if (normals == null)
-                    normals = new List<Vector3>(MCRD.MDDFEntryIndex.Length / 4 * model.Normals.Length);
-
                 // Doodads outside WMOs are treated like WMOs. Not a typo.
                 var transform = Transformation.GetWMOTransform(doodad.Position, doodad.Rotation, doodad.Scale / 1024.0f);
-                var vo = (uint)vertices.Count;
-                vertices.AddRange(model.Vertices.Select(v => Vector3.Transform(v, transform)));
-                normals.AddRange(model.Normals.Select(v => Vector3.Transform(v, transform)));
-                indices.AddRange(model.Indices.Select(t => new Triangle<uint>(TriangleType.Doodad, t.V0 + vo, t.V1 + vo, t.V2 + vo)));
+                yield return new Mesh
+                {
+                    Type = model.Mesh.Type,
+                    Indices = model.Mesh.Indices,
+                    Vertices = model.Mesh.Vertices.Select(v => Vector3.Transform(v, transform)).ToArray(),
+                    Normals = model.Mesh.Normals.Select(v => Vector3.Transform(v, transform)).ToArray(),
+                };
             }
         }
 
@@ -335,10 +267,16 @@ namespace WoWMap.Layers
 
         #region MH2O - Liquid
 
-        public void GenerateLiquid(ref List<Vector3> vertices, ref List<Triangle<uint>> indices)
+        public Mesh GenerateLiquid()
         {
+            if (ADT.Liquid.HeightMaps[Index] == null)
+                return null;
+
             var information = ADT.Liquid.Information[Index];
             var heightMap = ADT.Liquid.HeightMaps[Index];
+
+            var vertices = new List<Vector3>();
+            var indices = new List<uint>();
 
             var basePos = MCNK.Position;
             for (int y = information.YOffset; y < (information.YOffset + information.Height); y++)
@@ -350,23 +288,27 @@ namespace WoWMap.Layers
 
                     var v = new Vector3(basePos.X - (y * Constants.UnitSize), basePos.Y - (x * Constants.UnitSize), heightMap.Heightmap[x, y]);
 
-                    if (vertices == null)
-                        vertices = new List<Vector3>();
-                    if (indices == null)
-                        indices = new List<Triangle<uint>>();
-
-                    var vo = (uint)vertices.Count;
-
                     vertices.AddRange(new[] { v,
                         new Vector3(v.X - Constants.UnitSize, v.Y, v.Z),
                         new Vector3(v.X, v.Y - Constants.UnitSize, v.Z),
                         new Vector3(v.X - Constants.UnitSize, v.Y - Constants.UnitSize, v.Z)
                     });
 
-                    indices.Add(new Triangle<uint>(TriangleType.Water, vo, vo + 2, vo + 1));
-                    indices.Add(new Triangle<uint>(TriangleType.Water, vo + 2, vo + 3, vo + 1));
+                    var vo = (uint)vertices.Count;
+
+                    indices.AddRange(new uint[] {
+                        vo, vo + 2, vo + 1,
+                        vo + 2, vo + 3, vo + 1
+                    });
                 }
             }
+
+            return new Mesh
+            {
+                Type = MeshType.Liquid,
+                Indices = indices.ToArray(),
+                Vertices = vertices.ToArray()
+            };
         }
 
         #endregion

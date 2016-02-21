@@ -47,7 +47,7 @@ namespace WoWMap.Layers
                         combinedFile.AddMapChunk(subChunk);
                         break;
                     default:
-                        Console.WriteLine($"Unhandled {subChunk.Name} chunk in root ADT.");
+                        Console.WriteLine($"Unhandled {subChunk.Name} chunk in model ADT.");
                         break;
                 }
             }

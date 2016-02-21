@@ -15,7 +15,7 @@ namespace WoWMap.Archive
         {
             Locale = locale;
             Handler = CASCHandler.OpenLocalStorage(path, worker);
-            Handler.Root.SetFlags(locale, ContentFlags.None, false);
+            Handler.model.SetFlags(locale, ContentFlags.None, false);
 
             Initialized = true;
         }
@@ -24,7 +24,7 @@ namespace WoWMap.Archive
         {
             Locale = locale;
             Handler = CASCHandler.OpenOnlineStorage("wow", worker: worker);
-            Handler.Root.SetFlags(locale, ContentFlags.None, false);
+            Handler.model.SetFlags(locale, ContentFlags.None, false);
 
             Initialized = true;
         }

@@ -17,9 +17,9 @@ namespace WoWMap.Chunks
 
         public byte[] Magic;
         public uint Version;
-        public uint LengthModelName;
+        public uint LengthmodelName;
         public uint OffsetName;
-        public uint ModelFlags;
+        public uint modelFlags;
         public uint CountGlobalSequences;
         public uint OffsetGlobalSequences;
         public uint CountAnimations;
@@ -73,9 +73,9 @@ namespace WoWMap.Chunks
             var br = Chunk.GetReader();
             Magic = br.ReadBytes(4);
             Version = br.ReadUInt32();
-            LengthModelName = br.ReadUInt32();
+            LengthmodelName = br.ReadUInt32();
             OffsetName = br.ReadUInt32();
-            ModelFlags = br.ReadUInt32();
+            modelFlags = br.ReadUInt32();
             CountGlobalSequences = br.ReadUInt32();
             OffsetGlobalSequences = br.ReadUInt32();
             CountAnimations = br.ReadUInt32();

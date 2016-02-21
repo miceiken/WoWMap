@@ -113,7 +113,10 @@
     <Compile Include="Chunks\MOVI.cs" />
     <Compile Include="Chunks\MOVT.cs" />
     <Compile Include="Geometry\Geometry.cs" />
+    <Compile Include="Geometry\Mesh.cs" />
+    <Compile Include="Geometry\Scene.cs" />
     <Compile Include="Geometry\Transformation.cs" />
+    <Compile Include="Geometry\WMOScene.cs" />
     <Compile Include="Layers\ADT.cs" />
     <Compile Include="Archive\CASC.cs" />
     <Compile Include="Archive\DBC.cs" />
@@ -152,7 +155,6 @@
     <Compile Include="Chunks\MWMO.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Geometry\Triangle.cs" />
     <Compile Include="Layers\WDT.cs" />
     <Compile Include="Layers\WMOGroup.cs" />
     <Compile Include="Readers\ChunkReader.cs" />

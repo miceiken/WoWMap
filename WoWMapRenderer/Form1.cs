@@ -9,6 +9,7 @@ using OpenGL = OpenTK.Graphics.OpenGL;
 using System.Linq;
 using System.Diagnostics;
 using System.ComponentModel;
+using WoWMap.Geometry;
 
 namespace WoWMapRenderer
 {
@@ -180,28 +181,28 @@ namespace WoWMapRenderer
         {
             if (_renderer == null) return;
             drawTerraintoolStripMenuItem.Checked = !drawTerraintoolStripMenuItem.Checked;
-            _renderer.DrawTypePreference[VertexType.Terrain] = drawTerraintoolStripMenuItem.Checked;
+            _renderer.DrawMeshTypeEnabled[MeshType.Terrain] = drawTerraintoolStripMenuItem.Checked;
         }
 
         private void drawWMOtoolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (_renderer == null) return;
             drawWMOtoolStripMenuItem.Checked = !drawWMOtoolStripMenuItem.Checked;
-            _renderer.DrawTypePreference[VertexType.WMO] = drawWMOtoolStripMenuItem.Checked;
+            _renderer.DrawMeshTypeEnabled[MeshType.WorldModelObject] = drawWMOtoolStripMenuItem.Checked;
         }
 
         private void drawDoodadtoolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (_renderer == null) return;
             drawDoodadtoolStripMenuItem.Checked = !drawDoodadtoolStripMenuItem.Checked;
-            _renderer.DrawTypePreference[VertexType.M2] = drawDoodadtoolStripMenuItem.Checked;
+            _renderer.DrawMeshTypeEnabled[MeshType.Doodad] = drawDoodadtoolStripMenuItem.Checked;
         }
 
         private void drawLiquidtoolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (_renderer == null) return;
             drawLiquidtoolStripMenuItem.Checked = !drawLiquidtoolStripMenuItem.Checked;
-            _renderer.DrawTypePreference[VertexType.Liquid] = drawLiquidtoolStripMenuItem.Checked;
+            _renderer.DrawMeshTypeEnabled[MeshType.Liquid] = drawLiquidtoolStripMenuItem.Checked;
         }
     }
 

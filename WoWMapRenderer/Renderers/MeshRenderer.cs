@@ -12,47 +12,33 @@ using WoWMap.Layers;
 
 namespace WoWMapRenderer.Renderers
 {
-    public class GlobalModelRenderer : IRenderer
+    public class MeshRenderer : IRenderer
     {
-        public TerrainRenderer BaseRenderer { get; private set; }
-
-        public GlobalModelRenderer(TerrainRenderer baseRenderer)
+        public MeshRenderer(Mesh mesh, MeshType? overrideType = null)
         {
-            BaseRenderer = baseRenderer;
+            MeshType = overrideType.HasValue ? overrideType.Value : mesh.Type;
+            Vertices = mesh.Vertices.Select(v => new Vertex { Position = v, Type = (int)MeshType });
+            Indices = mesh.Indices;
         }
+
+        public MeshType MeshType { get; private set; }
 
         public int VAO { get; set; }
         public int VerticeVBO { get; set; }
         public int IndicesVBO { get; set; }
 
-        public List<Vertex> Vertices { get; private set; } = new List<Vertex>();
-        public List<uint> Indices { get; private set; } = new List<uint>();
+        public IEnumerable<Vertex> Vertices { get; private set; }
+        public IEnumerable<uint> Indices { get; private set; }
 
-        public int VerticeCount { get { return Vertices.Count; } }
+        public int VerticeCount { get { return Vertices.Count(); } }
         public int IndiceCount { get; set; }
-
-        public void Generate(WDT wdt)
-        {
-            if (!wdt.IsGlobalModel) return;
-            wdt.GenerateGlobalModel();
-
-            var mesh = wdt.ModelScene.Flatten();
-            Vertices = mesh.Vertices.Select(v => new Vertex { Position = v, Type = (int)mesh.Type }).ToList();
-            Indices = mesh.Indices.ToList();
-        }
 
         public void Bind(Shader shader)
         {
-            VerticeVBO = GL.GenBuffer();
-            IndicesVBO = GL.GenBuffer();
-            VAO = GL.GenVertexArray();
-
-            IndiceCount = Indices.Count;
-
             GL.BindVertexArray(VAO);
 
             var vertexSize = Marshal.SizeOf(typeof(Vertex));
-            var verticeSize = Vertices.Count * vertexSize;
+            var verticeSize = Vertices.Count() * vertexSize;
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, VerticeVBO);
             GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(verticeSize), Vertices.ToArray(), BufferUsageHint.StaticDraw);
@@ -70,12 +56,8 @@ namespace WoWMapRenderer.Renderers
                 Indices.ToArray(), BufferUsageHint.StaticDraw);
 
             // Not needed anymore
-            Vertices.Clear();
-            Indices.Clear();
-
-            GL.BindVertexArray(0);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            Vertices = null;
+            Indices = null;
         }
 
         public void Delete()
@@ -91,9 +73,6 @@ namespace WoWMapRenderer.Renderers
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
 
             GL.DrawElements(PrimitiveType.Triangles, IndiceCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
-
-            GL.BindVertexArray(0);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
         }
     }
 }

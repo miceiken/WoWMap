@@ -30,10 +30,7 @@ namespace WoWMap.Layers
         public MD20 MD20 { get; private set; }
 
         public bool IsCollidable { get; private set; }
-
-        public Vector3[] Vertices { get; private set; }
-        public Vector3[] Normals { get; private set; }
-        public Triangle<ushort>[] Indices { get; private set; }
+        public Mesh Mesh { get; private set; }
 
         public void Read()
         {
@@ -45,42 +42,37 @@ namespace WoWMap.Layers
 
             IsCollidable = true;
 
-            ReadVertices();
-            ReadIndices();
-            ReadNormals();
-        }
+            Mesh = new Mesh();
 
-        private void ReadVertices()
-        {
             var stream = Chunk.GetStream();
             stream.Seek(MD20.OffsetBoundingVertices, SeekOrigin.Begin);
             var br = Chunk.GetReader();
 
-            Vertices = new Vector3[MD20.CountBoundingVertices];
-            for (var i = 0; i < Vertices.Length; i++)
-                Vertices[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
-        }
+            var vertices = new Vector3[MD20.CountBoundingVertices];
+            for (var i = 0; i < vertices.Length; i++)
+                vertices[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
 
-        private void ReadIndices()
-        {
-            var stream = Chunk.GetStream();
             stream.Seek(MD20.OffsetBoundingTriangles, SeekOrigin.Begin);
-            var br = Chunk.GetReader();
+            br = Chunk.GetReader();
 
-            Indices = new Triangle<ushort>[MD20.CountBoundingTriangles / 3];
-            for (var i = 0; i < Indices.Length; i++)
-                Indices[i] = new Triangle<ushort>(TriangleType.Doodad, br.ReadUInt16(), br.ReadUInt16(), br.ReadUInt16());
-        }
+            var indices = new ushort[MD20.CountBoundingTriangles];
+            for (var i = 0; i < indices.Length; i++)
+                indices[i] = br.ReadUInt16();
 
-        private void ReadNormals()
-        {
-            var stream = Chunk.GetStream();
             stream.Seek(MD20.OffsetBoundingNormals, SeekOrigin.Begin);
-            var br = Chunk.GetReader();
+            br = Chunk.GetReader();
 
-            Normals = new Vector3[MD20.CountBoundingNormals];
-            for (var i = 0; i < Normals.Length; i++)
-                Normals[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+            var normals = new Vector3[MD20.CountBoundingNormals];
+            for (var i = 0; i < normals.Length; i++)
+                normals[i] = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+
+            Mesh = new Mesh
+            {
+                Type = MeshType.Doodad,
+                Indices = indices.Cast<uint>().ToArray(),
+                Vertices = vertices.ToArray(),
+                Normals = normals.ToArray()
+            };
         }
     }
 }

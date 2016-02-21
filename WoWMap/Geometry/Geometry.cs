@@ -30,12 +30,12 @@ namespace WoWMap.Geometry
     public class Geometry
     {
         public List<Vector3> Vertices { get; private set; }
-        public List<Triangle<uint>> Indices { get; private set; }
+        public List<uint> Indices { get; private set; }
 
         public Geometry()
         {
             Vertices = new List<Vector3>(10000);
-            Indices = new List<Triangle<uint>>(10000);
+            Indices = new List<uint>(10000);
         }
 
         public void SaveWavefrontObject(string filename)
@@ -46,46 +46,82 @@ namespace WoWMap.Geometry
                 var nf = CultureInfo.InvariantCulture.NumberFormat;
                 foreach (var v in Vertices)
                     sw.WriteLine("v " + v.X.ToString(nf) + " " + v.Y.ToString(nf) + " " + v.Z.ToString(nf));
-                foreach (var t in Indices)
-                    sw.WriteLine("f " + (t.V0 + 1) + " " + (t.V1 + 1) + " " + (t.V2 + 1));
+                for (int i = 0; i < Indices.Count; i += 3)
+                    sw.WriteLine("f " + (Indices[i] + 1) + " " + (Indices[i + 1] + 1) + " " + (Indices[i + 2] + 1));
             }
         }
 
-        public void AddGeometry(IEnumerable<Vector3> vertices, IEnumerable<Triangle<uint>> indices)
+        public void AddGeometry(IEnumerable<Vector3> vertices, IEnumerable<uint> indices)
         {
             var vo = (uint)Vertices.Count;
-            Vertices.AddRange(vertices.Select(v => v));
-            Indices.AddRange(indices.Select(i => new Triangle<uint>(i.Type, i.V0 + vo, i.V1 + vo, i.V2 + vo)));
+            Vertices.AddRange(vertices);
+            Indices.AddRange(indices);
+        }
+
+        public void AddMesh(Mesh mesh)
+        {
+            AddGeometry(mesh.Vertices, mesh.Indices);
+        }
+
+        public void AddWMOScene(WMOScene wmosecene)
+        {
+            foreach (var mesh in wmosecene.Terrain)
+                AddGeometry(mesh.Vertices, mesh.Indices);
+            foreach (var mesh in wmosecene.Doodads)
+                AddGeometry(mesh.Vertices, mesh.Indices);
+            foreach (var mesh in wmosecene.Liquids)
+                AddGeometry(mesh.Vertices, mesh.Indices);
+        }
+
+        public void AddScene(Scene scene)
+        {
+            if (scene.Terrain != null)
+                foreach (var mesh in scene.Terrain)
+                    AddMesh(mesh);
+            if (scene.WorldModelObjects != null)
+                foreach (var wmoscene in scene.WorldModelObjects)
+                    AddWMOScene(wmoscene);
+            if (scene.Doodads != null)
+                foreach (var mesh in scene.Doodads)
+                    AddMesh(mesh);
+            if (scene.Liquids != null)
+                foreach (var mesh in scene.Liquids)
+                    AddMesh(mesh);
         }
 
         public void AddADT(ADT s)
         {
             foreach (var mc in s.MapChunks)
             {
-                if (mc.Vertices != null && mc.Vertices.Count() > 0 && mc.Indices != null && mc.Indices.Count > 0)
-                    AddGeometry(mc.Vertices, mc.Indices);
-                if (mc.WMOVertices != null && mc.WMOVertices.Count > 0 && mc.WMOIndices != null && mc.WMOIndices.Count > 0)
-                    AddGeometry(mc.WMOVertices, mc.WMOIndices);
-                if (mc.DoodadVertices != null && mc.DoodadVertices.Count > 0 && mc.DoodadIndices != null && mc.DoodadIndices.Count > 0)
-                    AddGeometry(mc.DoodadVertices, mc.DoodadIndices);
-                if (mc.LiquidVertices != null && mc.LiquidVertices.Count() > 0 && mc.LiquidIndices != null && mc.LiquidIndices.Count > 0)
-                    AddGeometry(mc.LiquidVertices, mc.LiquidIndices);
+                var scene = mc.Scene;
+                if (scene.Terrain != null)
+                    foreach (var mesh in scene.Terrain)
+                        AddGeometry(mesh.Vertices, mesh.Indices);
+                if (scene.WorldModelObjects != null)
+                {
+                    foreach (var wmosecene in scene.WorldModelObjects)
+                    {
+                        foreach (var mesh in wmosecene.Terrain)
+                            AddGeometry(mesh.Vertices, mesh.Indices);
+                        foreach (var mesh in wmosecene.Doodads)
+                            AddGeometry(mesh.Vertices, mesh.Indices);
+                        foreach (var mesh in wmosecene.Liquids)
+                            AddGeometry(mesh.Vertices, mesh.Indices);
+                    }
+                }
+                if (scene.Doodads != null)
+                    foreach (var mesh in scene.Doodads)
+                        AddGeometry(mesh.Vertices, mesh.Indices);
+                if (scene.Liquids != null)
+                    foreach (var mesh in scene.Liquids)
+                        AddGeometry(mesh.Vertices, mesh.Indices);
             }
         }
 
-        public void AddWDTGlobalModel(WDT s)
+        public void AddWDTGlobalmodel(WDT s)
         {
-            if (s.ModelVertices != null && s.ModelVertices.Count() > 0 && s.ModelIndices != null && s.ModelIndices.Count > 0)
-                AddGeometry(s.ModelVertices, s.ModelIndices);
-        }
-
-        public void AddDungeon(WMORoot model, MODF.MODFEntry def)
-        {
-            var verts = new List<Vector3>();
-            var norms = new List<Vector3>();
-            var inds = new List<Triangle<uint>>();
-            MapChunk.InsertWMOGeometry(def, model, ref verts, ref inds, ref norms);
-            AddGeometry(verts, inds);
+            if (s.ModelScene != null)
+                AddWMOScene(s.ModelScene);
         }
 
         /*
@@ -103,14 +139,7 @@ namespace WoWMap.Geometry
                 vertices[(i * 3) + 1] = vert.Z;
                 vertices[(i * 3) + 2] = vert.Y;
             }
-            indices = new int[Indices.Count * 3];
-            for (int i = 0; i < Indices.Count; i++)
-            {
-                var tri = Indices[i];
-                indices[(i * 3) + 0] = (int)tri.V0;
-                indices[(i * 3) + 1] = (int)tri.V1;
-                indices[(i * 3) + 2] = (int)tri.V2;
-            }
+            indices = Indices.Cast<int>().ToArray();
             //areas = new AreaId[Indices.Count];
             //for (int i = 0; i < Indices.Count; i++)
             //{
