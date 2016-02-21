@@ -73,12 +73,15 @@ namespace WoWMap.Layers
 
         public void Generate()
         {
+
             Terrain = GenerateTerrain();
             Liquid = GenerateLiquid();
         }
 
         public Mesh GenerateTerrain(MODF.MODFEntry wmoDefinition = null)
         {
+            if (MOVT == null) return null;
+
             var indices = new List<uint>();
 
             for (var i = 0; i < MOVI.Indices.Length; i += 3)
@@ -114,6 +117,8 @@ namespace WoWMap.Layers
 
         public Mesh GenerateLiquid(MODF.MODFEntry wmoDefinition = null)
         {
+            if (MLIQ == null) return null;
+
             var vertices = new List<Vector3>((int)(MLIQ.Height * MLIQ.Width) * 4);
             var indices = new List<uint>((int)((MLIQ.Height * MLIQ.Width) * 3));
 

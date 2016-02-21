@@ -69,7 +69,7 @@ namespace WoWMap.Layers
             Mesh = new Mesh
             {
                 Type = MeshType.Doodad,
-                Indices = indices.Cast<uint>().ToArray(),
+                Indices = indices.Select(i => (uint)i).ToArray(),
                 Vertices = vertices.ToArray(),
                 Normals = normals.ToArray()
             };

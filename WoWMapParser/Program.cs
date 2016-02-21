@@ -25,11 +25,11 @@ namespace WoWMapParser
             Initialize();
 
             //ReadMapsDBC();
-            //ReadADT();
+            ReadADT();
             //ReadADTs();
             //CreateNavmesh();
             //TestNavmesh();
-            ReadWDT();
+            //ReadWDT();
             //ReadWMO();
 
             Console.WriteLine("Done.");

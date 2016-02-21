@@ -75,18 +75,14 @@ namespace WoWMap.Geometry
 
         public void AddScene(Scene scene)
         {
-            if (scene.Terrain != null)
-                foreach (var mesh in scene.Terrain)
-                    AddMesh(mesh);
-            if (scene.WorldModelObjects != null)
-                foreach (var wmoscene in scene.WorldModelObjects)
-                    AddWMOScene(wmoscene);
-            if (scene.Doodads != null)
-                foreach (var mesh in scene.Doodads)
-                    AddMesh(mesh);
-            if (scene.Liquids != null)
-                foreach (var mesh in scene.Liquids)
-                    AddMesh(mesh);
+            foreach (var mesh in scene.Terrain)
+                AddMesh(mesh);
+            foreach (var wmoscene in scene.WorldModelObjects)
+                AddWMOScene(wmoscene);
+            foreach (var mesh in scene.Doodads)
+                AddMesh(mesh);
+            foreach (var mesh in scene.Liquids)
+                AddMesh(mesh);
         }
 
         public void AddADT(ADT s)
@@ -94,27 +90,21 @@ namespace WoWMap.Geometry
             foreach (var mc in s.MapChunks)
             {
                 var scene = mc.Scene;
-                if (scene.Terrain != null)
-                    foreach (var mesh in scene.Terrain)
-                        AddGeometry(mesh.Vertices, mesh.Indices);
-                if (scene.WorldModelObjects != null)
+                foreach (var mesh in scene.Terrain)
+                    AddGeometry(mesh.Vertices, mesh.Indices);
+                foreach (var wmosecene in scene.WorldModelObjects)
                 {
-                    foreach (var wmosecene in scene.WorldModelObjects)
-                    {
-                        foreach (var mesh in wmosecene.Terrain)
-                            AddGeometry(mesh.Vertices, mesh.Indices);
-                        foreach (var mesh in wmosecene.Doodads)
-                            AddGeometry(mesh.Vertices, mesh.Indices);
-                        foreach (var mesh in wmosecene.Liquids)
-                            AddGeometry(mesh.Vertices, mesh.Indices);
-                    }
+                    foreach (var mesh in wmosecene.Terrain)
+                        AddGeometry(mesh.Vertices, mesh.Indices);
+                    foreach (var mesh in wmosecene.Doodads)
+                        AddGeometry(mesh.Vertices, mesh.Indices);
+                    foreach (var mesh in wmosecene.Liquids)
+                        AddGeometry(mesh.Vertices, mesh.Indices);
                 }
-                if (scene.Doodads != null)
-                    foreach (var mesh in scene.Doodads)
-                        AddGeometry(mesh.Vertices, mesh.Indices);
-                if (scene.Liquids != null)
-                    foreach (var mesh in scene.Liquids)
-                        AddGeometry(mesh.Vertices, mesh.Indices);
+                foreach (var mesh in scene.Doodads)
+                    AddGeometry(mesh.Vertices, mesh.Indices);
+                foreach (var mesh in scene.Liquids)
+                    AddGeometry(mesh.Vertices, mesh.Indices);
             }
         }
 
@@ -139,7 +129,7 @@ namespace WoWMap.Geometry
                 vertices[(i * 3) + 1] = vert.Z;
                 vertices[(i * 3) + 2] = vert.Y;
             }
-            indices = Indices.Cast<int>().ToArray();
+            indices = Indices.Select(i => (int)i).ToArray();
             //areas = new AreaId[Indices.Count];
             //for (int i = 0; i < Indices.Count; i++)
             //{

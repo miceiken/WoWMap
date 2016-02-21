@@ -224,6 +224,7 @@ namespace WoWMapRenderer.Renderers
             if (!_mapTiles.ContainsKey(tileToLoadKey))
                 _mapTiles[tileToLoadKey] = new ADT(_mapName, tileX, tileY, _wdt);
             _mapTiles[tileToLoadKey].Read();
+            _mapTiles[tileToLoadKey].Generate();
 
             var tileRenderer = new MapChunkRenderer(this);
             tileRenderer.Generate(_mapTiles[tileToLoadKey]);

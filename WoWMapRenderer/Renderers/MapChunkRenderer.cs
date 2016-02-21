@@ -31,13 +31,18 @@ namespace WoWMapRenderer.Renderers
                 if (mapChunk == null)
                     continue;
 
-                _meshRenderers.AddRange(new[]
+                if (!mapChunk.Scene.Terrain.IsNullOrEmpty())
+                    _meshRenderers.Add(new MeshRenderer(mapChunk.Scene.Terrain.Flatten(MeshType.Terrain)));
+                if (!mapChunk.Scene.Doodads.IsNullOrEmpty())
+                    _meshRenderers.Add(new MeshRenderer(mapChunk.Scene.Doodads.Flatten(MeshType.Doodad)));
+                if (!mapChunk.Scene.Liquids.IsNullOrEmpty())
+                    _meshRenderers.Add(new MeshRenderer(mapChunk.Scene.Liquids.Flatten(MeshType.Liquid)));
+                if (!mapChunk.Scene.WorldModelObjects.IsNullOrEmpty())
                 {
-                    new MeshRenderer(mapChunk.Scene.Terrain.Flatten()),
-                    new MeshRenderer(mapChunk.Scene.Doodads.Flatten()),
-                    new MeshRenderer(mapChunk.Scene.Liquids.Flatten()),
-                    new MeshRenderer(mapChunk.Scene.WorldModelObjects.Flatten())
-                });
+                    var flat = mapChunk.Scene.WorldModelObjects.Select(s => s.Flatten());
+                    if (!flat.IsNullOrEmpty())
+                        _meshRenderers.Add(new MeshRenderer(flat.Flatten(MeshType.WorldModelObject)));
+                }
             }
         }
 

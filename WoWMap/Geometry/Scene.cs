@@ -12,46 +12,24 @@ namespace WoWMap.Geometry
     {
         public ADT ADT { get; set; }
 
-        public IEnumerable<Mesh> Terrain { get; set; }
-        public IEnumerable<WMOScene> WorldModelObjects { get; set; }
-        public IEnumerable<Mesh> Doodads { get; set; }
-        public IEnumerable<Mesh> Liquids { get; set; }
+        public IEnumerable<Mesh> Terrain { get; set; } = Enumerable.Empty<Mesh>();
+        public IEnumerable<WMOScene> WorldModelObjects { get; set; } = Enumerable.Empty<WMOScene>();
+        public IEnumerable<Mesh> Doodads { get; set; } = Enumerable.Empty<Mesh>();
+        public IEnumerable<Mesh> Liquids { get; set; } = Enumerable.Empty<Mesh>();
     }
 
     public static class SceneHelpers
     {
-        public static Mesh Flatten(this IEnumerable<Mesh> meshes, MeshType? type = null)
-        {
-            var indices = new List<uint>();
-            var vertices = new List<Vector3>();
-            var normals = new List<Vector3>();
-            foreach (var mesh in meshes)
-            {
-                var vo = (uint)vertices.Count;
-                vertices.AddRange(mesh.Vertices);
-                normals.AddRange(mesh.Normals);
-                indices.AddRange(mesh.Indices.Select(i => vo + i));
-            }
-
-            return new Mesh
-            {
-                Type = type.HasValue ? type.Value : meshes.FirstOrDefault().Type,
-                Indices = indices.ToArray(),
-                Vertices = vertices.ToArray(),
-                Normals = normals.ToArray(),
-            };
-        }
-
         public static Scene Transform(this Scene scene, Matrix4 mat)
         {
             return new Scene
             {
                 ADT = scene.ADT,
 
-                Terrain = scene.Terrain.Select(m => m.Transform(mat)),
+                Terrain = scene.Terrain.OfType<Mesh>().Select(m => m.Transform(mat)),
                 WorldModelObjects = scene.WorldModelObjects.Select(s => s.Transform(mat)),
-                Doodads = scene.Doodads.Select(m => m.Transform(mat)),
-                Liquids = scene.Liquids.Select(m => m.Transform(mat)),
+                Doodads = scene.Doodads.OfType<Mesh>().Select(m => m.Transform(mat)),
+                Liquids = scene.Liquids.OfType<Mesh>().Select(m => m.Transform(mat)),
             };
         }
     }

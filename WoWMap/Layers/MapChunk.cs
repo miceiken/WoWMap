@@ -132,19 +132,19 @@ namespace WoWMap.Layers
         {
             Scene = new Scene()
             {
-                Terrain = new[] { GenerateTerrain() },
+                Terrain = GenerateTerrain(),
                 WorldModelObjects = GenerateWMOs(),
                 Doodads = GenerateDoodads(),
-                Liquids = new[] { GenerateLiquid() }
+                Liquids = GenerateLiquid(),
             };
         }
 
         #region MCVT - HeightMap
 
-        private Mesh GenerateTerrain()
+        private IEnumerable<Mesh> GenerateTerrain()
         {
             if (MCVT == null)
-                return null;
+                yield break;
 
             var vertices = new Vector3[145];
 
@@ -175,7 +175,7 @@ namespace WoWMap.Layers
                 if ((j + 1) % (9 + 8) == 0) j += 9;
             }
 
-            return new Mesh
+            yield return new Mesh
             {
                 Type = MeshType.Terrain,
                 Indices = indices.ToArray(),
@@ -215,9 +215,9 @@ namespace WoWMap.Layers
         {
             return new WMOScene
             {
-                Terrain = model.Groups.Select(g => g.GenerateTerrain(wmoDefinition)).OfType<Mesh>(),
-                Doodads = model.GenerateDoodads(wmoDefinition.DoodadSet, wmoDefinition).OfType<Mesh>(),
-                Liquids = model.Groups.Select(g => g.GenerateLiquid(wmoDefinition)).OfType<Mesh>(),
+                Terrain = model.Groups.Select(g => g.GenerateTerrain(wmoDefinition)).OfType<Mesh>() ?? Enumerable.Empty<Mesh>(),
+                Doodads = model.GenerateDoodads(wmoDefinition.DoodadSet, wmoDefinition).OfType<Mesh>() ?? Enumerable.Empty<Mesh>(),
+                Liquids = model.Groups.Select(g => g.GenerateLiquid(wmoDefinition)).OfType<Mesh>() ?? Enumerable.Empty<Mesh>(),
             };
         }
 
@@ -267,10 +267,10 @@ namespace WoWMap.Layers
 
         #region MH2O - Liquid
 
-        public Mesh GenerateLiquid()
+        public IEnumerable<Mesh> GenerateLiquid()
         {
             if (ADT.Liquid.HeightMaps[Index] == null)
-                return null;
+                yield break;
 
             var information = ADT.Liquid.Information[Index];
             var heightMap = ADT.Liquid.HeightMaps[Index];
@@ -303,7 +303,7 @@ namespace WoWMap.Layers
                 }
             }
 
-            return new Mesh
+            yield return new Mesh
             {
                 Type = MeshType.Liquid,
                 Indices = indices.ToArray(),

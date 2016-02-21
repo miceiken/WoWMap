@@ -9,9 +9,9 @@ namespace WoWMap.Geometry
 {
     public class WMOScene
     {
-        public IEnumerable<Mesh> Terrain { get; set; }
-        public IEnumerable<Mesh> Doodads { get; set; }
-        public IEnumerable<Mesh> Liquids { get; set; }
+        public IEnumerable<Mesh> Terrain { get; set; } = Enumerable.Empty<Mesh>();
+        public IEnumerable<Mesh> Doodads { get; set; } = Enumerable.Empty<Mesh>();
+        public IEnumerable<Mesh> Liquids { get; set; } = Enumerable.Empty<Mesh>();
     }
 
     public static class WMOSceneHelpers
@@ -22,24 +22,17 @@ namespace WoWMap.Geometry
             return scene.Terrain
                 .Concat(scene.Doodads)
                 .Concat(scene.Liquids)
+                .OfType<Mesh>()
                 .Flatten(MeshType.WorldModelObject);
-        }
-
-        public static Mesh Flatten(this IEnumerable<WMOScene> scenes)
-        {
-            // ew
-            return scenes
-                .Select(s => s.Flatten())
-                .Flatten();
         }
 
         public static WMOScene Transform(this WMOScene scene, Matrix4 mat)
         {
             return new WMOScene
             {
-                Terrain = scene.Terrain.Transform(mat),
-                Doodads = scene.Doodads.Transform(mat),
-                Liquids = scene.Liquids.Transform(mat),
+                Terrain = scene.Terrain.OfType<Mesh>().Transform(mat),
+                Doodads = scene.Doodads.OfType<Mesh>().Transform(mat),
+                Liquids = scene.Liquids.OfType<Mesh>().Transform(mat),
             };
         }
     }
