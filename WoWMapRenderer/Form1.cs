@@ -25,18 +25,19 @@ namespace WoWMapRenderer
 
         private string _localCascPath = string.Empty;
 
-        private TerrainRenderer _renderer;
+        private RenderView _view;
 
         public Form1()
         {
             InitializeComponent();
 
-            _renderer = new TerrainRenderer(GL);
-            _renderer.OnProgress += (progress, state) =>
-            {
-                _backgroundTaskProgress.Value = progress;
-                _feedbackText.Text = state;
-            };
+            _view = new RenderView(GL);
+            //_renderer = new TerrainRenderer(GL);
+            //_renderer.OnProgress += (progress, state) =>
+            //{
+            //    _backgroundTaskProgress.Value = progress;
+            //    _feedbackText.Text = state;
+            //};
         }
 
         private void OnLoad(object obj, EventArgs ea)
@@ -136,7 +137,7 @@ namespace WoWMapRenderer
                 if (record.ContinentID == entry.MapID)
                     _areaListBox.Items.Add(new AreaListBoxItem(record));
             }
-            _renderer.LoadMap(entry.Directory);
+            _view.Renderer = new WDTRenderer(_view, entry.Directory);
         }
 
         private void LoadOnlineCASC(object sender, EventArgs e)
@@ -161,10 +162,10 @@ namespace WoWMapRenderer
 
         private void OnForceWireframeToggle(object sender, EventArgs e)
         {
-            if (_renderer != null)
+            if (_view != null)
             {
                 forceWireframeToolStripMenuItem.Checked = !forceWireframeToolStripMenuItem.Checked;
-                _renderer.OnForceWireframeToggle(forceWireframeToolStripMenuItem.Checked);
+                _view.Options[RenderView.RenderOptions.ForceWireframe] = forceWireframeToolStripMenuItem.Checked;
             }
         }
 
@@ -179,30 +180,30 @@ namespace WoWMapRenderer
 
         private void drawTerraintoolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (_renderer == null) return;
+            if (_view == null) return;
             drawTerraintoolStripMenuItem.Checked = !drawTerraintoolStripMenuItem.Checked;
-            _renderer.DrawMeshTypeEnabled[MeshType.Terrain] = drawTerraintoolStripMenuItem.Checked;
+            _view.DrawMeshTypeEnabled[MeshType.Terrain] = drawTerraintoolStripMenuItem.Checked;
         }
 
         private void drawWMOtoolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (_renderer == null) return;
+            if (_view == null) return;
             drawWMOtoolStripMenuItem.Checked = !drawWMOtoolStripMenuItem.Checked;
-            _renderer.DrawMeshTypeEnabled[MeshType.WorldModelObject] = drawWMOtoolStripMenuItem.Checked;
+            _view.DrawMeshTypeEnabled[MeshType.WorldModelObject] = drawWMOtoolStripMenuItem.Checked;
         }
 
         private void drawDoodadtoolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (_renderer == null) return;
+            if (_view == null) return;
             drawDoodadtoolStripMenuItem.Checked = !drawDoodadtoolStripMenuItem.Checked;
-            _renderer.DrawMeshTypeEnabled[MeshType.Doodad] = drawDoodadtoolStripMenuItem.Checked;
+            _view.DrawMeshTypeEnabled[MeshType.Doodad] = drawDoodadtoolStripMenuItem.Checked;
         }
 
         private void drawLiquidtoolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (_renderer == null) return;
+            if (_view == null) return;
             drawLiquidtoolStripMenuItem.Checked = !drawLiquidtoolStripMenuItem.Checked;
-            _renderer.DrawMeshTypeEnabled[MeshType.Liquid] = drawLiquidtoolStripMenuItem.Checked;
+            _view.DrawMeshTypeEnabled[MeshType.Liquid] = drawLiquidtoolStripMenuItem.Checked;
         }
     }
 

@@ -108,6 +108,6 @@ namespace WoWMap
             return vec;
         }
 
-        public static bool IsNullOrEmpty<T>(this IEnumerable<T> thisObj) => thisObj == null || thisObj.Count() == 0;
+        public static bool IsNullOrEmpty<T>(this IEnumerable<T> thisObj) => thisObj == null || !thisObj.Any();
     }
 }

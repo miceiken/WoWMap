@@ -14,12 +14,18 @@ namespace WoWMapRenderer.Renderers
 {
     public class MeshRenderer : IRenderer
     {
-        public MeshRenderer(Mesh mesh, MeshType? overrideType = null)
+        public MeshRenderer(RenderView controller, Mesh mesh, MeshType? overrideType = null)
         {
+            Controller = controller;
+
             MeshType = overrideType.HasValue ? overrideType.Value : mesh.Type;
             Vertices = mesh.Vertices.Select(v => new Vertex { Position = v, Type = (int)MeshType });
             Indices = mesh.Indices;
+
+            IndiceCount = Indices.Count();
         }
+
+        public RenderView Controller { get; private set; }
 
         public MeshType MeshType { get; private set; }
 
@@ -33,8 +39,14 @@ namespace WoWMapRenderer.Renderers
         public int VerticeCount { get { return Vertices.Count(); } }
         public int IndiceCount { get; set; }
 
+        public void Update() { }
+
         public void Bind(Shader shader)
         {
+            VerticeVBO = GL.GenBuffer();
+            IndicesVBO = GL.GenBuffer();
+            VAO = GL.GenVertexArray();
+
             GL.BindVertexArray(VAO);
 
             var vertexSize = Marshal.SizeOf(typeof(Vertex));

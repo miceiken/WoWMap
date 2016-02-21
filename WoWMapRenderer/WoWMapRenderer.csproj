@@ -104,13 +104,16 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Renderers\ADTRenderer.cs" />
+    <Compile Include="Renderers\ContinentRenderer.cs" />
+    <Compile Include="Renderers\GenericCollectionRenderer.cs" />
     <Compile Include="Renderers\GlobalModelRenderer.cs" />
-    <Compile Include="Renderers\IRenderer.cs" />
+    <Compile Include="IRenderer.cs" />
     <Compile Include="Renderers\MeshRenderer.cs" />
+    <Compile Include="Renderers\WDTRenderer.cs" />
+    <Compile Include="RenderView.cs" />
     <Compile Include="Shader.cs" />
-    <Compile Include="Renderers\TerrainRenderer.cs" />
     <Compile Include="FrameBuffer.cs" />
-    <Compile Include="Renderers\MapChunkRenderer.cs" />
     <Compile Include="Vertex.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>

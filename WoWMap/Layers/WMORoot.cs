@@ -77,7 +77,7 @@ namespace WoWMap.Layers
             Groups = new List<WMOGroup>();
             for (int i = 0; i < MOHD.nGroups; i++)
             {
-                try { Groups.Add(new WMOGroup(string.Format("{0}_{1:000}.wmo", directory, i), this)); }
+                try { Groups.Add(new WMOGroup(string.Format("{0}_{1:000}.wmo", directory, i))); }
                 catch (FileNotFoundException e) { }
             }
         }

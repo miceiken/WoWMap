@@ -71,7 +71,7 @@ namespace WoWMapParser
         {
             // var adt = new ADT("Kalimdor", 32, 36);
             //var adt = new ADT("PvPZone01", 32, 30);
-            var adt = new ADT("Azeroth", 31, 31);
+            var adt = new ADT("Azeroth", 28, 28);
             // var adt = new ADT("Azeroth", 31, 40);
             adt.Read();
             adt.Generate();

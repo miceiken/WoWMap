@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WoWMapRenderer.Renderers
+namespace WoWMapRenderer
 {
     public interface IRenderer
     {
+        void Update();
         void Bind(Shader shader);
         void Delete();
         void Render(Shader shader);

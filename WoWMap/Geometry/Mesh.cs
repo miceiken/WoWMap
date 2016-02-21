@@ -18,9 +18,11 @@ namespace WoWMap.Geometry
     public class Mesh
     {
         public MeshType Type;
-        public uint[] Indices;
-        public Vector3[] Vertices;        
-        public Vector3[] Normals;
+        public uint[] Indices = Array.Empty<uint>();
+        public Vector3[] Vertices = Array.Empty<Vector3>();
+        public Vector3[] Normals = Array.Empty<Vector3>();
+
+        public void GenerateNormals() => Normals = Vertices.Select(v => v.Normalized()).ToArray();
     }
 
     public static class MeshHelpers
@@ -59,8 +61,8 @@ namespace WoWMap.Geometry
             {
                 Type = mesh.Type,
                 Indices = mesh.Indices,
-                Vertices = mesh.Vertices.Select(v => Vector3.Transform(v, mat)).ToArray(),
-                Normals = mesh.Normals.Select(v => Vector3.Transform(v, mat)).ToArray(),
+                Vertices = mesh.Vertices.OfType<Vector3>().Select(v => Vector3.Transform(v, mat)).ToArray(),
+                Normals = mesh.Normals.OfType<Vector3>().Select(v => Vector3.Transform(v, mat)).ToArray(),
             };
         }
     }

@@ -55,22 +55,23 @@ namespace WoWMap.Geometry
         {
             var vo = (uint)Vertices.Count;
             Vertices.AddRange(vertices);
-            Indices.AddRange(indices);
+            Indices.AddRange(indices.Select(i => vo + i));
         }
 
         public void AddMesh(Mesh mesh)
         {
+            mesh = mesh.Transform(Matrix4.CreateRotationX((float)(-Math.PI / 2.0f)));
             AddGeometry(mesh.Vertices, mesh.Indices);
         }
 
         public void AddWMOScene(WMOScene wmosecene)
         {
             foreach (var mesh in wmosecene.Terrain)
-                AddGeometry(mesh.Vertices, mesh.Indices);
+                AddMesh(mesh);
             foreach (var mesh in wmosecene.Doodads)
-                AddGeometry(mesh.Vertices, mesh.Indices);
+                AddMesh(mesh);
             foreach (var mesh in wmosecene.Liquids)
-                AddGeometry(mesh.Vertices, mesh.Indices);
+                AddMesh(mesh);
         }
 
         public void AddScene(Scene scene)
@@ -88,24 +89,7 @@ namespace WoWMap.Geometry
         public void AddADT(ADT s)
         {
             foreach (var mc in s.MapChunks)
-            {
-                var scene = mc.Scene;
-                foreach (var mesh in scene.Terrain)
-                    AddGeometry(mesh.Vertices, mesh.Indices);
-                foreach (var wmosecene in scene.WorldModelObjects)
-                {
-                    foreach (var mesh in wmosecene.Terrain)
-                        AddGeometry(mesh.Vertices, mesh.Indices);
-                    foreach (var mesh in wmosecene.Doodads)
-                        AddGeometry(mesh.Vertices, mesh.Indices);
-                    foreach (var mesh in wmosecene.Liquids)
-                        AddGeometry(mesh.Vertices, mesh.Indices);
-                }
-                foreach (var mesh in scene.Doodads)
-                    AddGeometry(mesh.Vertices, mesh.Indices);
-                foreach (var mesh in scene.Liquids)
-                    AddGeometry(mesh.Vertices, mesh.Indices);
-            }
+                AddScene(mc.Scene);
         }
 
         public void AddWDTGlobalmodel(WDT s)

@@ -230,10 +230,6 @@ namespace WoWMap.Layers
             if (MCRD == null || ADT.MDDF == null)
                 yield break;
 
-            var vertices = new List<Vector3>();
-            var indices = new List<uint>();
-            var normals = new List<Vector3>();
-
             var drawn = new HashSet<uint>();
             for (var i = 0; i < MCRD.MDDFEntryIndex.Length; i++)
             {
@@ -252,14 +248,7 @@ namespace WoWMap.Layers
                     continue;
 
                 // Doodads outside WMOs are treated like WMOs. Not a typo.
-                var transform = Transformation.GetWMOTransform(doodad.Position, doodad.Rotation, doodad.Scale / 1024.0f);
-                yield return new Mesh
-                {
-                    Type = model.Mesh.Type,
-                    Indices = model.Mesh.Indices,
-                    Vertices = model.Mesh.Vertices.Select(v => Vector3.Transform(v, transform)).ToArray(),
-                    Normals = model.Mesh.Normals.Select(v => Vector3.Transform(v, transform)).ToArray(),
-                };
+                yield return model.Mesh.Transform(Transformation.GetWMOTransform(doodad.Position, doodad.Rotation, doodad.Scale / 1024.0f));
             }
         }
 
@@ -269,7 +258,7 @@ namespace WoWMap.Layers
 
         public IEnumerable<Mesh> GenerateLiquid()
         {
-            if (ADT.Liquid.HeightMaps[Index] == null)
+            if (ADT.Liquid?.HeightMaps[Index] == null)
                 yield break;
 
             var information = ADT.Liquid.Information[Index];

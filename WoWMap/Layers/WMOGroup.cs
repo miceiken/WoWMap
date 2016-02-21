@@ -9,10 +9,9 @@ namespace WoWMap.Layers
 {
     public class WMOGroup
     {
-        public WMOGroup(string filename, WMORoot root)
+        public WMOGroup(string filename)
         {
             Filename = filename;
-            Root = root;
 
             var mainChunk = new ChunkData(filename);
             MOGP = new MOGP(Chunk = mainChunk.GetChunkByName("MOGP"));
@@ -27,8 +26,6 @@ namespace WoWMap.Layers
         public string Filename { get; private set; }
         public Chunk Chunk { get; private set; }
         public ChunkData SubData { get; private set; }
-
-        public WMORoot Root { get; private set; }
 
         public MOGP MOGP { get; private set; }
         public MOPY MOPY { get; private set; }
@@ -73,7 +70,6 @@ namespace WoWMap.Layers
 
         public void Generate()
         {
-
             Terrain = GenerateTerrain();
             Liquid = GenerateLiquid();
         }
@@ -93,26 +89,17 @@ namespace WoWMap.Layers
                 });
             }
 
-            if (wmoDefinition != null)
-            {
-                var transform = Transformation.GetWMOTransform(wmoDefinition.Position, wmoDefinition.Rotation);
-
-                return new Mesh
-                {
-                    Type = MeshType.Terrain,
-                    Indices = indices.ToArray(),
-                    Vertices = MOVT.Vertices.Select(v => Vector3.Transform(v, transform)).ToArray(),
-                    Normals = MONR.Normals.Select(v => Vector3.Transform(v, transform)).ToArray(),
-                };
-            }
-
-            return new Mesh
+            var mesh = new Mesh
             {
                 Type = MeshType.Terrain,
                 Indices = indices.ToArray(),
                 Vertices = MOVT.Vertices,
                 Normals = MONR.Normals,
             };
+
+            if (wmoDefinition != null)
+                return mesh.Transform(Transformation.GetWMOTransform(wmoDefinition.Position, wmoDefinition.Rotation));
+            return mesh;
         }
 
         public Mesh GenerateLiquid(MODF.MODFEntry wmoDefinition = null)
@@ -146,24 +133,15 @@ namespace WoWMap.Layers
                 }
             }
 
-            if (wmoDefinition != null)
-            {
-                var transform = Transformation.GetWMOTransform(wmoDefinition.Position, wmoDefinition.Rotation);
-
-                return new Mesh
-                {
-                    Type = MeshType.Terrain,
-                    Indices = indices.ToArray(),
-                    Vertices = vertices.Select(v => Vector3.Transform(v, transform)).ToArray(),
-                };
-            }
-
-            return new Mesh
+            var mesh =  new Mesh
             {
                 Type = MeshType.Liquid,
                 Indices = indices.ToArray(),
                 Vertices = vertices.ToArray(),
             };
+            if (wmoDefinition != null)
+                return mesh.Transform(Transformation.GetWMOTransform(wmoDefinition.Position, wmoDefinition.Rotation));
+            return mesh;
         }
     }
 }

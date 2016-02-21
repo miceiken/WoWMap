@@ -14,12 +14,13 @@ namespace WoWMapRenderer.Renderers
 {
     public class GlobalModelRenderer : IRenderer
     {
-        public TerrainRenderer BaseRenderer { get; private set; }
-
-        public GlobalModelRenderer(TerrainRenderer baseRenderer)
+        public GlobalModelRenderer(RenderView controller, WDT wdt)
         {
-            BaseRenderer = baseRenderer;
+            Controller = controller;
+            Generate(wdt);
         }
+
+        public RenderView Controller { get; private set; }
 
         public int VAO { get; set; }
         public int VerticeVBO { get; set; }
@@ -39,7 +40,17 @@ namespace WoWMapRenderer.Renderers
             var mesh = wdt.ModelScene.Flatten();
             Vertices = mesh.Vertices.Select(v => new Vertex { Position = v, Type = (int)mesh.Type }).ToList();
             Indices = mesh.Indices.ToList();
+
+            Bind(Controller.Shader);
         }
+
+        private void InitializeView()
+        {
+            Controller.SetCamera(Vertices.FirstOrDefault().Position);
+        }
+
+        public void Update()
+        { }
 
         public void Bind(Shader shader)
         {
@@ -94,6 +105,6 @@ namespace WoWMapRenderer.Renderers
 
             GL.BindVertexArray(0);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-        }
+        }        
     }
 }
