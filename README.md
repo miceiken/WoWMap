@@ -7,19 +7,18 @@ Feel free to contribute.
 
 
 
-[Screenshot](screenshot.jpg)
+![Screenshot](screenshot.png)
 
 ----------
 ## Credits ##
  - Contributers of the [WoWDev wiki](http://pxr.dk/wowdev/wiki/index.php?title=Main_Page)
  - caytchen/stschake 
+ - Warpten
+ - Deamon87
+ - schlumpf
  - [TOM_RUS]
  - Alram/Marlamin
  - relaxok
  - Cromon
- - schlumpf
- - Deamon87
  - miceiken
- - Warpten
  - Subv
-

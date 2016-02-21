@@ -71,7 +71,7 @@ namespace WoWMapRenderer
             _loader.ProgressChanged += (sender, args) =>
             {
                 if (OnProgress != null)
-                    OnProgress(args.ProgressPercentage, "Loading WDT...");
+                    OnProgress(args.ProgressPercentage, (string)args.UserState);
             };
             _loader.RunWorkerCompleted += (sender, e) => InitializeView();
             _loader.RunWorkerAsync();
@@ -94,14 +94,18 @@ namespace WoWMapRenderer
 
         public void SetCamera(Vector3 pos)
         {
-            Camera = new Camera(pos, -Vector3.UnitZ);
-            Camera.SetViewport(Control.Width, Control.Height);
-            GL.Viewport(0, 0, Control.Width, Control.Height);
-            Camera.OnMovement += () =>
-            {
-                Renderer.Update();
-                Render();
+            var worker = new BackgroundWorkerEx();
+            worker.DoWork += (sender, e) => {
+                Camera = new Camera(pos, -Vector3.UnitZ);
+                Camera.SetViewport(Control.Width, Control.Height);
+                GL.Viewport(0, 0, Control.Width, Control.Height);
+                Camera.OnMovement += () =>
+                {
+                    Renderer.Update();
+                    Render();
+                };
             };
+            worker.RunWorkerAsync();
         }
 
         private void Render()
