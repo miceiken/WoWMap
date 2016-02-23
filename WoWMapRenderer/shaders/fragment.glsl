@@ -1,22 +1,18 @@
-#version 330
+#version 130
 
-flat in int vertex_type;
+precision highp float;
 
-out vec4 outputColor; // R G B A
+uniform vec4 meshColor = vec4(0.0, 1.0, 0.0, 1.0);
 
-void main()
+const vec3 ambient = vec3(0.1, 0.1, 0.1);
+const vec3 lightVecNormalized = normalize(vec3(0.5, 0.5, 2.0));
+const vec3 lightColor = vec3(0.9, 0.9, 0.7);
+
+in vec3 normal;
+out vec4 out_frag_color;
+
+void main(void)
 {
-	vec4 color;
-	if (vertex_type == 0) // Terrain
-		color = vec4(0.0f, 1.0f, 0.0f, 1.0f);
-	else if (vertex_type == 1) // WMO
-		color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	else if (vertex_type == 2) // M2
-		color = vec4(1.0f, 1.0f, 0.0f, 1.0f);
-	else if (vertex_type == 3) // Water
-		color = vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	else // Can't be set in first line because glsl is very weird at eval'ing branches
-		color = vec4(1.0, 1.0f, 1.0f, 1.0f);
-	
-	outputColor = color;
+	float diffuse = clamp(dot(lightVecNormalized, normalize(normal)), 0.0, 1.0);
+	out_frag_color = meshColor * vec4(ambient + diffuse * lightColor, 1.0);
 }

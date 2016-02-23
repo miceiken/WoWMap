@@ -1,15 +1,19 @@
-#version 330
+#version 130
 
-in vec3 position; /* Input vertex */
-in int type; /* vertex type */
+precision highp float;
 
-uniform mat4 projection_modelview; /* projection * modelview */
+uniform mat4 projection_matrix;
+uniform mat4 modelview_matrix;
 
-flat out int vertex_type;
+in vec3 in_position;
+in vec3 in_normal;
 
-void main()
+out vec3 normal;
+
+void main(void)
 {
-	vertex_type = type;
+	//works only for orthogonal modelview
+	normal = (modelview_matrix * vec4(in_normal, 0)).xyz;
 
-    gl_Position = projection_modelview * vec4(position, 1.0f);
+	gl_Position = projection_matrix * modelview_matrix * vec4(in_position, 1);
 }

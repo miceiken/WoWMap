@@ -66,7 +66,7 @@ namespace WoWMap.Builders
             // Generate relevant geometry
             s_Tile.Generate();
             // Append to our geometry
-            s_Geometry.AddADT(s_Tile);
+            s_Geometry.AddADT(s_Tile, false);
 
             // Generate the bounding box for the tile
             // (Because we need to cut the surrounding tiles later)
@@ -84,7 +84,7 @@ namespace WoWMap.Builders
                     var tile = new ADT(World, x, y);
                     tile.Read();
                     tile.Generate();
-                    s_Geometry.AddADT(tile);
+                    s_Geometry.AddADT(tile, false);
                 }
             }
         }

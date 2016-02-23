@@ -58,38 +58,39 @@ namespace WoWMap.Geometry
             Indices.AddRange(indices.Select(i => vo + i));
         }
 
-        public void AddMesh(Mesh mesh)
+        public void AddMesh(Mesh mesh, bool transform = true)
         {
-            mesh = mesh.Transform(Matrix4.CreateRotationX((float)(-Math.PI / 2.0f)));
+            if (transform)
+                mesh = mesh.Transform(Matrix4.CreateRotationX((float)(-Math.PI / 2.0f)));
             AddGeometry(mesh.Vertices, mesh.Indices);
         }
 
-        public void AddWMOScene(WMOScene wmosecene)
+        public void AddWMOScene(WMOScene wmosecene, bool transform = true)
         {
             foreach (var mesh in wmosecene.Terrain)
-                AddMesh(mesh);
+                AddMesh(mesh, transform);
             foreach (var mesh in wmosecene.Doodads)
-                AddMesh(mesh);
+                AddMesh(mesh, transform);
             foreach (var mesh in wmosecene.Liquids)
-                AddMesh(mesh);
+                AddMesh(mesh, transform);
         }
 
-        public void AddScene(Scene scene)
+        public void AddScene(Scene scene, bool transform = true)
         {
             foreach (var mesh in scene.Terrain)
-                AddMesh(mesh);
+                AddMesh(mesh, transform);
             foreach (var wmoscene in scene.WorldModelObjects)
-                AddWMOScene(wmoscene);
+                AddWMOScene(wmoscene, transform);
             foreach (var mesh in scene.Doodads)
-                AddMesh(mesh);
+                AddMesh(mesh, transform);
             foreach (var mesh in scene.Liquids)
-                AddMesh(mesh);
+                AddMesh(mesh, transform);
         }
 
-        public void AddADT(ADT s)
+        public void AddADT(ADT s, bool transform = true)
         {
             foreach (var mc in s.MapChunks)
-                AddScene(mc.Scene);
+                AddScene(mc.Scene, transform);
         }
 
         public void AddWDTGlobalmodel(WDT s)

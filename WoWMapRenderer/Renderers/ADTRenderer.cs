@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using WoWMap;
 using WoWMap.Geometry;
 using WoWMap.Layers;
+using OpenTK;
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
 
 namespace WoWMapRenderer.Renderers
 {
@@ -49,6 +52,12 @@ namespace WoWMapRenderer.Renderers
         public void Update() => MeshRenderers.Update();
         public void Bind(Shader shader) => MeshRenderers.Bind(shader);
         public void Delete() => MeshRenderers.Delete();
-        public void Render(Shader shader) => MeshRenderers.Render(shader);
+        public void Render(Shader shader)
+        {
+            MeshRenderers.Render(shader);
+
+            GL.BindVertexArray(0);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+        }
     }
 }

@@ -37,9 +37,9 @@ namespace WoWMapRenderer.Renderers
             if (!wdt.IsGlobalModel) return;
             wdt.GenerateGlobalModel();
 
-            var mesh = wdt.ModelScene.Flatten();
-            Vertices = mesh.Vertices.Select(v => new Vertex { Position = v, Type = (int)mesh.Type }).ToList();
-            Indices = mesh.Indices.ToList();
+            //var mesh = wdt.ModelScene.Flatten();
+            //Vertices = mesh.Vertices.Select(v => new Vertex { Position = v, Type = (int)mesh.Type }).ToList();
+            //Indices = mesh.Indices.ToList();
 
             Bind(Controller.Shader);
         }

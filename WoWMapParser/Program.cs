@@ -25,9 +25,9 @@ namespace WoWMapParser
             Initialize();
 
             //ReadMapsDBC();
-            ReadADT();
+            //ReadADT();
             //ReadADTs();
-            //CreateNavmesh();
+            CreateNavmesh();
             //TestNavmesh();
             //ReadWDT();
             //ReadWMO();

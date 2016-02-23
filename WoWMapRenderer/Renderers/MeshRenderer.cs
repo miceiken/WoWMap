@@ -1,4 +1,5 @@
 ﻿using OpenTK;
+using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
@@ -19,10 +20,10 @@ namespace WoWMapRenderer.Renderers
             Controller = controller;
 
             MeshType = overrideType.HasValue ? overrideType.Value : mesh.Type;
-            Vertices = mesh.Vertices.Select(v => new Vertex { Position = v, Type = (int)MeshType });
             Indices = mesh.Indices;
-
-            IndiceCount = Indices.Count();
+            Vertices = mesh.Vertices;
+            Normals = mesh.Normals;
+            IndiceCount = Indices.Length;
         }
 
         public RenderView Controller { get; private set; }
@@ -30,61 +31,83 @@ namespace WoWMapRenderer.Renderers
         public MeshType MeshType { get; private set; }
 
         public int VAO { get; set; }
-        public int VerticeVBO { get; set; }
         public int IndicesVBO { get; set; }
+        public int VerticesVBO { get; set; }
+        public int NormalsVBO { get; set; }
 
-        public IEnumerable<Vertex> Vertices { get; private set; }
-        public IEnumerable<uint> Indices { get; private set; }
+        public uint[] Indices { get; private set; }
+        public Vector3[] Vertices { get; private set; }
+        public Vector3[] Normals { get; private set; }
 
-        public int VerticeCount { get { return Vertices.Count(); } }
         public int IndiceCount { get; set; }
 
         public void Update() { }
 
         public void Bind(Shader shader)
         {
-            VerticeVBO = GL.GenBuffer();
-            IndicesVBO = GL.GenBuffer();
             VAO = GL.GenVertexArray();
-
             GL.BindVertexArray(VAO);
 
-            var vertexSize = Marshal.SizeOf(typeof(Vertex));
-            var verticeSize = Vertices.Count() * vertexSize;
+            // Vertices VBO
+            VerticesVBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VerticesVBO);
+            GL.BufferData<Vector3>(BufferTarget.ArrayBuffer,
+                new IntPtr(Vertices.Length * Vector3.SizeInBytes),
+                Vertices, BufferUsageHint.StaticDraw);
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, VerticeVBO);
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(verticeSize), Vertices.ToArray(), BufferUsageHint.StaticDraw);
+            // Vertices VAO
+            GL.VertexAttribPointer(shader.GetAttribLocation("in_position"),
+                3, VertexAttribPointerType.Float, true, Vector3.SizeInBytes, 0);
+            GL.EnableVertexAttribArray(shader.GetAttribLocation("in_position"));
 
-            GL.VertexAttribPointer(shader.GetAttribLocation("position"), 3, VertexAttribPointerType.Float, false,
-                vertexSize, sizeof(int));
-            GL.EnableVertexAttribArray(shader.GetAttribLocation("position"));
+            // Normals VBO
+            NormalsVBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, NormalsVBO);
+            GL.BufferData<Vector3>(BufferTarget.ArrayBuffer,
+                new IntPtr(Vertices.Length * Vector3.SizeInBytes),
+                Normals, BufferUsageHint.StaticDraw);
 
-            GL.VertexAttribIPointer(shader.GetAttribLocation("type"), 1, VertexAttribIntegerType.Int,
-                vertexSize, IntPtr.Zero);
-            GL.EnableVertexAttribArray(shader.GetAttribLocation("type"));
+            // Normals VAO
+            GL.VertexAttribPointer(shader.GetAttribLocation("in_normal"),
+                3, VertexAttribPointerType.Float, true, Vector3.SizeInBytes, 0);
+            GL.EnableVertexAttribArray(shader.GetAttribLocation("in_normal"));
 
+            IndicesVBO = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(IndiceCount * sizeof(uint)),
-                Indices.ToArray(), BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ElementArrayBuffer,
+                (IntPtr)(IndiceCount * sizeof(uint)),
+                Indices, BufferUsageHint.StaticDraw);
 
             // Not needed anymore
             Vertices = null;
+            Normals = null;
             Indices = null;
         }
 
         public void Delete()
         {
             GL.DeleteBuffer(IndicesVBO);
-            GL.DeleteBuffer(VerticeVBO);
+            GL.DeleteBuffer(VerticesVBO);
+            GL.DeleteBuffer(NormalsVBO);
             GL.DeleteVertexArray(VAO);
         }
 
         public void Render(Shader shader)
         {
+            if (!Controller.DrawMeshTypeEnabled[MeshType]) return;
+
+            GL.Uniform4(shader.GetUniformLocation("meshColor"), MeshTypeColorMap[MeshType]);
             GL.BindVertexArray(VAO);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndicesVBO);
-
             GL.DrawElements(PrimitiveType.Triangles, IndiceCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
         }
+
+        private static Dictionary<MeshType, Color4> MeshTypeColorMap = new Dictionary<MeshType, Color4>()
+        {
+            [MeshType.Terrain] = Color4.Green,
+            [MeshType.WorldModelObject] = Color4.Red,
+            [MeshType.Doodad] = Color4.Yellow,
+            [MeshType.Liquid] = Color4.Blue,
+        };
     }
 }

@@ -109,21 +109,21 @@ namespace WoWMap.Layers
                     case "MCCV":
                         MCCV = new MCCV(subChunk);
                         break;
-                        //case "MCSH":
-                        //    MCSH = new MCSH(subChunk);
-                        //    break;
-                        //case "MCLY":
-                        //    MCLY = new MCLY(subChunk);
-                        //    break;
-                        //case "MCAL":
-                        //    if (WDT == null)
-                        //        Console.WriteLine($"Skipping MCAL Chunk in MCNK #{Index} because no WDT was provided!");
-                        //    else
-                        //        MCAL = new MCAL(this, WDT, subChunk);
-                        //    break;
-                        //default:
-                        //    Console.WriteLine($"Skipped {subChunk.Name} MapChunk sub-chunk.");
-                        //    break;
+                    //case "MCSH":
+                    //    MCSH = new MCSH(subChunk);
+                    //    break;
+                    //case "MCLY":
+                    //    MCLY = new MCLY(subChunk);
+                    //    break;
+                    //case "MCAL":
+                    //    if (WDT == null)
+                    //        Console.WriteLine($"Skipping MCAL Chunk in MCNK #{Index} because no WDT was provided!");
+                    //    else
+                    //        MCAL = new MCAL(this, WDT, subChunk);
+                    //    break;
+                    //default:
+                    //    Console.WriteLine($"Skipped {subChunk.Name} MapChunk sub-chunk.");
+                    //    break;
                 }
             }
         }
@@ -147,6 +147,7 @@ namespace WoWMap.Layers
                 yield break;
 
             var vertices = new Vector3[145];
+            var normals = new Vector3[145];
 
             for (int i = 0, idx = 0; i < 17; i++)
             {
@@ -154,6 +155,7 @@ namespace WoWMap.Layers
                 {
                     var v = new Vector3(MCNK.Position.X - (i * Constants.UnitSize * 0.5f), MCNK.Position.Y - (j * Constants.UnitSize), MCVT.Heights[idx] + MCNK.Position.Z);
                     if ((i % 2) != 0) v.Y -= 0.5f * Constants.UnitSize;
+                    normals[idx] = MCNR.Entries[idx].Normal;
                     vertices[idx++] = v;
                 }
             }
@@ -179,7 +181,8 @@ namespace WoWMap.Layers
             {
                 Type = MeshType.Terrain,
                 Indices = indices.ToArray(),
-                Vertices = vertices.ToArray()
+                Vertices = vertices,
+                Normals = normals,
             };
         }
 

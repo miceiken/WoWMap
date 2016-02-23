@@ -32,12 +32,11 @@ namespace WoWMapRenderer
             InitializeComponent();
 
             _view = new RenderView(GL);
-            //_renderer = new TerrainRenderer(GL);
-            //_renderer.OnProgress += (progress, state) =>
-            //{
-            //    _backgroundTaskProgress.Value = progress;
-            //    _feedbackText.Text = state;
-            //};
+            _view.OnProgress += (progress, state) =>
+            {
+                _backgroundTaskProgress.Value = progress;
+                _feedbackText.Text = state;
+            };
         }
 
         private void OnLoad(object obj, EventArgs ea)

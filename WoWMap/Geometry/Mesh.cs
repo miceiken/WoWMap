@@ -22,7 +22,23 @@ namespace WoWMap.Geometry
         public Vector3[] Vertices = Array.Empty<Vector3>();
         public Vector3[] Normals = Array.Empty<Vector3>();
 
-        public void GenerateNormals() => Normals = Vertices.Select(v => v.Normalized()).ToArray();
+        public void GenerateIndices()
+        {
+            var indices = new List<uint>(Vertices.Length);
+            for (uint vo = 0; vo < Vertices.Length; vo += 3)
+                indices.AddRange(new uint[] {
+                        vo, vo + 2, vo + 1,
+                        vo + 2, vo + 3, vo + 1
+                    });
+            Indices = indices.ToArray();
+        }
+
+        //public void GenerateNormals()
+        //{
+        //    var normals = new List<Vector3>();
+        //    for (var i = 0; i < Indices.Length; i++)
+        //        normals.Add(Vector3.Cross((Vertices[i + 1] - Vertices[i]), (Vertices[i + 2] - Vertices[i])).Normalized());
+        //}
     }
 
     public static class MeshHelpers

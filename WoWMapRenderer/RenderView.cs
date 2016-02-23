@@ -14,6 +14,7 @@ using WoWMap.Layers;
 using System.Drawing;
 using WoWMap.Geometry;
 using WoWMapRenderer.Renderers;
+using OpenTK.Graphics;
 
 namespace WoWMapRenderer
 {
@@ -95,7 +96,8 @@ namespace WoWMapRenderer
         public void SetCamera(Vector3 pos)
         {
             var worker = new BackgroundWorkerEx();
-            worker.DoWork += (sender, e) => {
+            worker.DoWork += (sender, e) =>
+            {
                 Camera = new Camera(pos, -Vector3.UnitZ);
                 Camera.SetViewport(Control.Width, Control.Height);
                 GL.Viewport(0, 0, Control.Width, Control.Height);
@@ -108,6 +110,30 @@ namespace WoWMapRenderer
             worker.RunWorkerAsync();
         }
 
+        private void SetView()
+        {
+            var modelView = Camera.View;
+            GL.UniformMatrix4(Shader.GetUniformLocation("modelview_matrix"), false, ref modelView);
+            var projection = Camera.Projection;
+            GL.UniformMatrix4(Shader.GetUniformLocation("projection_matrix"), false, ref projection);
+        }
+
+        private void SetLighting()
+        {            
+            GL.Light(LightName.Light0, LightParameter.Position, new Vector4(Camera.Position, 1.0f));
+            GL.Light(LightName.Light0, LightParameter.Ambient, new Vector4(0, 0, 0, 1));
+            GL.Light(LightName.Light0, LightParameter.Diffuse, new Vector4(1, 1, 1, 1));
+            GL.Light(LightName.Light0, LightParameter.Specular, new Vector4(1, 1, 1, 1));
+            GL.LightModel(LightModelParameter.LightModelAmbient, new float[] { 0.2f, 0.2f, 0.2f, 1f });
+            GL.Enable(EnableCap.Lighting);
+            GL.Enable(EnableCap.Light0);
+            
+            GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
+            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1, 1, 1, 1));
+            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Emission, new Vector4(0, 0, 0, 1));
+            GL.Enable(EnableCap.ColorMaterial);
+        }
+
         private void Render()
         {
             GL.ClearColor(Color.White);
@@ -117,13 +143,9 @@ namespace WoWMapRenderer
 
             GL.PolygonMode(MaterialFace.FrontAndBack, Options[RenderOptions.ForceWireframe] ? PolygonMode.Line : PolygonMode.Fill);
 
-            var uniform = Matrix4.Mult(Camera.View, Camera.Projection);
-            GL.UniformMatrix4(Shader.GetUniformLocation("projection_modelview"), false, ref uniform);
-
-            GL.Enable(EnableCap.Lighting);
-            GL.Enable(EnableCap.Light0);
+            SetView();
+            SetLighting();
             GL.Enable(EnableCap.DepthTest);
-            //GL.DepthFunc(DepthFunction.Less);
 
             Renderer.Render(Shader);
 
