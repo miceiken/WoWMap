@@ -65,6 +65,7 @@ namespace WoWMapRenderer
             _loader.DoWork += (sender, e) =>
             {
                 _loader.ReportProgress(1, "Loading WDT...");
+                Renderer?.Delete();
                 var wdt = new WDT(string.Format(@"World\Maps\{0}\{0}.wdt", mapName));
                 Renderer = new WDTRenderer(this, mapName, wdt);
                 _loader.ReportProgress(100, "Map loaded");
@@ -112,10 +113,10 @@ namespace WoWMapRenderer
 
         private void SetView()
         {
-            var modelView = Camera.View;
-            GL.UniformMatrix4(Shader.GetUniformLocation("modelview_matrix"), false, ref modelView);
-            var projection = Camera.Projection;
-            GL.UniformMatrix4(Shader.GetUniformLocation("projection_matrix"), false, ref projection);
+            var normalMatrix = Matrix4.Transpose(Matrix4.Invert(Camera.View));
+            GL.UniformMatrix4(Shader.GetUniformLocation("normal_matrix"), false, ref normalMatrix);
+            var projModelView = Matrix4.Mult(Camera.View, Camera.Projection);            
+            GL.UniformMatrix4(Shader.GetUniformLocation("projModelView_matrix"), false, ref projModelView);
         }
 
         private void SetLighting()

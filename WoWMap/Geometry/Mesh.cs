@@ -78,7 +78,7 @@ namespace WoWMap.Geometry
                 Type = mesh.Type,
                 Indices = mesh.Indices,
                 Vertices = mesh.Vertices.OfType<Vector3>().Select(v => Vector3.Transform(v, mat)).ToArray(),
-                Normals = mesh.Normals.OfType<Vector3>().Select(v => Vector3.Transform(v, mat)).ToArray(),
+                Normals = mesh.Normals,
             };
         }
     }

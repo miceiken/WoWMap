@@ -27,18 +27,22 @@ namespace WoWMapRenderer.Renderers
 
         public void Generate()
         {
-            for (var i = 0; i < ADT.MapChunks.Count; ++i)
+            foreach (var mapChunk in ADT.MapChunks.OfType<MapChunk>())
             {
-                var mapChunk = ADT.MapChunks[i];
-                if (mapChunk == null)
-                    continue;
-
+                // Terrain
                 if (!mapChunk.Scene.Terrain.IsNullOrEmpty())
                     MeshRenderers.Renderers.Add(new MeshRenderer(Controller, mapChunk.Scene.Terrain.Flatten(MeshType.Terrain)));
+
+                // Doodads
                 if (!mapChunk.Scene.Doodads.IsNullOrEmpty())
                     MeshRenderers.Renderers.Add(new MeshRenderer(Controller, mapChunk.Scene.Doodads.Flatten(MeshType.Doodad)));
+
+                // Liquids
                 if (!mapChunk.Scene.Liquids.IsNullOrEmpty())
                     MeshRenderers.Renderers.Add(new MeshRenderer(Controller, mapChunk.Scene.Liquids.Flatten(MeshType.Liquid)));
+
+                // WMOs are special since they have terrain, doodads and liquids
+                // We just flatten them all into one mesh so they are distinguishable from the rest
                 if (!mapChunk.Scene.WorldModelObjects.IsNullOrEmpty())
                 {
                     var flat = mapChunk.Scene.WorldModelObjects.Select(s => s.Flatten());
