@@ -34,6 +34,11 @@ namespace WoWMapRenderer
             Control.MouseMove += (sender, args) => Camera?.Update();
         }
 
+        ~RenderView()
+        {
+            //Renderer?.Delete();
+        }
+
         private GLControl Control { get; set; }
 
         public Camera Camera { get; set; }
@@ -113,26 +118,8 @@ namespace WoWMapRenderer
 
         private void SetView()
         {
-            var normalMatrix = Matrix4.Transpose(Matrix4.Invert(Camera.View));
-            GL.UniformMatrix4(Shader.GetUniformLocation("normal_matrix"), false, ref normalMatrix);
-            var projModelView = Matrix4.Mult(Camera.View, Camera.Projection);            
+            var projModelView = Matrix4.Mult(Camera.View, Camera.Projection);
             GL.UniformMatrix4(Shader.GetUniformLocation("projModelView_matrix"), false, ref projModelView);
-        }
-
-        private void SetLighting()
-        {            
-            GL.Light(LightName.Light0, LightParameter.Position, new Vector4(Camera.Position, 1.0f));
-            GL.Light(LightName.Light0, LightParameter.Ambient, new Vector4(0, 0, 0, 1));
-            GL.Light(LightName.Light0, LightParameter.Diffuse, new Vector4(1, 1, 1, 1));
-            GL.Light(LightName.Light0, LightParameter.Specular, new Vector4(1, 1, 1, 1));
-            GL.LightModel(LightModelParameter.LightModelAmbient, new float[] { 0.2f, 0.2f, 0.2f, 1f });
-            GL.Enable(EnableCap.Lighting);
-            GL.Enable(EnableCap.Light0);
-            
-            GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
-            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, new Vector4(1, 1, 1, 1));
-            GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Emission, new Vector4(0, 0, 0, 1));
-            GL.Enable(EnableCap.ColorMaterial);
         }
 
         private void Render()
@@ -145,7 +132,6 @@ namespace WoWMapRenderer
             GL.PolygonMode(MaterialFace.FrontAndBack, Options[RenderOptions.ForceWireframe] ? PolygonMode.Line : PolygonMode.Fill);
 
             SetView();
-            SetLighting();
             GL.Enable(EnableCap.DepthTest);
 
             Renderer.Render(Shader);

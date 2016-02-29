@@ -35,9 +35,9 @@ namespace WoWMap.Chunks
                 {
                     Normal = new Vector3
                     {
-                        X = br.ReadByte() / 127.0f,
-                        Y = br.ReadByte() / 127.0f,
-                        Z = br.ReadByte() / 127.0f
+                        X = br.ReadSByte() / 127.0f,
+                        Y = br.ReadSByte() / 127.0f,
+                        Z = br.ReadSByte() / 127.0f
                     }
                 };
                 return entry;
