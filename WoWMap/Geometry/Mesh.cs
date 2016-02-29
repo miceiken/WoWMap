@@ -73,12 +73,13 @@ namespace WoWMap.Geometry
 
         public static Mesh Transform(this Mesh mesh, Matrix4 mat)
         {
+            var normalTransform = Matrix4.Transpose(Matrix4.Invert(mat));
             return new Mesh
             {
                 Type = mesh.Type,
                 Indices = mesh.Indices,
                 Vertices = mesh.Vertices.OfType<Vector3>().Select(v => Vector3.Transform(v, mat)).ToArray(),
-                Normals = mesh.Normals.OfType<Vector3>().Select(v => Vector3.Transform(v, mat).Normalized()).ToArray(),
+                Normals = mesh.Normals.OfType<Vector3>().Select(v => Vector3.Transform(v, normalTransform)).ToArray(),
             };
         }
     }

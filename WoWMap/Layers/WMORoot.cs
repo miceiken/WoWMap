@@ -101,11 +101,7 @@ namespace WoWMap.Layers
             if (!doodad.IsCollidable) return null;
 
             if (wmoDefinition != null)
-            {
-                var transform = Transformation.GetDoodadTransform(doodadDefinition, wmoDefinition);
-                doodad.Mesh.Vertices = doodad.Mesh.Vertices.Select(v => Vector3.Transform(v, transform)).ToArray();
-                doodad.Mesh.Normals = doodad.Mesh.Normals.Select(v => Vector3.Transform(v, transform)).ToArray();
-            }
+                return doodad.Mesh.Transform(Transformation.GetDoodadTransform(doodadDefinition, wmoDefinition));
 
             return doodad.Mesh;
         }
