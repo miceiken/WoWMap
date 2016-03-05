@@ -60,7 +60,8 @@ namespace WoWMapRenderer
             };
             _cascAction.ProgressChanged += (sender, e) =>
             {
-                _feedbackText.Text = (string)e.UserState;
+                if (e.UserState != null && !string.IsNullOrEmpty((string)e.UserState))
+                    _feedbackText.Text = (string)e.UserState;
                 _backgroundTaskProgress.Style = ProgressBarStyle.Continuous;
                 _backgroundTaskProgress.Maximum = 100;
                 _backgroundTaskProgress.Value = e.ProgressPercentage;

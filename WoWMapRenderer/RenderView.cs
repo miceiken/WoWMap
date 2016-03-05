@@ -120,6 +120,8 @@ namespace WoWMapRenderer
         {
             var projModelView = Matrix4.Mult(Camera.View, Camera.Projection);
             GL.UniformMatrix4(Shader.GetUniformLocation("projModelView_matrix"), false, ref projModelView);
+            var modelView = Matrix4.Transpose(Matrix4.Invert(Camera.View));
+            GL.UniformMatrix4(Shader.GetUniformLocation("modelView_matrix"), false, ref modelView);
         }
 
         private void Render()
@@ -133,6 +135,8 @@ namespace WoWMapRenderer
 
             SetView();
             GL.Enable(EnableCap.DepthTest);
+            // GL.Enable(EnableCap.CullFace);
+            // GL.CullFace(CullFaceMode.Back);
 
             Renderer.Render(Shader);
 

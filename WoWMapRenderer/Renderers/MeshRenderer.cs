@@ -64,7 +64,7 @@ namespace WoWMapRenderer.Renderers
             NormalsVBO = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, NormalsVBO);
             GL.BufferData<Vector3>(BufferTarget.ArrayBuffer,
-                new IntPtr(Vertices.Length * Vector3.SizeInBytes),
+                new IntPtr(Normals.Length * Vector3.SizeInBytes),
                 Normals, BufferUsageHint.StaticDraw);
 
             // Normals VAO
@@ -104,8 +104,8 @@ namespace WoWMapRenderer.Renderers
 
         private static Dictionary<MeshType, Color4> MeshTypeColorMap = new Dictionary<MeshType, Color4>()
         {
-            [MeshType.Terrain] = Color4.Green,
-            [MeshType.WorldModelObject] = Color4.Red,
+            [MeshType.Terrain] = new Color4(138, 185, 0, 255),
+            [MeshType.WorldModelObject] = new Color4(182, 25, 25, 255),
             [MeshType.Doodad] = Color4.Yellow,
             [MeshType.Liquid] = Color4.Blue,
         };
